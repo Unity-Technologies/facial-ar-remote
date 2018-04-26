@@ -52,6 +52,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 240cd22d3cf424670af1033c633a45b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_ClientGUI: {fileID: 114641071989034726}
 --- !u!114 &114641071989034726
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -64,7 +65,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Port: 9000
-  m_IP: 192.168.1.151
+  m_IP: 10.0.1.2
   m_Client: {fileID: 114306834681226924}
   m_Style:
     m_Name: 

@@ -34,7 +34,7 @@ public class ClientGUI : MonoBehaviour
 
         if (GUILayout.Button("Connect", m_Style))
         {
-            var endPoint = new IPEndPoint(address.Address, m_Port);
+            var endPoint = new IPEndPoint(address, m_Port);
             var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.Connect(endPoint);
             m_Client.Setup(socket);
