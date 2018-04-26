@@ -5,6 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Client.unity
     guid: 05a2230be70354b64a3dea1da43de943
+  - enabled: 0
+    path: Assets/UnityARKitPlugin/Examples/FaceTracking/FaceBlendshapeSloth.unity
+    guid: b9bc483a4023d4829a88ddc3adff3caf
+  - enabled: 1
+    path: Assets/FaceBlendshapeSloth.unity
+    guid: 930b9145849e94b95a973074b8dc0c1b

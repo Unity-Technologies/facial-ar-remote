@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -11,11 +9,16 @@ public class Server : MonoBehaviour
 	[SerializeField]
 	int m_Port = 9000;
 
-	int m_FrameNumber;
+	[SerializeField]
+	SkinnedMeshRenderer m_SkinnedMeshRenderer;
+
+	[SerializeField]
+	Transform m_Transform;
 
 	Socket m_Socket;
-
-	readonly byte[] m_Buffer = new byte[4096];
+	readonly byte[] m_Buffer = new byte[Client.BufferSize];
+	readonly float[] m_Blendshapes = new float[BlendshapeDriver.BlendshapeCount];
+	Pose m_Pose;
 
 	void Start()
 	{
@@ -30,23 +33,44 @@ public class Server : MonoBehaviour
 			m_Socket = m_Socket.Accept();
 			Debug.Log("accepted");
 
+			//var posePtr = Marshal.AllocHGlobal(Client.PoseSize);
+			var poseArray = new float[7];
+
 			while (true)
 			{
 				if (m_Socket.Connected)
 				{
-					m_Socket.Receive(m_Buffer);
-					m_FrameNumber = m_Buffer[0];
-					Thread.Sleep(10);
+					try
+					{
+						m_Socket.Receive(m_Buffer);
+						if (m_Buffer[0] == Client.ErrorCheck)
+						{
+							Buffer.BlockCopy(m_Buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
+							// Marshal.Copy(m_Buffer, Client.BlendshapeSize + 1, posePtr, Client.PoseSize);
+							// Marshal.PtrToStructure(posePtr, m_Pose);
+
+							Buffer.BlockCopy(m_Buffer, Client.BlendshapeSize + 1, poseArray, 0, Client.PoseSize);
+							m_Pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
+							m_Pose.rotation = new Quaternion(poseArray[3], poseArray[4], poseArray[5], poseArray[6]);
+						}
+					}
+					catch (Exception e)
+					{
+					}
 				}
+
+				Thread.Sleep(10);
 			}
 		}).Start();
 	}
 
 	void Update()
 	{
-		if (!m_Socket.Connected)
-			return;
-
-		Debug.Log(m_FrameNumber);
+		m_Transform.localPosition = m_Pose.position;
+		m_Transform.localRotation = m_Pose.rotation;
+		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
+		{
+			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);
+		}
 	}
 }

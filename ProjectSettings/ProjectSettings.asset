@@ -292,7 +292,7 @@ PlayerSettings:
   enableInternalProfiler: 0
   logObjCUncaughtExceptions: 1
   enableCrashReportAPI: 0
-  cameraUsageDescription: 
+  cameraUsageDescription: AR Face Tracking
   locationUsageDescription: 
   microphoneUsageDescription: 
   switchNetLibKey: 
