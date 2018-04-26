@@ -12,15 +12,18 @@ public class Client : MonoBehaviour
     public const int BlendshapeSize = sizeof(float) * BlendshapeDriver.BlendshapeCount;
     public const int PoseSize = sizeof(float) * 7;
     // 0 - Error check
-    // 1-204 - Blendshapes
-    // 205-233 - Pose
-    // 234-255 - Padding
-    public const int BufferSize = 256;
+    // 1-200 - Blendshapes
+    // 201-228 - Pose
+    // 229-256 - Camera Pose
+    public const int BufferSize = 257;
 
-     const float k_Timeout = 5;
+    const float k_Timeout = 5;
 
-     [SerializeField]
-     ClientGUI m_ClientGUI;
+    [SerializeField]
+    ClientGUI m_ClientGUI;
+
+    Transform m_CameraTransform;
+    Pose m_CameraPose;
 
     Socket m_Socket;
 
@@ -31,11 +34,14 @@ public class Client : MonoBehaviour
 
     public void Setup(Socket socket)
     {
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        m_CameraTransform = Camera.main.transform;
         m_StartTime = Time.time;
         m_Socket = socket;
         enabled = true;
         //var posePtr = Marshal.AllocHGlobal(PoseSize);
         var poseArray = new float[7];
+        var cameraPoseArray = new float[7];
 
         new Thread(() =>
         {
@@ -53,16 +59,10 @@ public class Client : MonoBehaviour
                             // Marshal.StructureToPtr(UnityARFaceAnchorManager.Pose, posePtr, true);
                             // Marshal.Copy(posePtr, m_Buffer, BlendshapeSize + 1, PoseSize);
                             var pose = UnityARFaceAnchorManager.Pose;
-                            var position = pose.position;
-                            var rotation = pose.rotation;
-                            poseArray[0] = position.x;
-                            poseArray[1] = position.y;
-                            poseArray[2] = position.z;
-                            poseArray[3] = rotation.x;
-                            poseArray[4] = rotation.y;
-                            poseArray[5] = rotation.z;
-                            poseArray[6] = rotation.w;
+                            PoseToArray(pose, poseArray);
+                            PoseToArray(m_CameraPose, cameraPoseArray);
                             Buffer.BlockCopy(poseArray, 0, m_Buffer, BlendshapeSize + 1, PoseSize);
+                            Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, BlendshapeSize + PoseSize + 1, PoseSize);
 
                             m_Socket.Send(m_Buffer);
                         }
@@ -77,13 +77,27 @@ public class Client : MonoBehaviour
                     TryTimeout();
                 }
 
-                Thread.Sleep(30);
+                Thread.Sleep(10);
             }
         }).Start();
     }
 
+    static void PoseToArray(Pose pose, float[] poseArray)
+    {
+        var position = pose.position;
+        var rotation = pose.rotation;
+        poseArray[0] = position.x;
+        poseArray[1] = position.y;
+        poseArray[2] = position.z;
+        poseArray[3] = rotation.x;
+        poseArray[4] = rotation.y;
+        poseArray[5] = rotation.z;
+        poseArray[6] = rotation.w;
+    }
+
     void Update()
     {
+        m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
         m_FreshData = true;
     }
 
