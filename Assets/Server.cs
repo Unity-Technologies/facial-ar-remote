@@ -11,6 +11,14 @@ public class Server : MonoBehaviour
 	[SerializeField]
 	int m_Port = 9000;
 
+	[Range(0.1f, 1)]
+	[SerializeField]
+	float m_CameraSmoothing = 0.8f;
+
+	[Range(0.1f, 1)]
+	[SerializeField]
+	float m_FaceSmoothing = 0.8f;
+
 	[SerializeField]
 	SkinnedMeshRenderer m_SkinnedMeshRenderer;
 
@@ -27,50 +35,52 @@ public class Server : MonoBehaviour
 	void Start()
 	{
 		m_CameraTransform = Camera.main.transform;
-		var ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0];
-
-		Debug.Log(ip);
-
-		var endPoint = new IPEndPoint(ip, m_Port);
-		m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-		m_Socket.Bind(endPoint);
-		m_Socket.Listen(100);
-		new Thread(() =>
+		Debug.Log("Possible IP addresses:");
+		foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
 		{
-			m_Socket = m_Socket.Accept();
-			Debug.Log("Client connected");
+			Debug.Log(address);
 
-			var poseArray = new float[7];
-			var cameraPoseArray = new float[7];
-
-			while (true)
+			var endPoint = new IPEndPoint(address, m_Port);
+			m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			m_Socket.Bind(endPoint);
+			m_Socket.Listen(100);
+			new Thread(() =>
 			{
-				if (m_Socket.Connected)
-				{
-					try
-					{
-						m_Socket.Receive(m_Buffer);
-						if (m_Buffer[0] == Client.ErrorCheck)
-						{
-							const int poseOffset = Client.BlendshapeSize + 1;
-							const int cameraPoseOffset = poseOffset + Client.PoseSize;
+				m_Socket = m_Socket.Accept();
+				Debug.Log("Client connected on " + address);
 
-							Buffer.BlockCopy(m_Buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
-							Buffer.BlockCopy(m_Buffer, poseOffset, poseArray, 0, Client.PoseSize);
-							Buffer.BlockCopy(m_Buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
-							ArrayToPose(poseArray, ref m_Pose);
-							ArrayToPose(cameraPoseArray, ref m_CameraPose);
+				var poseArray = new float[7];
+				var cameraPoseArray = new float[7];
+
+				while (true)
+				{
+					if (m_Socket.Connected)
+					{
+						try
+						{
+							m_Socket.Receive(m_Buffer);
+							if (m_Buffer[0] == Client.ErrorCheck)
+							{
+								const int poseOffset = Client.BlendshapeSize + 1;
+								const int cameraPoseOffset = poseOffset + Client.PoseSize;
+
+								Buffer.BlockCopy(m_Buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
+								Buffer.BlockCopy(m_Buffer, poseOffset, poseArray, 0, Client.PoseSize);
+								Buffer.BlockCopy(m_Buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
+								ArrayToPose(poseArray, ref m_Pose);
+								ArrayToPose(cameraPoseArray, ref m_CameraPose);
+							}
+						}
+						catch (Exception e)
+						{
+							Debug.LogError(e.Message);
 						}
 					}
-					catch (Exception e)
-					{
-						Debug.LogError(e.Message);
-					}
-				}
 
-				Thread.Sleep(10);
-			}
-		}).Start();
+					Thread.Sleep(10);
+				}
+			}).Start();
+		}
 	}
 
 	static void ArrayToPose(float[] poseArray, ref Pose pose)
@@ -81,10 +91,10 @@ public class Server : MonoBehaviour
 
 	void Update()
 	{
-		m_CameraTransform.localPosition = m_CameraPose.position;
-		m_CameraTransform.localRotation = m_CameraPose.rotation;
-		m_Transform.localPosition = m_Pose.position;
-		m_Transform.localRotation = m_Pose.rotation * k_RotationOffset;
+		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
+		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
+		m_Transform.localPosition = Vector3.Lerp(m_Transform.localPosition, m_Pose.position, m_FaceSmoothing);
+		m_Transform.localRotation = Quaternion.Lerp(m_Transform.localRotation, m_Pose.rotation * k_RotationOffset, m_FaceSmoothing);
 		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
 		{
 			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);

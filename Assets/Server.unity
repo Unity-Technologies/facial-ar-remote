@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44261357, g: 0.49172002, b: 0.57153076, a: 1}
+  m_IndirectSpecularColor: {r: 0.44259894, g: 0.49170685, b: 0.571525, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -222,6 +222,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Port: 9000
+  m_CameraSmoothing: 0.8
+  m_FaceSmoothing: 0.8
   m_SkinnedMeshRenderer: {fileID: 774728488}
   m_Transform: {fileID: 774728487}
 --- !u!4 &676841259
