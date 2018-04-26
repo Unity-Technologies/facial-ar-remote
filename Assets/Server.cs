@@ -28,7 +28,9 @@ public class Server : MonoBehaviour
 	{
 		m_CameraTransform = Camera.main.transform;
 		var ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0];
+
 		Debug.Log(ip);
+
 		var endPoint = new IPEndPoint(ip, m_Port);
 		m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 		m_Socket.Bind(endPoint);
@@ -36,9 +38,8 @@ public class Server : MonoBehaviour
 		new Thread(() =>
 		{
 			m_Socket = m_Socket.Accept();
-			Debug.Log("accepted");
+			Debug.Log("Client connected");
 
-			//var posePtr = Marshal.AllocHGlobal(Client.PoseSize);
 			var poseArray = new float[7];
 			var cameraPoseArray = new float[7];
 
@@ -51,18 +52,19 @@ public class Server : MonoBehaviour
 						m_Socket.Receive(m_Buffer);
 						if (m_Buffer[0] == Client.ErrorCheck)
 						{
-							Buffer.BlockCopy(m_Buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
-							// Marshal.Copy(m_Buffer, Client.BlendshapeSize + 1, posePtr, Client.PoseSize);
-							// Marshal.PtrToStructure(posePtr, m_Pose);
+							const int poseOffset = Client.BlendshapeSize + 1;
+							const int cameraPoseOffset = poseOffset + Client.PoseSize;
 
-							Buffer.BlockCopy(m_Buffer, Client.BlendshapeSize + 1, poseArray, 0, Client.PoseSize);
-							Buffer.BlockCopy(m_Buffer, Client.BlendshapeSize + Client.PoseSize + 1, cameraPoseArray, 0, Client.PoseSize);
+							Buffer.BlockCopy(m_Buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
+							Buffer.BlockCopy(m_Buffer, poseOffset, poseArray, 0, Client.PoseSize);
+							Buffer.BlockCopy(m_Buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
 							ArrayToPose(poseArray, ref m_Pose);
 							ArrayToPose(cameraPoseArray, ref m_CameraPose);
 						}
 					}
 					catch (Exception e)
 					{
+						Debug.LogError(e.Message);
 					}
 				}
 

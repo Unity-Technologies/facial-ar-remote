@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
 
@@ -39,7 +36,6 @@ public class Client : MonoBehaviour
         m_StartTime = Time.time;
         m_Socket = socket;
         enabled = true;
-        //var posePtr = Marshal.AllocHGlobal(PoseSize);
         var poseArray = new float[7];
         var cameraPoseArray = new float[7];
 
@@ -56,13 +52,15 @@ public class Client : MonoBehaviour
                             m_Buffer[0] = ErrorCheck;
                             Buffer.BlockCopy(BlendshapeDriver.BlendShapes, 0, m_Buffer, 1, BlendshapeSize);
 
-                            // Marshal.StructureToPtr(UnityARFaceAnchorManager.Pose, posePtr, true);
-                            // Marshal.Copy(posePtr, m_Buffer, BlendshapeSize + 1, PoseSize);
                             var pose = UnityARFaceAnchorManager.Pose;
                             PoseToArray(pose, poseArray);
                             PoseToArray(m_CameraPose, cameraPoseArray);
-                            Buffer.BlockCopy(poseArray, 0, m_Buffer, BlendshapeSize + 1, PoseSize);
-                            Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, BlendshapeSize + PoseSize + 1, PoseSize);
+
+                            const int poseOffset = BlendshapeSize + 1;
+                            const int cameraPoseOffset = poseOffset + PoseSize;
+
+                            Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, PoseSize);
+                            Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, PoseSize);
 
                             m_Socket.Send(m_Buffer);
                         }
@@ -74,10 +72,11 @@ public class Client : MonoBehaviour
                 }
                 catch (Exception e)
                 {
+                    Debug.LogError(e.Message);
                     TryTimeout();
                 }
 
-                Thread.Sleep(10);
+                Thread.Sleep(30);
             }
         }).Start();
     }

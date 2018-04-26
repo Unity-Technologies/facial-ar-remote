@@ -37,7 +37,6 @@ public class BlendshapeDriver : MonoBehaviour
 
 		if (currentBlendShapes != null)
 		{
-			var count = 0;
 			foreach(KeyValuePair<string, float> kvp in currentBlendShapes)
 			{
 				var value = kvp.Value;
