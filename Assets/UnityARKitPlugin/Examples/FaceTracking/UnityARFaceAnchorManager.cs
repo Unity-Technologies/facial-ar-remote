@@ -1,12 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.XR.iOS;
 
 public class UnityARFaceAnchorManager : MonoBehaviour {
 
 	[SerializeField]
-	private GameObject anchorPrefab;
+	GameObject anchorPrefab;
 
 	[Range(0.1f, 1f)]
 	[SerializeField]

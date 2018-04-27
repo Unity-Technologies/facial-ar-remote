@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.XR.iOS;
 
 public class UnityARFaceMeshManager : MonoBehaviour {
 
 	[SerializeField]
-	private MeshFilter meshFilter;
+	MeshFilter meshFilter;
 
-	private UnityARSessionNativeInterface m_session;
-	private Mesh faceMesh;
+	 UnityARSessionNativeInterface m_session;
+	 Mesh faceMesh;
 
 	// Use this for initialization
 	void Start () {
@@ -21,24 +19,25 @@ public class UnityARFaceMeshManager : MonoBehaviour {
 		config.enableLightEstimation = true;
 
 		if (config.IsSupported && meshFilter != null) {
-			
+
 			m_session.RunWithConfig (config);
 
 			UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
 			UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
 			UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
-
 		}
-
-
 	}
 
 	void FaceAdded (ARFaceAnchor anchorData)
 	{
-		gameObject.transform.localPosition = UnityARMatrixOps.GetPosition (anchorData.transform);
-		gameObject.transform.localRotation = UnityARMatrixOps.GetRotation (anchorData.transform);
+		var position = UnityARMatrixOps.GetPosition (anchorData.transform);
+		var rotation = UnityARMatrixOps.GetRotation (anchorData.transform);
+		UnityARFaceAnchorManager.Pose.position = position;
+		UnityARFaceAnchorManager.Pose.rotation = rotation;
+		gameObject.transform.localPosition = position;
+		gameObject.transform.localRotation = rotation;
+		UnityARFaceAnchorManager.active = true;
 
-		
 		faceMesh = new Mesh ();
 		faceMesh.vertices = anchorData.faceGeometry.vertices;
 		faceMesh.uv = anchorData.faceGeometry.textureCoordinates;
@@ -53,32 +52,24 @@ public class UnityARFaceMeshManager : MonoBehaviour {
 	void FaceUpdated (ARFaceAnchor anchorData)
 	{
 		if (faceMesh != null) {
-			gameObject.transform.localPosition = UnityARMatrixOps.GetPosition (anchorData.transform);
-			gameObject.transform.localRotation = UnityARMatrixOps.GetRotation (anchorData.transform);
+			var position = UnityARMatrixOps.GetPosition (anchorData.transform);
+			var rotation = UnityARMatrixOps.GetRotation (anchorData.transform);
+			UnityARFaceAnchorManager.Pose.position = position;
+			UnityARFaceAnchorManager.Pose.rotation = rotation;
+			gameObject.transform.localPosition = position;
+			gameObject.transform.localRotation = rotation;
 			faceMesh.vertices = anchorData.faceGeometry.vertices;
-			faceMesh.uv = anchorData.faceGeometry.textureCoordinates;
-			faceMesh.triangles = anchorData.faceGeometry.triangleIndices;
-			faceMesh.RecalculateBounds();
+			//faceMesh.uv = anchorData.faceGeometry.textureCoordinates;
+			//faceMesh.triangles = anchorData.faceGeometry.triangleIndices;
+			//faceMesh.RecalculateBounds();
 			faceMesh.RecalculateNormals();
 		}
-
 	}
 
 	void FaceRemoved (ARFaceAnchor anchorData)
 	{
+		UnityARFaceAnchorManager.active = false;
 		meshFilter.mesh = null;
 		faceMesh = null;
-	}
-
-
-
-	// Update is called once per frame
-	void Update () {
-		
-	}
-
-	void OnDestroy()
-	{
-		
 	}
 }
