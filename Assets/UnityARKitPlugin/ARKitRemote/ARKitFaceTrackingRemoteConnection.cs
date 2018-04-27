@@ -1,8 +1,6 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking.PlayerConnection;
-using System.Text;
-using UnityEngine.XR.iOS.Utils; 
+using UnityEngine.XR.iOS.Utils;
 
 #if UNITY_EDITOR
 
@@ -34,7 +32,6 @@ namespace UnityEngine.XR.iOS
 
 			bTexturesInitialized = false;
 
-
 			editorConnection = EditorConnection.instance;
 			editorConnection.Initialize ();
 			editorConnection.RegisterConnection (PlayerConnected);
@@ -57,17 +54,17 @@ namespace UnityEngine.XR.iOS
 		void OnGUI()
 		{
 
-			if (!bTexturesInitialized) 
+			if (!bTexturesInitialized)
 			{
 				if (currentPlayerID != -1) {
 					guimessage = "Connected to ARKit Remote device : " + currentPlayerID.ToString ();
 
-					if (GUI.Button (new Rect ((Screen.width / 2) - 200, (Screen.height / 2) - 200, 400, 100), "Start Remote ARKit FaceTracking Session")) 
+					if (GUI.Button (new Rect ((Screen.width / 2) - 200, (Screen.height / 2) - 200, 400, 100), "Start Remote ARKit FaceTracking Session"))
 					{
 						SendInitToPlayer ();
 					}
-				} 
-				else 
+				}
+				else
 				{
 					guimessage = "Please connect to player in the console menu";
 				}
@@ -187,7 +184,7 @@ namespace UnityEngine.XR.iOS
 
 			serializableFromEditorMessage sfem = new serializableFromEditorMessage ();
 			sfem.subMessageId = SubMessageIds.editorInitARKitFaceTracking;
-			serializableARSessionConfiguration ssc = new serializableARSessionConfiguration (UnityARAlignment.UnityARAlignmentCamera, UnityARPlaneDetection.None, false, enableLightEstimation, true); 
+			serializableARSessionConfiguration ssc = new serializableARSessionConfiguration (UnityARAlignment.UnityARAlignmentCamera, UnityARPlaneDetection.None, false, enableLightEstimation, true);
 			UnityARSessionRunOption roTracking = resetTracking ? UnityARSessionRunOption.ARSessionRunOptionResetTracking : 0;
 			UnityARSessionRunOption roAnchors = removeExistingAnchors ? UnityARSessionRunOption.ARSessionRunOptionRemoveExistingAnchors : 0;
 			sfem.arkitConfigMsg = new serializableARKitInit (ssc, roTracking | roAnchors);

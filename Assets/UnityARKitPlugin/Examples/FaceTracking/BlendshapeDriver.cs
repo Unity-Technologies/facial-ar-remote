@@ -46,7 +46,6 @@ public class BlendshapeDriver : MonoBehaviour
 		currentBlendShapes = anchorData.blendShapes;
 	}
 
-	// Update is called once per frame
 	void Update () {
 		if (currentBlendShapes != null)
 		{
@@ -55,7 +54,7 @@ public class BlendshapeDriver : MonoBehaviour
 				var value = kvp.Value;
 				var blendShapeIndex = blendShapeIndices[kvp.Key];
 				if (blendShapeIndex >= 0 ) {
-					skinnedMeshRenderer.SetBlendShapeWeight (blendShapeIndex, value * 100.0f);
+					//skinnedMeshRenderer.SetBlendShapeWeight (blendShapeIndex, value * 100.0f);
 					BlendShapes[blendShapeIndex] = value;
 				}
 			}
