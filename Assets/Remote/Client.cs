@@ -9,10 +9,11 @@ public class Client : MonoBehaviour
     public const int BlendshapeSize = sizeof(float) * BlendshapeDriver.BlendshapeCount;
     public const int PoseSize = sizeof(float) * 7;
     // 0 - Error check
-    // 1-200 - Blendshapes
-    // 201-228 - Pose
-    // 229-256 - Camera Pose
-    public const int BufferSize = 257;
+    // 1-204 - Blendshapes
+    // 205-232 - Pose
+    // 233-260 - Camera Pose
+    // 261 - Active state
+    public const int BufferSize = 262;
 
     const float k_Timeout = 5;
 
@@ -29,9 +30,13 @@ public class Client : MonoBehaviour
 
     readonly byte[] m_Buffer = new byte[BufferSize];
 
-    public void Setup(Socket socket)
+    void Awake()
     {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
+    }
+
+    public void Setup(Socket socket)
+    {
         m_CameraTransform = Camera.main.transform;
         m_StartTime = Time.time;
         m_Socket = socket;
@@ -61,6 +66,7 @@ public class Client : MonoBehaviour
 
                             Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, PoseSize);
                             Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, PoseSize);
+                            m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 
                             m_Socket.Send(m_Buffer);
                         }
