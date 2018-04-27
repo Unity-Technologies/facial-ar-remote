@@ -10,6 +10,7 @@ public class BlendshapeDriver : MonoBehaviour
 
 	SkinnedMeshRenderer skinnedMeshRenderer;
 	Dictionary<string, float> currentBlendShapes;
+	Dictionary<string, int> blendShapeIndices;
 
 	// Use this for initialization
 	void Start () {
@@ -24,6 +25,17 @@ public class BlendshapeDriver : MonoBehaviour
 	void FaceAdded (ARFaceAnchor anchorData)
 	{
 		currentBlendShapes = anchorData.blendShapes;
+
+		if (blendShapeIndices == null)
+		{
+			blendShapeIndices = new Dictionary<string, int>();
+
+			var skinnedMesh = skinnedMeshRenderer.sharedMesh;
+			foreach (var kvp in currentBlendShapes)
+			{
+				blendShapeIndices[kvp.Key] = skinnedMesh.GetBlendShapeIndex("blendShape2." + kvp.Key);
+			}
+		}
 	}
 
 	void FaceUpdated (ARFaceAnchor anchorData)
@@ -31,16 +43,14 @@ public class BlendshapeDriver : MonoBehaviour
 		currentBlendShapes = anchorData.blendShapes;
 	}
 
-
 	// Update is called once per frame
 	void Update () {
-
 		if (currentBlendShapes != null)
 		{
-			foreach(KeyValuePair<string, float> kvp in currentBlendShapes)
+			foreach(var kvp in currentBlendShapes)
 			{
 				var value = kvp.Value;
-				int blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex ("blendShape2." + kvp.Key);
+				var blendShapeIndex = blendShapeIndices[kvp.Key];
 				if (blendShapeIndex >= 0 ) {
 					skinnedMeshRenderer.SetBlendShapeWeight (blendShapeIndex, value * 100.0f);
 					BlendShapes[blendShapeIndex] = value;
