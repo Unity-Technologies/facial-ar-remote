@@ -1,0 +1,215 @@
+fileFormatVersion: 2
+guid: 46f23e38aced69f4aa3aa0fd18471e33
+timeCreated: 1524194084
+licenseType: Pro
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: BlendShaps
+    100002: button1
+    100004: Character1_EyeLeft
+    100006: Character1_EyeRight
+    100008: Character1_Head
+    100010: Character1_HeadAnchor
+    100012: Character1_Hips
+    100014: Character1_LeftArm
+    100016: Character1_LeftForeArm
+    100018: Character1_LeftShoulder
+    100020: Character1_Neck
+    100022: Character1_RightArm
+    100024: Character1_RightForeArm
+    100026: Character1_RightShoulder
+    100028: Character1_Spine
+    100030: Character1_Spine1
+    100032: Character1_Spine2
+    100034: eye_left1
+    100036: eyelashes_lp2
+    100038: hair_inner_tips
+    100040: hair_ties
+    100042: hair_ties_small
+    100044: head
+    100046: Little_girl
+    100048: //RootNode
+    100050: LittleGirl_LP
+    100052: LittleGirl_polywink_iphonex_Little_girl
+    100054: PonyTail_Left
+    100056: PonyTail_Left1
+    100058: PonyTail_Left2
+    100060: PonyTail_Left3
+    100062: PonyTail_Left4
+    100064: PonyTail_Left5
+    100066: PonyTail_Left6
+    100068: PonyTail_Right
+    100070: PonyTail_Right1
+    100072: PonyTail_Right2
+    100074: PonyTail_Right3
+    100076: PonyTail_Right4
+    100078: PonyTail_Right5
+    100080: PonyTail_Right6
+    100082: shirt3
+    100084: sweater
+    100086: teeth
+    100088: tongue
+    400000: BlendShaps
+    400002: button1
+    400004: Character1_EyeLeft
+    400006: Character1_EyeRight
+    400008: Character1_Head
+    400010: Character1_HeadAnchor
+    400012: Character1_Hips
+    400014: Character1_LeftArm
+    400016: Character1_LeftForeArm
+    400018: Character1_LeftShoulder
+    400020: Character1_Neck
+    400022: Character1_RightArm
+    400024: Character1_RightForeArm
+    400026: Character1_RightShoulder
+    400028: Character1_Spine
+    400030: Character1_Spine1
+    400032: Character1_Spine2
+    400034: eye_left1
+    400036: eyelashes_lp2
+    400038: hair_inner_tips
+    400040: hair_ties
+    400042: hair_ties_small
+    400044: head
+    400046: Little_girl
+    400048: //RootNode
+    400050: LittleGirl_LP
+    400052: LittleGirl_polywink_iphonex_Little_girl
+    400054: PonyTail_Left
+    400056: PonyTail_Left1
+    400058: PonyTail_Left2
+    400060: PonyTail_Left3
+    400062: PonyTail_Left4
+    400064: PonyTail_Left5
+    400066: PonyTail_Left6
+    400068: PonyTail_Right
+    400070: PonyTail_Right1
+    400072: PonyTail_Right2
+    400074: PonyTail_Right3
+    400076: PonyTail_Right4
+    400078: PonyTail_Right5
+    400080: PonyTail_Right6
+    400082: shirt3
+    400084: sweater
+    400086: teeth
+    400088: tongue
+    2100000: button_initialShadingGroup4
+    2100002: button_blinn1SG4
+    2100004: shirt_initialShadingGroup4
+    2100006: borders
+    2100008: lambert14
+    2100010: lambert17
+    2100012: test_eyeoutter1
+    2100014: test_eye1
+    2100016: lambert21
+    2100018: lambert1
+    2100020: blinn18
+    2100022: purl
+    2100024: details1
+    2100026: knit
+    2100028: head_orig_retopo3_Head_New_TopoSG1
+    4300000: button1
+    4300002: shirt3
+    4300004: teeth
+    4300006: tongue
+    4300008: eye_left1
+    4300010: hair_inner_tips
+    4300012: hair_ties
+    4300014: hair_ties_small
+    4300016: sweater
+    4300018: eyelashes_lp2
+    4300020: head
+    9500000: //RootNode
+    13700000: button1
+    13700002: eye_left1
+    13700004: eyelashes_lp2
+    13700006: hair_inner_tips
+    13700008: hair_ties
+    13700010: hair_ties_small
+    13700012: head
+    13700014: shirt3
+    13700016: sweater
+    13700018: teeth
+    13700020: tongue
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -5,8 +5,11 @@ using UnityEngine.XR.iOS;
 
 public class BlendshapeDriver : MonoBehaviour
 {
-	public const int BlendshapeCount = 50;
+	public const int BlendshapeCount = 51;
 	public static readonly float[] BlendShapes = new float[BlendshapeCount];
+
+	[SerializeField]
+	string m_BlendshapePrefix = "blendShape1.";
 
 	SkinnedMeshRenderer skinnedMeshRenderer;
 	Dictionary<string, float> currentBlendShapes;
@@ -33,7 +36,7 @@ public class BlendshapeDriver : MonoBehaviour
 			var skinnedMesh = skinnedMeshRenderer.sharedMesh;
 			foreach (var kvp in currentBlendShapes)
 			{
-				blendShapeIndices[kvp.Key] = skinnedMesh.GetBlendShapeIndex("blendShape2." + kvp.Key);
+				blendShapeIndices[kvp.Key] = skinnedMesh.GetBlendShapeIndex(string.Format("{0}{1}", m_BlendshapePrefix, kvp.Key));
 			}
 		}
 	}

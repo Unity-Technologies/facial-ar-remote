@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class Server : MonoBehaviour
 {
-	static readonly Quaternion k_RotationOffset = Quaternion.AngleAxis(180, Vector3.up);
-
 	[SerializeField]
 	int m_Port = 9000;
 
@@ -23,17 +21,20 @@ public class Server : MonoBehaviour
 	SkinnedMeshRenderer m_SkinnedMeshRenderer;
 
 	[SerializeField]
-	Transform m_Transform;
+	Transform m_FaceTransform;
 
 	Socket m_Socket;
 	readonly byte[] m_Buffer = new byte[Client.BufferSize];
 	readonly float[] m_Blendshapes = new float[BlendshapeDriver.BlendshapeCount];
+	GameObject m_FaceGameObject;
 	Pose m_Pose;
 	Pose m_CameraPose;
 	Transform m_CameraTransform;
+	bool m_Active;
 
 	void Start()
 	{
+		m_FaceGameObject = m_FaceTransform.gameObject;
 		m_CameraTransform = Camera.main.transform;
 		Debug.Log("Possible IP addresses:");
 		foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
@@ -69,6 +70,7 @@ public class Server : MonoBehaviour
 								Buffer.BlockCopy(m_Buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
 								ArrayToPose(poseArray, ref m_Pose);
 								ArrayToPose(cameraPoseArray, ref m_CameraPose);
+								m_Active = m_Buffer[m_Buffer.Length - 1] == 1;
 							}
 						}
 						catch (Exception e)
@@ -91,10 +93,11 @@ public class Server : MonoBehaviour
 
 	void Update()
 	{
+		m_FaceGameObject.SetActive(m_Active);
 		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
 		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
-		m_Transform.localPosition = Vector3.Lerp(m_Transform.localPosition, m_Pose.position, m_FaceSmoothing);
-		m_Transform.localRotation = Quaternion.Lerp(m_Transform.localRotation, m_Pose.rotation * k_RotationOffset, m_FaceSmoothing);
+		m_FaceTransform.localPosition = Vector3.Lerp(m_FaceTransform.localPosition, m_Pose.position, m_FaceSmoothing);
+		m_FaceTransform.localRotation = Quaternion.Lerp(m_FaceTransform.localRotation, m_Pose.rotation, m_FaceSmoothing);
 		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
 		{
 			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);
