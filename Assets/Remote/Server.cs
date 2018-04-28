@@ -148,15 +148,14 @@ public class Server : MonoBehaviour
 		m_FaceGameObject.SetActive(m_Active);
 		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
 		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
-		m_FaceTransform.position = Vector3.Lerp(m_FaceTransform.position, m_FacePose.position, m_FaceSmoothing);
+		var facePosition = m_FacePose.position;
+		m_HipsTransform.position = Vector3.Lerp(m_HipsTransform.position, facePosition + m_HipsOffset, m_FaceSmoothing);
 		m_FaceTransform.rotation = Quaternion.Lerp(m_FaceTransform.rotation, m_FacePose.rotation * k_RotationOffset, m_FaceSmoothing);
 
-		var toCamera = m_FacePose.position - m_CameraPose.position;
+		var toCamera = facePosition - m_CameraPose.position;
 		toCamera.y = 0;
 		if (toCamera.magnitude > 0)
 			m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera) * k_RotationOffset, m_FaceSmoothing);
-
-		m_HipsTransform.position = m_FaceTransform.position + m_HipsOffset;
 
 		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
 		{
