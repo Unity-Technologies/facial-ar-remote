@@ -12,8 +12,9 @@ public class Client : MonoBehaviour
     // 1-204 - Blendshapes
     // 205-232 - Pose
     // 233-260 - Camera Pose
-    // 261 - Active state
-    public const int BufferSize = 262;
+    // 261-264 - Frame Number
+    // 265 - Active state
+    public const int BufferSize = 266;
 
     const float k_Timeout = 5;
 
@@ -27,6 +28,7 @@ public class Client : MonoBehaviour
 
     float m_StartTime;
     bool m_FreshData;
+    bool m_Running;
 
     readonly byte[] m_Buffer = new byte[BufferSize];
 
@@ -43,10 +45,13 @@ public class Client : MonoBehaviour
         enabled = true;
         var poseArray = new float[7];
         var cameraPoseArray = new float[7];
+        var frameNum = new int[1];
 
+        m_Running = true;
         new Thread(() =>
         {
-            while (true)
+            var count = 0;
+            while (m_Running)
             {
                 try {
                     if (m_Socket.Connected)
@@ -63,12 +68,17 @@ public class Client : MonoBehaviour
 
                             const int poseOffset = BlendshapeSize + 1;
                             const int cameraPoseOffset = poseOffset + PoseSize;
+                            const int frameNumOffset = cameraPoseOffset + PoseSize;
 
+                            frameNum[0] = count;
                             Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, PoseSize);
                             Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, PoseSize);
+                            Buffer.BlockCopy(frameNum, 0, m_Buffer, frameNumOffset, sizeof(int));
                             m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 
                             m_Socket.Send(m_Buffer);
+
+                            Debug.Log(count++ + ", " + Server.PrintAccuratePose(pose));
                         }
                     }
                     else
@@ -82,7 +92,7 @@ public class Client : MonoBehaviour
                     TryTimeout();
                 }
 
-                Thread.Sleep(30);
+                Thread.Sleep(5);
             }
         }).Start();
     }
@@ -113,5 +123,10 @@ public class Client : MonoBehaviour
             enabled = false;
             m_ClientGUI.enabled = true;
         }
+    }
+
+    void OnDestroy()
+    {
+        m_Running = false;
     }
 }
