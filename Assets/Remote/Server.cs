@@ -8,9 +8,11 @@ using UnityEngine;
 public class Server : MonoBehaviour
 {
 	const int k_BufferPrewarm = 16;
+	const int k_MaxBufferQueue = 1024; // No use in bufferring really old frames
 	const int poseOffset = Client.BlendshapeSize + 1;
 	const int cameraPoseOffset = poseOffset + Client.PoseSize;
 	const int frameNumOffset = cameraPoseOffset + Client.PoseSize;
+	static readonly Quaternion k_RotationOffset = Quaternion.AngleAxis(180, Vector3.up);
 
 	[SerializeField]
 	int m_Port = 9000;
@@ -44,6 +46,7 @@ public class Server : MonoBehaviour
 
 	void Start()
 	{
+		Application.targetFrameRate = 60;
 		for (var i = 0; i < k_BufferPrewarm; i++)
 		{
 			m_UnusedBuffers.Enqueue(new byte[Client.BufferSize]);
@@ -61,11 +64,11 @@ public class Server : MonoBehaviour
 			m_Socket.Bind(endPoint);
 			m_Socket.Listen(100);
 			m_Running = true;
+			m_LastFrameNum = -1;
 			new Thread(() =>
 			{
 				m_Socket = m_Socket.Accept();
 				Debug.Log("Client connected on " + address);
-
 
 				var frameNumArray = new int[1];
 
@@ -75,7 +78,7 @@ public class Server : MonoBehaviour
 					{
 						try
 						{
-							var buffer = m_UnusedBuffers.Dequeue();
+							var buffer = m_UnusedBuffers.Count == 0 ? new byte[Client.BufferSize] : m_UnusedBuffers.Dequeue();
 							m_Socket.Receive(buffer);
 							if (buffer[0] == Client.ErrorCheck)
 							{
@@ -84,11 +87,9 @@ public class Server : MonoBehaviour
 
 								var frameNum = frameNumArray[0];
 								if (m_LastFrameNum != frameNum - 1)
-									Debug.LogFormat("Dropped frame {0} (last frame: {1}) frameNum + ", frameNum, m_LastFrameNum);
+									Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
 
 								m_LastFrameNum = frameNum;
-
-
 							}
 						}
 						catch (Exception e)
@@ -97,18 +98,13 @@ public class Server : MonoBehaviour
 						}
 					}
 
-					Thread.Sleep(10);
+					if (m_BufferQueue.Count > k_MaxBufferQueue)
+						m_BufferQueue.Dequeue();
+
+					Thread.Sleep(1);
 				}
 			}).Start();
 		}
-	}
-
-	public static string PrintAccuratePose(Pose pose)
-	{
-		var position = pose.position;
-		var rotation = pose.rotation;
-		return string.Format("({0:0.000000}, {1:0.000000}, {2:0.000000}) ({3:0.000000}, {4:0.000000}, {5:0.000000}, {6:0.000000})", position.x, position.y, position.z,
-			rotation.x, rotation.y, rotation.z, rotation.w);
 	}
 
 	static void ArrayToPose(float[] poseArray, ref Pose pose)
@@ -121,6 +117,9 @@ public class Server : MonoBehaviour
 	{
 		if (m_BufferQueue.Count == 0)
 			return false;
+
+		if (m_BufferQueue.Count > 2)
+			m_BufferQueue.Dequeue(); // Throw out an old frame
 
 		var poseArray = new float[7];
 		var cameraPoseArray = new float[7];
@@ -145,7 +144,7 @@ public class Server : MonoBehaviour
 		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
 		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
 		m_FaceTransform.localPosition = Vector3.Lerp(m_FaceTransform.localPosition, m_Pose.position, m_FaceSmoothing);
-		m_FaceTransform.localRotation = Quaternion.Lerp(m_FaceTransform.localRotation, m_Pose.rotation, m_FaceSmoothing);
+		m_FaceTransform.localRotation = Quaternion.Lerp(m_FaceTransform.localRotation, m_Pose.rotation * k_RotationOffset, m_FaceSmoothing);
 		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
 		{
 			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);

@@ -47,6 +47,7 @@ public class Client : MonoBehaviour
         var cameraPoseArray = new float[7];
         var frameNum = new int[1];
 
+        Application.targetFrameRate = 60;
         m_Running = true;
         new Thread(() =>
         {
@@ -70,15 +71,13 @@ public class Client : MonoBehaviour
                             const int cameraPoseOffset = poseOffset + PoseSize;
                             const int frameNumOffset = cameraPoseOffset + PoseSize;
 
-                            frameNum[0] = count;
+                            frameNum[0] = count++;
                             Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, PoseSize);
                             Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, PoseSize);
                             Buffer.BlockCopy(frameNum, 0, m_Buffer, frameNumOffset, sizeof(int));
                             m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 
                             m_Socket.Send(m_Buffer);
-
-                            Debug.Log(count++ + ", " + Server.PrintAccuratePose(pose));
                         }
                     }
                     else
