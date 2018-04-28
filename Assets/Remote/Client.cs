@@ -3,19 +3,8 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
-public class Client : MonoBehaviour
+class Client : MonoBehaviour
 {
-    public const byte ErrorCheck = 42;
-    public const int BlendshapeSize = sizeof(float) * BlendshapeDriver.BlendshapeCount;
-    public const int PoseSize = sizeof(float) * 7;
-    // 0 - Error check
-    // 1-204 - Blendshapes
-    // 205-232 - Pose
-    // 233-260 - Camera Pose
-    // 261-264 - Frame Number
-    // 265 - Active state
-    public const int BufferSize = 266;
-
     const float k_Timeout = 5;
 
     [SerializeField]
@@ -30,7 +19,7 @@ public class Client : MonoBehaviour
     bool m_FreshData;
     bool m_Running;
 
-    readonly byte[] m_Buffer = new byte[BufferSize];
+    readonly byte[] m_Buffer = new byte[Server.BufferSize];
 
     void Awake()
     {
@@ -60,20 +49,20 @@ public class Client : MonoBehaviour
                         if (m_FreshData)
                         {
                             m_FreshData = false;
-                            m_Buffer[0] = ErrorCheck;
-                            Buffer.BlockCopy(BlendshapeDriver.BlendShapes, 0, m_Buffer, 1, BlendshapeSize);
+                            m_Buffer[0] = Server.ErrorCheck;
+                            Buffer.BlockCopy(BlendshapeDriver.BlendShapes, 0, m_Buffer, 1, Server.BlendshapeSize);
 
                             var pose = UnityARFaceAnchorManager.Pose;
                             PoseToArray(pose, poseArray);
                             PoseToArray(m_CameraPose, cameraPoseArray);
 
-                            const int poseOffset = BlendshapeSize + 1;
-                            const int cameraPoseOffset = poseOffset + PoseSize;
-                            const int frameNumOffset = cameraPoseOffset + PoseSize;
+                            const int poseOffset = Server.BlendshapeSize + 1;
+                            const int cameraPoseOffset = poseOffset + Server.PoseSize;
+                            const int frameNumOffset = cameraPoseOffset + Server.PoseSize;
 
                             frameNum[0] = count++;
-                            Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, PoseSize);
-                            Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, PoseSize);
+                            Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, Server.PoseSize);
+                            Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, Server.PoseSize);
                             Buffer.BlockCopy(frameNum, 0, m_Buffer, frameNumOffset, sizeof(int));
                             m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 

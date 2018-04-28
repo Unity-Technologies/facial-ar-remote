@@ -5,13 +5,25 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
-public class Server : MonoBehaviour
+class Server : MonoBehaviour
 {
+	public const byte ErrorCheck = 42;
+	public const int BlendshapeSize = sizeof(float) * BlendshapeDriver.BlendshapeCount;
+	public const int PoseSize = sizeof(float) * 7;
+	public const int PoseOffset = BlendshapeSize + 1;
+	public const int CameraPoseOffset = PoseOffset + PoseSize;
+	public const int FrameNumberOffset = CameraPoseOffset + PoseSize;
+
+	// 0 - Error check
+	// 1-204 - Blendshapes
+	// 205-232 - Pose
+	// 233-260 - Camera Pose
+	// 261-264 - Frame Number
+	// 265 - Active state
+	public const int BufferSize = 266;
+
 	const int k_BufferPrewarm = 16;
 	const int k_MaxBufferQueue = 1024; // No use in bufferring really old frames
-	const int poseOffset = Client.BlendshapeSize + 1;
-	const int cameraPoseOffset = poseOffset + Client.PoseSize;
-	const int frameNumOffset = cameraPoseOffset + Client.PoseSize;
 	static readonly Quaternion k_RotationOffset = Quaternion.AngleAxis(180, Vector3.up);
 
 	[SerializeField]
@@ -54,7 +66,7 @@ public class Server : MonoBehaviour
 		Application.targetFrameRate = 60;
 		for (var i = 0; i < k_BufferPrewarm; i++)
 		{
-			m_UnusedBuffers.Enqueue(new byte[Client.BufferSize]);
+			m_UnusedBuffers.Enqueue(new byte[BufferSize]);
 		}
 
 		m_FaceGameObject = m_FaceTransform.gameObject;
@@ -83,12 +95,12 @@ public class Server : MonoBehaviour
 					{
 						try
 						{
-							var buffer = m_UnusedBuffers.Count == 0 ? new byte[Client.BufferSize] : m_UnusedBuffers.Dequeue();
+							var buffer = m_UnusedBuffers.Count == 0 ? new byte[BufferSize] : m_UnusedBuffers.Dequeue();
 							m_Socket.Receive(buffer);
-							if (buffer[0] == Client.ErrorCheck)
+							if (buffer[0] == ErrorCheck)
 							{
 								m_BufferQueue.Enqueue(buffer);
-								Buffer.BlockCopy(buffer, frameNumOffset, frameNumArray, 0, sizeof(int));
+								Buffer.BlockCopy(buffer, FrameNumberOffset, frameNumArray, 0, sizeof(int));
 
 								var frameNum = frameNumArray[0];
 								if (m_LastFrameNum != frameNum - 1)
@@ -129,9 +141,9 @@ public class Server : MonoBehaviour
 		var poseArray = new float[7];
 		var cameraPoseArray = new float[7];
 		var buffer = m_BufferQueue.Dequeue();
-		Buffer.BlockCopy(buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
-		Buffer.BlockCopy(buffer, poseOffset, poseArray, 0, Client.PoseSize);
-		Buffer.BlockCopy(buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
+		Buffer.BlockCopy(buffer, 1, m_Blendshapes, 0, BlendshapeSize);
+		Buffer.BlockCopy(buffer, PoseOffset, poseArray, 0, PoseSize);
+		Buffer.BlockCopy(buffer, CameraPoseOffset, cameraPoseArray, 0, PoseSize);
 		ArrayToPose(poseArray, ref m_FacePose);
 		ArrayToPose(cameraPoseArray, ref m_CameraPose);
 		m_Active = buffer[buffer.Length - 1] == 1;
