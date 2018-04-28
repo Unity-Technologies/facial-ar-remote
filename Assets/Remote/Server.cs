@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -29,15 +29,19 @@ public class Server : MonoBehaviour
 	SkinnedMeshRenderer m_SkinnedMeshRenderer;
 
 	[SerializeField]
+	Transform m_HipsTransform;
+
+	[SerializeField]
 	Transform m_FaceTransform;
 
 	Socket m_Socket;
 	readonly float[] m_Blendshapes = new float[BlendshapeDriver.BlendshapeCount];
 	GameObject m_FaceGameObject;
-	Pose m_Pose;
+	Pose m_FacePose;
 	Pose m_CameraPose;
 	Transform m_CameraTransform;
 	bool m_Active;
+	Vector3 m_HipsOffset;
 	bool m_Running;
 	int m_LastFrameNum;
 
@@ -46,6 +50,7 @@ public class Server : MonoBehaviour
 
 	void Start()
 	{
+		m_HipsOffset = m_HipsTransform.position - m_FaceTransform.position;
 		Application.targetFrameRate = 60;
 		for (var i = 0; i < k_BufferPrewarm; i++)
 		{
@@ -99,7 +104,7 @@ public class Server : MonoBehaviour
 					}
 
 					if (m_BufferQueue.Count > k_MaxBufferQueue)
-						m_BufferQueue.Dequeue();
+						m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
 
 					Thread.Sleep(1);
 				}
@@ -119,7 +124,7 @@ public class Server : MonoBehaviour
 			return false;
 
 		if (m_BufferQueue.Count > 2)
-			m_BufferQueue.Dequeue(); // Throw out an old frame
+			m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue()); // Throw out an old frame
 
 		var poseArray = new float[7];
 		var cameraPoseArray = new float[7];
@@ -127,7 +132,7 @@ public class Server : MonoBehaviour
 		Buffer.BlockCopy(buffer, 1, m_Blendshapes, 0, Client.BlendshapeSize);
 		Buffer.BlockCopy(buffer, poseOffset, poseArray, 0, Client.PoseSize);
 		Buffer.BlockCopy(buffer, cameraPoseOffset, cameraPoseArray, 0, Client.PoseSize);
-		ArrayToPose(poseArray, ref m_Pose);
+		ArrayToPose(poseArray, ref m_FacePose);
 		ArrayToPose(cameraPoseArray, ref m_CameraPose);
 		m_Active = buffer[buffer.Length - 1] == 1;
 		m_UnusedBuffers.Enqueue(buffer);
@@ -143,8 +148,16 @@ public class Server : MonoBehaviour
 		m_FaceGameObject.SetActive(m_Active);
 		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
 		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
-		m_FaceTransform.localPosition = Vector3.Lerp(m_FaceTransform.localPosition, m_Pose.position, m_FaceSmoothing);
-		m_FaceTransform.localRotation = Quaternion.Lerp(m_FaceTransform.localRotation, m_Pose.rotation * k_RotationOffset, m_FaceSmoothing);
+		m_FaceTransform.position = Vector3.Lerp(m_FaceTransform.position, m_FacePose.position, m_FaceSmoothing);
+		m_FaceTransform.rotation = Quaternion.Lerp(m_FaceTransform.rotation, m_FacePose.rotation * k_RotationOffset, m_FaceSmoothing);
+
+		var toCamera = m_FacePose.position - m_CameraPose.position;
+		toCamera.y = 0;
+		if (toCamera.magnitude > 0)
+			m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera) * k_RotationOffset, m_FaceSmoothing);
+
+		m_HipsTransform.position = m_FaceTransform.position + m_HipsOffset;
+
 		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
 		{
 			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);
