@@ -428,6 +428,11 @@ Prefab:
       propertyPath: m_ReceiveShadows
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 137003661315252628, guid: f335006035fbb4dfbb23cfd3c133b360,
+        type: 2}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300014, guid: 34c4aed4b78de4374a1e954776381c3f, type: 3}
     m_RemovedComponents:
     - {fileID: 114179595749137924, guid: f335006035fbb4dfbb23cfd3c133b360, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: f335006035fbb4dfbb23cfd3c133b360, type: 2}
