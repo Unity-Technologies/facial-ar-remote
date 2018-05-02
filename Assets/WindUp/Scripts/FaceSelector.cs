@@ -16,8 +16,6 @@ public class FaceSelector : MonoBehaviour
     [SerializeField]
     int m_Padding = 5;
 
-    GameObject m_ActiveGameObject;
-
 	void Start ()
     {
         foreach (var face in m_Faces)
@@ -51,7 +49,6 @@ public class FaceSelector : MonoBehaviour
 
     void SetActiveFace(GameObject activeFace)
     {
-        m_ActiveGameObject = activeFace;
         foreach (var face in m_Faces)
         {
             face.SetActive(activeFace == face);
