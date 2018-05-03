@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -9,6 +8,13 @@ using UnityEngine.XR.iOS;
 
 class Server : MonoBehaviour
 {
+	[Serializable]
+	class Mapping
+	{
+		public string from;
+		public string to;
+	}
+
 	public const byte ErrorCheck = 42;
 	public const int BlendshapeCount = 51;
 	public const int BlendshapeSize = sizeof(float) * BlendshapeCount;
@@ -27,7 +33,6 @@ class Server : MonoBehaviour
 
 	const int k_BufferPrewarm = 16;
 	const int k_MaxBufferQueue = 1024; // No use in bufferring really old frames
-	static readonly Quaternion k_RotationOffset = Quaternion.AngleAxis(180, Vector3.up);
 
 	[SerializeField]
 	int m_Port = 9000;
@@ -57,6 +62,9 @@ class Server : MonoBehaviour
 
 	[SerializeField]
 	Transform m_HeadTransform;
+
+	[SerializeField]
+	Mapping[] m_Mappings;
 
 	Socket m_Socket;
 	readonly float[] m_Blendshapes = new float[BlendshapeCount];
@@ -90,7 +98,15 @@ class Server : MonoBehaviour
 		var locations = new List<string>();
 		foreach (var location in ARBlendShapeLocation.Locations)
 		{
-			locations.Add(location.ToLower()); // Eliminate capitalization mismatch
+			locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+		}
+
+		var mappingLength = m_Mappings.Length;
+		for (var i = 0; i < mappingLength; i++)
+		{
+			var mapping = m_Mappings[i];
+			mapping.from = Filter(mapping.from);
+			mapping.to = Filter(mapping.to);
 		}
 
 		locations.Sort();
@@ -104,21 +120,30 @@ class Server : MonoBehaviour
 			for (var i = 0; i < count; i++)
 			{
 				var name = mesh.GetBlendShapeName(i);
-				var lower = name.ToLower();
+				var lower = Filter(name);
 				var index = -1;
-				for (var j = 0; j < locationCount; j++)
+				foreach (var mapping in m_Mappings)
 				{
-					if (lower.Contains(locations[j]))
+					if (lower.Contains(mapping.from))
+						index = locations.IndexOf(mapping.to);
+				}
+
+				if (index < 0)
+				{
+					for (var j = 0; j < locationCount; j++)
 					{
-						index = j;
-						break;
+						if (lower.Contains(locations[j]))
+						{
+							index = j;
+							break;
+						}
 					}
 				}
 
 				indices[i] = index;
 
 				if (index < 0)
-					Debug.LogErrorFormat("Blendshape {0} is not a valid AR blendshape", name);
+					Debug.LogWarningFormat("Blendshape {0} is not a valid AR blendshape", name);
 			}
 
 			m_Indices.Add(renderer, indices);
@@ -180,6 +205,11 @@ class Server : MonoBehaviour
 		}
 	}
 
+	static string Filter(string @string)
+	{
+		return @string.ToLower().Replace("_", "");
+	}
+
 	static void ArrayToPose(float[] poseArray, ref Pose pose)
 	{
 		pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
@@ -224,14 +254,14 @@ class Server : MonoBehaviour
 			var toCamera = facePosition - m_CameraPose.position;
 			toCamera.y = 0;
 			if (toCamera.magnitude > 0)
-				m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera) * k_RotationOffset, m_FaceSmoothing);
+				m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera), m_FaceSmoothing);
 		}
 
 		if (m_TrackHeadPosition)
 			m_HipsTransform.position = Vector3.Lerp(m_HipsTransform.position, facePosition + m_HipsOffset, m_FaceSmoothing);
 
 		if (m_TrackHeadRotation)
-			m_HeadTransform.rotation = Quaternion.Lerp(m_HeadTransform.rotation, m_FacePose.rotation * k_RotationOffset, m_FaceSmoothing);
+			m_HeadTransform.rotation = Quaternion.Lerp(m_HeadTransform.rotation, m_FacePose.rotation, m_FaceSmoothing);
 
 		foreach (var renderer in m_SkinnedMeshRenderers)
 		{
@@ -239,7 +269,11 @@ class Server : MonoBehaviour
 			var length = indices.Length;
 			for (var i = 0; i < length; i++)
 			{
-				renderer.SetBlendShapeWeight(i, m_Blendshapes[indices[i]] * 100);
+				var index = indices[i];
+				if (index < 0)
+					continue;
+
+				renderer.SetBlendShapeWeight(i, m_Blendshapes[index] * 100);
 			}
 		}
 	}
