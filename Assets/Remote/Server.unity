@@ -194,6 +194,10 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &404489929 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 400002, guid: 34c4aed4b78de4374a1e954776381c3f, type: 3}
+  m_PrefabInternal: {fileID: 844461403}
 --- !u!1 &676841257
 GameObject:
   m_ObjectHideFlags: 0
@@ -224,8 +228,13 @@ MonoBehaviour:
   m_Port: 9000
   m_CameraSmoothing: 0.8
   m_FaceSmoothing: 0.8
-  m_SkinnedMeshRenderer: {fileID: 844461405}
-  m_FaceTransform: {fileID: 1076011990}
+  m_SkinnedMeshRenderers:
+  - {fileID: 844461405}
+  m_TrackCamera: 0
+  m_TrackHeadPosition: 0
+  m_TrackHeadRotation: 0
+  m_HipsTransform: {fileID: 1921095694}
+  m_HeadTransform: {fileID: 404489929}
 --- !u!4 &676841259
 Transform:
   m_ObjectHideFlags: 0
@@ -400,3 +409,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 44.513, y: 35.988003, z: 71.773}
+--- !u!4 &1921095694 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 400004, guid: 34c4aed4b78de4374a1e954776381c3f, type: 3}
+  m_PrefabInternal: {fileID: 844461403}

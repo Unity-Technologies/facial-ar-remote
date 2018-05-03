@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.XR.iOS;
 
 class Server : MonoBehaviour
 {
 	public const byte ErrorCheck = 42;
-	public const int BlendshapeSize = sizeof(float) * BlendshapeDriver.BlendshapeCount;
+	public const int BlendshapeCount = 51;
+	public const int BlendshapeSize = sizeof(float) * BlendshapeCount;
 	public const int PoseSize = sizeof(float) * 7;
 	public const int PoseOffset = BlendshapeSize + 1;
 	public const int CameraPoseOffset = PoseOffset + PoseSize;
@@ -38,16 +41,25 @@ class Server : MonoBehaviour
 	float m_FaceSmoothing = 0.8f;
 
 	[SerializeField]
-	SkinnedMeshRenderer m_SkinnedMeshRenderer;
+	SkinnedMeshRenderer[] m_SkinnedMeshRenderers;
+
+	[SerializeField]
+	bool m_TrackCamera;
+
+	[SerializeField]
+	bool m_TrackHeadPosition;
+
+	[SerializeField]
+	bool m_TrackHeadRotation;
 
 	[SerializeField]
 	Transform m_HipsTransform;
 
 	[SerializeField]
-	Transform m_FaceTransform;
+	Transform m_HeadTransform;
 
 	Socket m_Socket;
-	readonly float[] m_Blendshapes = new float[BlendshapeDriver.BlendshapeCount];
+	readonly float[] m_Blendshapes = new float[BlendshapeCount];
 	GameObject m_FaceGameObject;
 	Pose m_FacePose;
 	Pose m_CameraPose;
@@ -57,20 +69,64 @@ class Server : MonoBehaviour
 	bool m_Running;
 	int m_LastFrameNum;
 
+	readonly Dictionary<SkinnedMeshRenderer, int[]> m_Indices = new Dictionary<SkinnedMeshRenderer, int[]>();
+
 	readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>(k_BufferPrewarm);
 	readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>(k_BufferPrewarm);
 
 	void Start()
 	{
-		m_HipsOffset = m_HipsTransform.position - m_FaceTransform.position;
+		m_FaceGameObject = m_HeadTransform.gameObject;
+
+		if (m_TrackHeadRotation && m_HeadTransform)
+			m_HipsOffset = m_HipsTransform.position - m_HeadTransform.position;
+
 		Application.targetFrameRate = 60;
 		for (var i = 0; i < k_BufferPrewarm; i++)
 		{
 			m_UnusedBuffers.Enqueue(new byte[BufferSize]);
 		}
 
-		m_FaceGameObject = m_FaceTransform.gameObject;
-		m_CameraTransform = Camera.main.transform;
+		var locations = new List<string>();
+		foreach (var location in ARBlendShapeLocation.Locations)
+		{
+			locations.Add(location.ToLower()); // Eliminate capitalization mismatch
+		}
+
+		locations.Sort();
+		var locationCount = locations.Count;
+
+		foreach (var renderer in m_SkinnedMeshRenderers)
+		{
+			var mesh = renderer.sharedMesh;
+			var count = mesh.blendShapeCount;
+			var indices = new int[count];
+			for (var i = 0; i < count; i++)
+			{
+				var name = mesh.GetBlendShapeName(i);
+				var lower = name.ToLower();
+				var index = -1;
+				for (var j = 0; j < locationCount; j++)
+				{
+					if (lower.Contains(locations[j]))
+					{
+						index = j;
+						break;
+					}
+				}
+
+				indices[i] = index;
+
+				if (index < 0)
+					Debug.LogErrorFormat("Blendshape {0} is not a valid AR blendshape", name);
+			}
+
+			m_Indices.Add(renderer, indices);
+		}
+
+		if (m_TrackCamera)
+			m_CameraTransform = Camera.main.transform;
+
 		Debug.Log("Possible IP addresses:");
 		foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
 		{
@@ -158,20 +214,33 @@ class Server : MonoBehaviour
 			return;
 
 		m_FaceGameObject.SetActive(m_Active);
-		m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
-		m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
+
 		var facePosition = m_FacePose.position;
-		m_HipsTransform.position = Vector3.Lerp(m_HipsTransform.position, facePosition + m_HipsOffset, m_FaceSmoothing);
-		m_FaceTransform.rotation = Quaternion.Lerp(m_FaceTransform.rotation, m_FacePose.rotation * k_RotationOffset, m_FaceSmoothing);
-
-		var toCamera = facePosition - m_CameraPose.position;
-		toCamera.y = 0;
-		if (toCamera.magnitude > 0)
-			m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera) * k_RotationOffset, m_FaceSmoothing);
-
-		for (var i = 0; i < BlendshapeDriver.BlendshapeCount; i++)
+		if (m_TrackCamera)
 		{
-			m_SkinnedMeshRenderer.SetBlendShapeWeight(i, m_Blendshapes[i] * 100);
+			m_CameraTransform.localPosition = Vector3.Lerp(m_CameraTransform.localPosition, m_CameraPose.position, m_CameraSmoothing);
+			m_CameraTransform.localRotation = Quaternion.Lerp(m_CameraTransform.localRotation, m_CameraPose.rotation, m_CameraSmoothing);
+
+			var toCamera = facePosition - m_CameraPose.position;
+			toCamera.y = 0;
+			if (toCamera.magnitude > 0)
+				m_HipsTransform.rotation = Quaternion.Lerp(m_HipsTransform.rotation, Quaternion.LookRotation(toCamera) * k_RotationOffset, m_FaceSmoothing);
+		}
+
+		if (m_TrackHeadPosition)
+			m_HipsTransform.position = Vector3.Lerp(m_HipsTransform.position, facePosition + m_HipsOffset, m_FaceSmoothing);
+
+		if (m_TrackHeadRotation)
+			m_HeadTransform.rotation = Quaternion.Lerp(m_HeadTransform.rotation, m_FacePose.rotation * k_RotationOffset, m_FaceSmoothing);
+
+		foreach (var renderer in m_SkinnedMeshRenderers)
+		{
+			var indices = m_Indices[renderer];
+			var length = indices.Length;
+			for (var i = 0; i < length; i++)
+			{
+				renderer.SetBlendShapeWeight(i, m_Blendshapes[indices[i]] * 100);
+			}
 		}
 	}
 

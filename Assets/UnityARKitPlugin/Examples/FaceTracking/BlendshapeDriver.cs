@@ -5,9 +5,6 @@ using UnityEngine.XR.iOS;
 
 public class BlendshapeDriver : MonoBehaviour
 {
-	public const int BlendshapeCount = 51;
-	public static readonly float[] BlendShapes = new float[BlendshapeCount];
-
 	[SerializeField]
 	string m_BlendshapePrefix = "blendShape1.";
 
@@ -51,11 +48,9 @@ public class BlendshapeDriver : MonoBehaviour
 		{
 			foreach(var kvp in currentBlendShapes)
 			{
-				var value = kvp.Value;
 				var blendShapeIndex = blendShapeIndices[kvp.Key];
 				if (blendShapeIndex >= 0 ) {
-					//skinnedMeshRenderer.SetBlendShapeWeight (blendShapeIndex, value * 100.0f);
-					BlendShapes[blendShapeIndex] = value;
+					skinnedMeshRenderer.SetBlendShapeWeight (blendShapeIndex, kvp.Value * 100.0f);
 				}
 			}
 		}

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.XR.iOS;
 
 class Client : MonoBehaviour
 {
@@ -20,10 +23,49 @@ class Client : MonoBehaviour
     bool m_Running;
 
     readonly byte[] m_Buffer = new byte[Server.BufferSize];
+    readonly float[] m_Blendshapes = new float[Server.BlendshapeCount];
+
+    Dictionary<string, float> currentBlendShapes;
+    Dictionary<string, int> blendShapeIndices;
 
     void Awake()
     {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
+        UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
+    }
+
+    void FaceAdded (ARFaceAnchor anchorData)
+    {
+        currentBlendShapes = anchorData.blendShapes;
+
+        if (blendShapeIndices == null)
+        {
+            blendShapeIndices = new Dictionary<string, int>();
+
+            var names = currentBlendShapes.Keys.ToList();
+            names.Sort();
+            foreach (var kvp in currentBlendShapes)
+            {
+                blendShapeIndices[kvp.Key] = names.IndexOf(kvp.Key);
+            }
+        }
+
+        UpdateBlendshapes();
+    }
+
+    void FaceUpdated (ARFaceAnchor anchorData)
+    {
+        currentBlendShapes = anchorData.blendShapes;
+        UpdateBlendshapes();
+    }
+
+    void UpdateBlendshapes()
+    {
+        foreach (var kvp in currentBlendShapes)
+        {
+            m_Blendshapes[blendShapeIndices[kvp.Key]] = kvp.Value;
+        }
     }
 
     public void Setup(Socket socket)
@@ -50,7 +92,7 @@ class Client : MonoBehaviour
                         {
                             m_FreshData = false;
                             m_Buffer[0] = Server.ErrorCheck;
-                            Buffer.BlockCopy(BlendshapeDriver.BlendShapes, 0, m_Buffer, 1, Server.BlendshapeSize);
+                            Buffer.BlockCopy(m_Blendshapes, 0, m_Buffer, 1, Server.BlendshapeSize);
 
                             var pose = UnityARFaceAnchorManager.Pose;
                             PoseToArray(pose, poseArray);
