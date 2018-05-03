@@ -60,6 +60,61 @@ namespace UnityEngine.XR.iOS
 		 public const string  MouthUpperUpRight   =   "mouthUpperUp_R";
 		 public const string  NoseSneerLeft       =   "noseSneer_L";
 		 public const string  NoseSneerRight      =   "noseSneer_R";
+
+		public static readonly List<string> Locations = new List<string>
+		{
+			BrowDownLeft,
+			BrowDownRight,
+			BrowInnerUp,
+			BrowOuterUpLeft,
+			BrowOuterUpRight,
+			CheekPuff,
+			CheekSquintLeft,
+			CheekSquintRight,
+			EyeBlinkLeft,
+			EyeBlinkRight,
+			EyeLookDownLeft,
+			EyeLookDownRight,
+			EyeLookInLeft,
+			EyeLookInRight,
+			EyeLookOutLeft,
+			EyeLookOutRight,
+			EyeLookUpLeft,
+			EyeLookUpRight,
+			EyeSquintLeft,
+			EyeSquintRight,
+			EyeWideLeft,
+			EyeWideRight,
+			JawForward,
+			JawLeft,
+			JawOpen,
+			JawRight,
+			MouthClose,
+			MouthDimpleLeft,
+			MouthDimpleRight,
+			MouthFrownLeft,
+			MouthFrownRight,
+			MouthFunnel,
+			MouthLeft,
+			MouthLowerDownLeft,
+			MouthLowerDownRight,
+			MouthPressLeft,
+			MouthPressRight,
+			MouthPucker,
+			MouthRight,
+			MouthRollLower,
+			MouthRollUpper,
+			MouthShrugLower,
+			MouthShrugUpper,
+			MouthSmileLeft,
+			MouthSmileRight,
+			MouthStretchLeft,
+			MouthStretchRight,
+			MouthUpperUpLeft,
+			MouthUpperUpRight,
+			NoseSneerLeft,
+			NoseSneerRight
+		};
 	}
 
 
