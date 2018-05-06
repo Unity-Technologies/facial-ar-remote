@@ -152,6 +152,7 @@ class Client : MonoBehaviour
         {
             enabled = false;
             m_ClientGUI.enabled = true;
+            m_Running = false;
         }
     }
 
