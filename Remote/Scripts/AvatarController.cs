@@ -143,7 +143,7 @@ namespace Unity.Labs.FacialRemote
                 var controller = m_AnimatorController as AnimatorController;
                 if (controller == null)
                     return;
-                
+
                 if (m_EyeLookLayer != -1)
                 {
                     controller.RemoveLayer(m_EyeLookLayer);
@@ -177,7 +177,7 @@ namespace Unity.Labs.FacialRemote
 
                     yield return null;
                 }
-                
+
 #if UNITY_EDITOR
                 if (m_HeadLookLayer == -1 || m_EyeLookLayer == -1)
                 {
@@ -362,7 +362,7 @@ namespace Unity.Labs.FacialRemote
         {
             if (!animatorReady)
                 return;
-            
+
 #if UNITY_EDITOR
             var controller = m_AnimatorController as AnimatorController;
             if (controller == null)
@@ -381,7 +381,7 @@ namespace Unity.Labs.FacialRemote
                 //TODO hacky
                 if (m_RotNeck)
                 {
-                    var neckRot = m_Server.faceActive ?
+                    var neckRot = m_Server.trackingActive ?
                         Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, mirror, m_NeckAmount) :
                         Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, m_TrackingLossSmoothing);
                     m_Animator.SetBoneLocalRotation(HumanBodyBones.Neck, neckRot);
@@ -389,7 +389,7 @@ namespace Unity.Labs.FacialRemote
 
                 if(m_RotHead)
                 {
-                    var headRot = m_Server.faceActive ?
+                    var headRot = m_Server.trackingActive ?
                         Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, mirror, m_HeadAmount) :
                         Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, m_HeadAmount);
                     m_Animator.SetBoneLocalRotation(HumanBodyBones.Head, headRot);

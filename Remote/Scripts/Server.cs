@@ -45,6 +45,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Mapping[] m_Mappings;
 
+        [SerializeField]
+        bool m_UseDebug;
+
+        [SerializeField]
+        PlaybackData m_PlaybackData;
+
         Socket m_Socket;
 
         public Mapping[] mappings { get { return m_Mappings; }}
@@ -55,6 +61,7 @@ namespace Unity.Labs.FacialRemote
         Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
         public bool faceActive { get; private set; }
+        public bool trackingActive { get; private set; }
         public bool running { get; private set; }
         int m_LastFrameNum;
 
@@ -63,6 +70,13 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         float m_BufferSize;
+
+        [SerializeField]
+        [Range(1, 512)]
+        int m_TrackingLossPadding = 64;
+
+        Vector3 m_LastPose;
+        int m_TrackingLossCount;
 
         public Pose facePose { get { return m_FacePose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
@@ -89,12 +103,24 @@ namespace Unity.Labs.FacialRemote
 
         List<string> m_Locations = new List<string>();
 
+        public bool useRecorder
+        {
+            get { return Application.isEditor && Application.isPlaying && m_PlaybackData != null; }
+        }
+
+        public bool isRecording { get; private set; }
+
         void Awake()
         {
             Application.targetFrameRate = 60;
             for (var i = 0; i < k_BufferPrewarm; i++)
             {
                 m_UnusedBuffers.Enqueue(new byte[BufferSize]);
+            }
+
+            if (m_PlaybackData != null)
+            {
+                m_PlaybackData.CreatePlaybackBuffer();
             }
 
             foreach (var location in ARBlendShapeLocation.Locations)
@@ -150,11 +176,23 @@ namespace Unity.Labs.FacialRemote
                                 if (buffer[0] == ErrorCheck)
                                 {
                                     m_BufferQueue.Enqueue(buffer);
+
+                                    if (m_PlaybackData != null)
+                                    {
+                                        if (isRecording)
+                                        {
+                                            m_PlaybackData.activeByteQueue.Enqueue(buffer);
+                                        }
+                                    }
+
                                     Buffer.BlockCopy(buffer, FrameNumberOffset, frameNumArray, 0, sizeof(int));
 
                                     var frameNum = frameNumArray[0];
-                                    if (m_LastFrameNum != frameNum - 1)
-                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                    if (m_UseDebug)
+                                    {
+                                        if (m_LastFrameNum != frameNum - 1)
+                                            Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                    }
 
                                     m_LastFrameNum = frameNum;
                                 }
@@ -174,6 +212,12 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        void OnDisable()
+        {
+            if (isRecording)
+                StopRecording();
+        }
+
         public int GetLocationIndex(string location)
         {
             return locations.IndexOf(Filter(location));
@@ -188,6 +232,16 @@ namespace Unity.Labs.FacialRemote
         {
             pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
             pose.rotation = new Quaternion(poseArray[3], poseArray[4], poseArray[5], poseArray[6]);
+        }
+
+        public void StartRecording()
+        {
+            isRecording = true;
+        }
+
+        public void StopRecording()
+        {
+            isRecording = false;
         }
 
         bool DequeueBuffer()
@@ -211,19 +265,11 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, CameraPoseOffset, cameraPoseArray, 0, PoseSize);
             ArrayToPose(poseArray, ref m_FacePose);
             ArrayToPose(cameraPoseArray, ref m_CameraPose);
-            faceActive = faceActive && buffer[buffer.Length - 1] == 1;
+            faceActive = buffer[buffer.Length - 1] == 1;
             m_UnusedBuffers.Enqueue(buffer);
 
             return true;
         }
-
-        [SerializeField]
-        [Range(1, 512)]
-        int m_TrackingLossPadding = 64
-            ;
-
-        Vector3 m_LastPose;
-        int m_TrackingLossCount;
 
         void Update()
         {
@@ -234,10 +280,10 @@ namespace Unity.Labs.FacialRemote
             if (m_FacePose.position == m_LastPose)
             {
                 m_TrackingLossCount++;
-                if (m_TrackingLossCount > m_TrackingLossPadding)
-                    faceActive = false;
+                if (!faceActive && m_TrackingLossCount > m_TrackingLossPadding)
+                    trackingActive = false;
                 else
-                    faceActive = true;
+                    trackingActive = true;
             }
             else
             {

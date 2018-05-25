@@ -108,7 +108,7 @@ namespace Unity.Labs.FacialRemote
                     var threshold = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
                     var smoothing = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                    if (m_Server.faceActive)
+                    if (m_Server.trackingActive)
                     {
                         if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
                             m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
