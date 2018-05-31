@@ -13,6 +13,13 @@ namespace Unity.Labs.FacialRemote
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
 
+        public bool streamActive
+        {
+            get { return enabled && streamSource != null && streamSource.streamActive; }
+        }
+
+        public StreamSource streamSource { get; private set; }
+
         Vector3 m_LastPose;
         int m_TrackingLossCount;
 
@@ -23,7 +30,19 @@ namespace Unity.Labs.FacialRemote
         [Range(1, 512)]
         int m_TrackingLossPadding = 64;
 
-        public StreamSettings streamSettings { get { return m_StreamSettings; } }
+        public StreamSettings streamSettings
+        {
+            get
+            {
+                if (m_StreamSettings == null)
+                    return null;
+
+                if (!m_StreamSettings.initialized)
+                    m_StreamSettings.Initialize();
+
+                return m_StreamSettings;
+            }
+        }
 
         public float[] blendShapesBuffer { get { return m_BlendShapesBuffer; } }
         public float[] headPoseArray { get { return m_HeadPoseArray; } }
@@ -32,6 +51,11 @@ namespace Unity.Labs.FacialRemote
         float[] m_BlendShapesBuffer;
         float[] m_HeadPoseArray = new float[7];
         float[] m_CameraPoseArray = new float[7];
+
+        public void SetStreamSource(StreamSource source)
+        {
+            streamSource = source;
+        }
 
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
@@ -49,6 +73,15 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
+            if (streamSettings == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            if (!streamSettings.initialized)
+                streamSettings.Initialize();
+
             m_BlendShapesBuffer = new float[m_StreamSettings.blendShapeCount];
         }
 
