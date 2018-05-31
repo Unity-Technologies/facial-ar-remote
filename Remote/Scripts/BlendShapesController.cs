@@ -43,8 +43,14 @@ namespace Unity.Labs.FacialRemote
 
             void Awake()
             {
-                float[] m_BlendShapes = new float[m_Reader.streamSettings.blendShapeCount];
-                float[] m_BlendShapesScaled = new float[m_Reader.streamSettings.blendShapeCount];
+                if (m_Reader == null || m_Reader.streamSettings == null)
+                {
+                    enabled = false;
+                    return;
+                }
+
+                m_BlendShapes = new float[m_Reader.streamSettings.blendShapeCount];
+                m_BlendShapesScaled = new float[m_Reader.streamSettings.blendShapeCount];
             }
 
             void Start()
@@ -103,8 +109,8 @@ namespace Unity.Labs.FacialRemote
 
             void Update()
             {
-//                if (!m_Reader.running)
-//                    return;
+                if (!m_Reader.streamActive)
+                    return;
 
                 //Interpolate blend shapes
                 for (var i = 0; i < m_Reader.streamSettings.blendShapeCount; i++)

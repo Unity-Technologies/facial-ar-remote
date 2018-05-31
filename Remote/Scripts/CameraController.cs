@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -28,8 +26,8 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-//            if (!m_Server.running)
-//                return;
+            if (!m_Reader.streamActive)
+                return;
 
             var cameraRotation = m_Reader.cameraPose.rotation;
 

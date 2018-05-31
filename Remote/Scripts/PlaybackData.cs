@@ -43,7 +43,7 @@ namespace Unity.Labs.FacialRemote
             var empty = new byte();
             for (var i = 0; i < stream.Length;)
             {
-                var bytes = new byte[266];
+                var bytes = new byte[bufferSize];
                 for (var b = 0; b < bytes.Length; b++)
                 {
                     bytes[b] = i + b < stream.Length ? stream[i + b] : empty;

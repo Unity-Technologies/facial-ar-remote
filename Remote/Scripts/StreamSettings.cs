@@ -13,6 +13,9 @@ namespace Unity.Labs.FacialRemote {
         [SerializeField]
         int m_BlendShapeCount = 51;
 
+        bool m_Initialized;
+
+        public bool initialized { get { return m_Initialized; } }
         public byte errorCheck { get { return m_ErrorCheck; } }
         public int blendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get; private set; }
@@ -58,6 +61,12 @@ namespace Unity.Labs.FacialRemote {
 
         public void Initialize()
         {
+            if (!m_Initialized)
+                Awake();
+        }
+
+        void Awake()
+        {
             BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             PoseSize = sizeof(float) * 7;
             PoseOffset = BlendShapeSize + 1;
@@ -79,6 +88,13 @@ namespace Unity.Labs.FacialRemote {
             }
 
             m_Locations.Sort();
+
+            m_Initialized = true;
+        }
+
+        void OnDestroy()
+        {
+            m_Initialized = false;
         }
 
         public int GetLocationIndex(string location)

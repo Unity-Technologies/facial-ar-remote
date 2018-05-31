@@ -307,9 +307,7 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-//            if (!m_Reader.running || !animatorReady)
-//                return;
-            if (!animatorReady)
+            if (!m_Reader.streamActive || !animatorReady)
                 return;
 
             if (m_AnimatorSetup != null)
