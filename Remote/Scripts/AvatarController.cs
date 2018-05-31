@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
     public class AvatarController : MonoBehaviour
     {
         [SerializeField]
-        Server m_Server;
+        BlendShapeReader m_Reader;
 
         [SerializeField]
         Animator m_Animator;
@@ -103,7 +103,7 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
-            if (m_Server == null)
+            if (m_Reader == null)
             {
                 Debug.LogWarning("Avatar Controller needs a Server set.");
                 enabled = false;
@@ -117,14 +117,14 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            m_EyeLookDownLeftIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
-            m_EyeLookInLeftIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
-            m_EyeLookInRightIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
-            m_EyeLookOutLeftIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = m_Server.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
+            m_EyeLookDownLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
+            m_EyeLookDownRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
+            m_EyeLookInLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
+            m_EyeLookInRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
+            m_EyeLookOutLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
+            m_EyeLookOutRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
+            m_EyeLookUpLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
+            m_EyeLookUpRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
 
 //            m_AnimatorSetup = StartCoroutine(SetupAnimator());
         }
@@ -295,19 +295,21 @@ namespace Unity.Labs.FacialRemote
 
         void LocalizeFacePose()
         {
-            var mirror = m_Server.facePose.rotation;
+            var mirror = m_Reader.headPose.rotation;
             mirror.w *= -1f;
 
-            m_LocalizedHeadParent.position = m_Server.facePose.position;
-            m_LocalizedHeadParent.LookAt(m_Server.cameraPose.position);
+            m_LocalizedHeadParent.position = m_Reader.headPose.position;
+            m_LocalizedHeadParent.LookAt(m_Reader.cameraPose.position);
 
-            m_LocalizedHeadRot.rotation = m_Server.facePose.rotation;
+            m_LocalizedHeadRot.rotation = m_Reader.headPose.rotation;
             m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
         }
 
         void Update()
         {
-            if (!m_Server.running || !animatorReady)
+//            if (!m_Reader.running || !animatorReady)
+//                return;
+            if (!animatorReady)
                 return;
 
             if (m_AnimatorSetup != null)
@@ -316,19 +318,19 @@ namespace Unity.Labs.FacialRemote
                 m_AnimatorSetup = null;
             }
 
-            if (m_Server.faceActive)
+            if (m_Reader.faceActive)
             {
                 LocalizeFacePose();
 
-                m_EyeLookDownLeft = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookDownLeftIndex], m_EyeLookDownLeft, m_EyeSmoothing);
-                m_EyeLookInLeft = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookInLeftIndex], m_EyeLookInLeft, m_EyeSmoothing);
-                m_EyeLookOutLeft = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookOutLeftIndex], m_EyeLookOutLeft, m_EyeSmoothing);
-                m_EyeLookUpLeft = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookUpLeftIndex], m_EyeLookUpLeft, m_EyeSmoothing);
+                m_EyeLookDownLeft = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookDownLeftIndex], m_EyeLookDownLeft, m_EyeSmoothing);
+                m_EyeLookInLeft = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookInLeftIndex], m_EyeLookInLeft, m_EyeSmoothing);
+                m_EyeLookOutLeft = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookOutLeftIndex], m_EyeLookOutLeft, m_EyeSmoothing);
+                m_EyeLookUpLeft = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookUpLeftIndex], m_EyeLookUpLeft, m_EyeSmoothing);
 
-                m_EyeLookDownRight = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookDownRightIndex], m_EyeLookDownRight, m_EyeSmoothing);
-                m_EyeLookInRight = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookInRightIndex], m_EyeLookInRight, m_EyeSmoothing);
-                m_EyeLookOutRight = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookOutRightIndex], m_EyeLookOutRight, m_EyeSmoothing);
-                m_EyeLookUpRight = Mathf.Lerp(m_Server.blendShapesBuffer[m_EyeLookUpRightIndex], m_EyeLookUpRight, m_EyeSmoothing);
+                m_EyeLookDownRight = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookDownRightIndex], m_EyeLookDownRight, m_EyeSmoothing);
+                m_EyeLookInRight = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookInRightIndex], m_EyeLookInRight, m_EyeSmoothing);
+                m_EyeLookOutRight = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookOutRightIndex], m_EyeLookOutRight, m_EyeSmoothing);
+                m_EyeLookUpRight = Mathf.Lerp(m_Reader.blendShapesBuffer[m_EyeLookUpRightIndex], m_EyeLookUpRight, m_EyeSmoothing);
 
 //                var leftEyePitch = Quaternion.AngleAxis((m_EyeLookDownLeft - m_EyeLookUpLeft) * m_EyeAngleRange.x, Vector3.right);
                 var leftEyePitch = Quaternion.AngleAxis((m_EyeLookUpLeft - m_EyeLookDownLeft) * m_EyeAngleRange.x, Vector3.right);
@@ -342,7 +344,7 @@ namespace Unity.Labs.FacialRemote
 
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
 
-                var headRot = m_UseLocalizedHeadRot ? m_OtherThing.localRotation : m_Server.facePose.rotation;
+                var headRot = m_UseLocalizedHeadRot ? m_OtherThing.localRotation : m_Reader.headPose.rotation;
                 m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, m_HeadSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
             }
@@ -381,7 +383,7 @@ namespace Unity.Labs.FacialRemote
                 //TODO hacky
                 if (m_RotNeck)
                 {
-                    var neckRot = m_Server.trackingActive ?
+                    var neckRot = m_Reader.trackingActive ?
                         Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, mirror, m_NeckAmount) :
                         Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, m_TrackingLossSmoothing);
                     m_Animator.SetBoneLocalRotation(HumanBodyBones.Neck, neckRot);
@@ -389,7 +391,7 @@ namespace Unity.Labs.FacialRemote
 
                 if(m_RotHead)
                 {
-                    var headRot = m_Server.trackingActive ?
+                    var headRot = m_Reader.trackingActive ?
                         Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, mirror, m_HeadAmount) :
                         Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, m_HeadAmount);
                     m_Animator.SetBoneLocalRotation(HumanBodyBones.Head, headRot);

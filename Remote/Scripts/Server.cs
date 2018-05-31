@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -15,24 +14,9 @@ namespace Unity.Labs.FacialRemote
         public string to;
     }
 
+    [RequireComponent(typeof(BlendShapeReader))]
     public class Server : MonoBehaviour
     {
-        public const byte ErrorCheck = 42;
-        public const int BlendShapeCount = 51;
-        public const int BlendShapeSize = sizeof(float) * BlendShapeCount;
-        public const int PoseSize = sizeof(float) * 7;
-        public const int PoseOffset = BlendShapeSize + 1;
-        public const int CameraPoseOffset = PoseOffset + PoseSize;
-        public const int FrameNumberOffset = CameraPoseOffset + PoseSize;
-
-        // 0 - Error check
-        // 1-204 - Blendshapes
-        // 205-232 - Pose
-        // 233-260 - Camera Pose
-        // 261-264 - Frame Number
-        // 265 - Active state
-        public const int BufferSize = 266;
-
         const int k_BufferPrewarm = 16;
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
 
@@ -43,9 +27,6 @@ namespace Unity.Labs.FacialRemote
         int m_CatchupSize = 2;
 
         [SerializeField]
-        Mapping[] m_Mappings;
-
-        [SerializeField]
         bool m_UseDebug;
 
         [SerializeField]
@@ -53,15 +34,11 @@ namespace Unity.Labs.FacialRemote
 
         Socket m_Socket;
 
-        public Mapping[] mappings { get { return m_Mappings; }}
+        [SerializeField]
+        StreamSettings m_StreamSettings;
 
-        public float[] blendShapesBuffer { get { return m_BlendShapesBuffer; } }
+        BlendShapeReader m_BlendShapeReader;
 
-        readonly float[] m_BlendShapesBuffer = new float[BlendShapeCount];
-        Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
-        Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
-        public bool faceActive { get; private set; }
-        public bool trackingActive { get; private set; }
         public bool running { get; private set; }
         int m_LastFrameNum;
 
@@ -75,34 +52,6 @@ namespace Unity.Labs.FacialRemote
         [Range(1, 512)]
         int m_TrackingLossPadding = 64;
 
-        Vector3 m_LastPose;
-        int m_TrackingLossCount;
-
-        public Pose facePose { get { return m_FacePose; } }
-        public Pose cameraPose { get { return m_CameraPose; } }
-
-        public List<string> locations
-        {
-            get
-            {
-                if (m_Locations == null)
-                {
-                    m_Locations = new List<string>();
-                }
-                if (m_Locations.Count != BlendShapeCount)
-                {
-                    m_Locations.Clear();
-                    foreach (var location in ARBlendShapeLocation.Locations)
-                    {
-                        m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
-                    }
-                }
-                return m_Locations;
-            }
-        }
-
-        List<string> m_Locations = new List<string>();
-
         public bool useRecorder
         {
             get { return Application.isEditor && Application.isPlaying && m_PlaybackData != null; }
@@ -115,7 +64,7 @@ namespace Unity.Labs.FacialRemote
             Application.targetFrameRate = 60;
             for (var i = 0; i < k_BufferPrewarm; i++)
             {
-                m_UnusedBuffers.Enqueue(new byte[BufferSize]);
+                m_UnusedBuffers.Enqueue(new byte[m_StreamSettings.BufferSize]);
             }
 
             if (m_PlaybackData != null)
@@ -123,20 +72,7 @@ namespace Unity.Labs.FacialRemote
                 m_PlaybackData.CreatePlaybackBuffer();
             }
 
-            foreach (var location in ARBlendShapeLocation.Locations)
-            {
-                m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
-            }
-
-            var mappingLength = m_Mappings.Length;
-            for (var i = 0; i < mappingLength; i++)
-            {
-                var mapping = m_Mappings[i];
-                mapping.from = Filter(mapping.from);
-                mapping.to = Filter(mapping.to);
-            }
-
-            m_Locations.Sort();
+            m_BlendShapeReader = GetComponent<BlendShapeReader>();
         }
 
         void Start()
@@ -166,14 +102,14 @@ namespace Unity.Labs.FacialRemote
                         {
                             try
                             {
-                                var buffer = m_UnusedBuffers.Count == 0 ? new byte[BufferSize] : m_UnusedBuffers.Dequeue();
-                                for (var i = 0; i < BufferSize; i++)
+                                var buffer = m_UnusedBuffers.Count == 0 ? new byte[m_StreamSettings.BufferSize] : m_UnusedBuffers.Dequeue();
+                                for (var i = 0; i < m_StreamSettings.BufferSize; i++)
                                 {
                                     buffer[i] = 0;
                                 }
 
                                 m_Socket.Receive(buffer);
-                                if (buffer[0] == ErrorCheck)
+                                if (buffer[0] == m_StreamSettings.errorCheck)
                                 {
                                     m_BufferQueue.Enqueue(buffer);
 
@@ -185,7 +121,7 @@ namespace Unity.Labs.FacialRemote
                                         }
                                     }
 
-                                    Buffer.BlockCopy(buffer, FrameNumberOffset, frameNumArray, 0, sizeof(int));
+                                    Buffer.BlockCopy(buffer, m_StreamSettings.FrameNumberOffset, frameNumArray, 0, sizeof(int));
 
                                     var frameNum = frameNumArray[0];
                                     if (m_UseDebug)
@@ -218,22 +154,6 @@ namespace Unity.Labs.FacialRemote
                 StopRecording();
         }
 
-        public int GetLocationIndex(string location)
-        {
-            return locations.IndexOf(Filter(location));
-        }
-
-        public static string Filter(string @string)
-        {
-            return @string.ToLower().Replace("_", "");
-        }
-
-        static void ArrayToPose(float[] poseArray, ref Pose pose)
-        {
-            pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
-            pose.rotation = new Quaternion(poseArray[3], poseArray[4], poseArray[5], poseArray[6]);
-        }
-
         public void StartRecording()
         {
             isRecording = true;
@@ -244,10 +164,10 @@ namespace Unity.Labs.FacialRemote
             isRecording = false;
         }
 
-        bool DequeueBuffer()
+        void DequeueBuffer()
         {
             if (m_BufferQueue.Count == 0)
-                return false;
+                return;
 
             if (m_BufferQueue.Count > m_CatchupSize)
             {
@@ -257,39 +177,22 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            var poseArray = new float[7];
-            var cameraPoseArray = new float[7];
             var buffer = m_BufferQueue.Dequeue();
-            Buffer.BlockCopy(buffer, 1, m_BlendShapesBuffer, 0, BlendShapeSize);
-            Buffer.BlockCopy(buffer, PoseOffset, poseArray, 0, PoseSize);
-            Buffer.BlockCopy(buffer, CameraPoseOffset, cameraPoseArray, 0, PoseSize);
-            ArrayToPose(poseArray, ref m_FacePose);
-            ArrayToPose(cameraPoseArray, ref m_CameraPose);
-            faceActive = buffer[buffer.Length - 1] == 1;
-            m_UnusedBuffers.Enqueue(buffer);
 
-            return true;
+            m_BlendShapeReader.UpdateStreamData(ref buffer, 0);
+            m_UnusedBuffers.Enqueue(buffer);
         }
 
         void Update()
         {
             m_BufferSize = m_BufferQueue.Count;
-            if (!DequeueBuffer())
-                return;
+            if (m_UseDebug)
+            {
+                if (m_BufferSize > m_CatchupSize)
+                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", m_BufferSize, m_CatchupSize));
+            }
 
-            if (m_FacePose.position == m_LastPose)
-            {
-                m_TrackingLossCount++;
-                if (!faceActive && m_TrackingLossCount > m_TrackingLossPadding)
-                    trackingActive = false;
-                else
-                    trackingActive = true;
-            }
-            else
-            {
-                m_TrackingLossCount = 0;
-            }
-            m_LastPose = m_FacePose.position;
+            DequeueBuffer();
         }
 
         void OnDestroy()
