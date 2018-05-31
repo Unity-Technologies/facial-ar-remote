@@ -9,7 +9,7 @@ namespace Unity.Labs.FacialRemote
         public class BlendShapesController : MonoBehaviour
         {
             [SerializeField]
-            Server m_Server;
+            BlendShapeReader m_Reader;
 
             [SerializeField]
             SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
@@ -38,12 +38,18 @@ namespace Unity.Labs.FacialRemote
         float m_TrackingLossSmoothing = 0.1f;
 
             readonly Dictionary<SkinnedMeshRenderer, int[]> m_Indices = new Dictionary<SkinnedMeshRenderer, int[]>();
-            readonly float[] m_BlendShapes = new float[Server.BlendShapeCount];
-            readonly float[] m_BlendShapesScaled = new float[Server.BlendShapeCount];
+            float[] m_BlendShapes;
+            float[] m_BlendShapesScaled;
+
+            void Awake()
+            {
+                float[] m_BlendShapes = new float[m_Reader.streamSettings.blendShapeCount];
+                float[] m_BlendShapesScaled = new float[m_Reader.streamSettings.blendShapeCount];
+            }
 
             void Start()
             {
-                if (m_Server == null)
+                if (m_Reader == null)
                 {
                     Debug.LogWarning("Blend Shape Controller needs a Server set.");
                     enabled = false;
@@ -65,19 +71,19 @@ namespace Unity.Labs.FacialRemote
                     for (var i = 0; i < count; i++)
                     {
                         var name = mesh.GetBlendShapeName(i);
-                        var lower = Server.Filter(name);
+                        var lower = StreamSettings.Filter(name);
                         var index = -1;
-                        foreach (var mapping in m_Server.mappings)
+                        foreach (var mapping in m_Reader.streamSettings.mappings)
                         {
                             if (lower.Contains(mapping.from))
-                                index = m_Server.locations.IndexOf(mapping.to);
+                                index = m_Reader.streamSettings.locations.IndexOf(mapping.to);
                         }
 
                         if (index < 0)
                         {
-                            for (var j = 0; j < m_Server.locations.Count; j++)
+                            for (var j = 0; j < m_Reader.streamSettings.locations.Count; j++)
                             {
-                                if (lower.Contains(m_Server.locations[j]))
+                                if (lower.Contains(m_Reader.streamSettings.locations[j]))
                                 {
                                     index = j;
                                     break;
@@ -97,18 +103,18 @@ namespace Unity.Labs.FacialRemote
 
             void Update()
             {
-                if (!m_Server.running)
-                    return;
+//                if (!m_Reader.running)
+//                    return;
 
                 //Interpolate blend shapes
-                for (var i = 0; i < Server.BlendShapeCount; i++)
+                for (var i = 0; i < m_Reader.streamSettings.blendShapeCount; i++)
                 {
                     var blendShape = m_BlendShapes[i];
-                    var blendShapeTarget = m_Server.blendShapesBuffer[i];
+                    var blendShapeTarget = m_Reader.blendShapesBuffer[i];
                     var threshold = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
                     var smoothing = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                    if (m_Server.trackingActive)
+                    if (m_Reader.trackingActive)
                     {
                         if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
                             m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
@@ -146,21 +152,21 @@ namespace Unity.Labs.FacialRemote
 #if UNITY_EDITOR
             void OnValidate()
             {
-                if (m_Server == null || m_Server.locations ==null || m_Server.locations.Count == 0)
+                if (m_Reader == null || m_Reader.streamSettings.locations ==null || m_Reader.streamSettings.locations.Count == 0)
                     return;
 
-                if (m_Overrides.Length != Server.BlendShapeCount)
+                if (m_Overrides.Length != m_Reader.streamSettings.blendShapeCount)
                 {
-                    var overridesCopy = new BlendShapeOverride[Server.BlendShapeCount];
+                    var overridesCopy = new BlendShapeOverride[m_Reader.streamSettings.blendShapeCount];
 
-                    foreach (var location in m_Server.locations)
+                    foreach (var location in m_Reader.streamSettings.locations)
                     {
                         var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location);
                         if (blendShapeOverride == null)
                         {
                             blendShapeOverride = new BlendShapeOverride(location);
                         }
-                        overridesCopy[m_Server.locations.IndexOf(location)] = blendShapeOverride;
+                        overridesCopy[m_Reader.streamSettings.locations.IndexOf(location)] = blendShapeOverride;
                     }
 
                     m_Overrides = overridesCopy;
