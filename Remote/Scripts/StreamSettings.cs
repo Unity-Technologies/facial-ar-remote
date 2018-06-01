@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.iOS;
 
-namespace Unity.Labs.FacialRemote {
+namespace Unity.Labs.FacialRemote
+{
     [Serializable]
     [CreateAssetMenu(fileName = "Stream Settings", menuName = "FacialRemote/Stream Settings")]
     public class StreamSettings : ScriptableObject
@@ -13,6 +14,7 @@ namespace Unity.Labs.FacialRemote {
         [SerializeField]
         int m_BlendShapeCount = 51;
 
+        [NonSerialized]
         bool m_Initialized;
 
         public bool initialized { get { return m_Initialized; } }
@@ -22,6 +24,8 @@ namespace Unity.Labs.FacialRemote {
         public int PoseSize  { get; private set; }
         public int PoseOffset  { get; private set; }
         public int CameraPoseOffset  { get; private set; }
+        // TODO Frame value is just int. Need to start tracking the time of that frame for proper playback.
+        // TODO Right now the frame rate is just assumed to be 60fps.
         public int FrameNumberOffset  { get; private set; }
 
         // 0 - Error check
@@ -73,6 +77,7 @@ namespace Unity.Labs.FacialRemote {
             CameraPoseOffset = PoseOffset + PoseSize;
             FrameNumberOffset = CameraPoseOffset + PoseSize;
             BufferSize = 1 + BlendShapeSize + PoseSize * 2 + sizeof(float) + 1;
+            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
 
             foreach (var location in ARBlendShapeLocation.Locations)
             {
