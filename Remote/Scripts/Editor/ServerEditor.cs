@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -12,6 +10,21 @@ namespace Unity.Labs.FacialRemote
         {
             base.OnInspectorGUI();
             var server = target as Server;
+
+            using (new EditorGUI.DisabledGroupScope(!Application.isPlaying))
+            {
+                if (!server.streamActive)
+                {
+                    if (GUILayout.Button("Start Server"))
+                        server.ActivateStreamSource();
+                }
+                else
+                {
+                    if (GUILayout.Button("Stop Server"))
+                        server.DeactivateStreamSource();
+                }
+            }
+
             using (new EditorGUI.DisabledGroupScope(!server.useRecorder))
             {
                 if (server.isRecording)

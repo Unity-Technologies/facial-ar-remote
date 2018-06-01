@@ -57,6 +57,11 @@ namespace Unity.Labs.FacialRemote
             streamSource = source;
         }
 
+        public void UnSetStreamSource()
+        {
+            streamSource = null;
+        }
+
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
             Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, m_StreamSettings.BlendShapeSize);

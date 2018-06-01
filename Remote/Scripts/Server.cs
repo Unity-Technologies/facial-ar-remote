@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -14,16 +15,67 @@ namespace Unity.Labs.FacialRemote
         public string to;
     }
 
+    [RequireComponent(typeof(BlendShapeReader))]
     public abstract class StreamSource : MonoBehaviour
     {
         public bool streamActive { get; protected set; }
+        protected BlendShapeReader m_BlendShapeReader;
+
+        protected virtual void Awake()
+        {
+            m_BlendShapeReader = GetComponent<BlendShapeReader>();
+            if (m_BlendShapeReader == null || m_BlendShapeReader.streamSettings == null)
+            {
+                enabled = false;
+                return;
+            }
+        }
+
+        protected virtual void Update()
+        {
+            if (!streamActive)
+                return;
+
+            if (m_BlendShapeReader.streamSource != this)
+            {
+                streamActive = false;
+                return;
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            streamActive = false;
+        }
+
+        public virtual void ActivateStreamSource()
+        {
+            if (m_BlendShapeReader == null)
+                return;
+
+            if (m_BlendShapeReader.streamSource != this)
+            {
+                m_BlendShapeReader.UnSetStreamSource();
+                m_BlendShapeReader.SetStreamSource(this);
+                streamActive = true;
+            }
+        }
+
+        public virtual void DeactivateStreamSource()
+        {
+            if (m_BlendShapeReader == null || m_BlendShapeReader.streamSource == null)
+                return;
+
+            if (m_BlendShapeReader.streamSource == this)
+            {
+                m_BlendShapeReader.UnSetStreamSource();
+                streamActive = false;
+            }
+        }
     }
 
-    [RequireComponent(typeof(BlendShapeReader))]
     public class Server : StreamSource
     {
-        public const byte ErrorCheck = 42;
-
         const int k_BufferPrewarm = 16;
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
 
@@ -41,7 +93,7 @@ namespace Unity.Labs.FacialRemote
 
         Socket m_Socket;
 
-        BlendShapeReader m_BlendShapeReader;
+        bool m_ServerActive;
 
         int m_LastFrameNum;
 
@@ -57,19 +109,14 @@ namespace Unity.Labs.FacialRemote
 
         public bool useRecorder
         {
-            get { return Application.isEditor && Application.isPlaying && m_PlaybackData != null; }
+            get { return m_ServerActive && Application.isEditor && Application.isPlaying && m_PlaybackData != null; }
         }
 
         public bool isRecording { get; private set; }
 
-        void Awake()
+        protected override void Awake()
         {
-            m_BlendShapeReader = GetComponent<BlendShapeReader>();
-            if (m_BlendShapeReader == null || m_BlendShapeReader.streamSettings == null)
-            {
-                enabled = false;
-                return;
-            }
+            base.Awake();
 
             Application.targetFrameRate = 60;
             for (var i = 0; i < k_BufferPrewarm; i++)
@@ -94,7 +141,7 @@ namespace Unity.Labs.FacialRemote
                 m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 m_Socket.Bind(endPoint);
                 m_Socket.Listen(100);
-                streamActive = true;
+                m_ServerActive = true;
                 m_LastFrameNum = -1;
                 var connectionAddress = address;
                 new Thread(() =>
@@ -104,15 +151,12 @@ namespace Unity.Labs.FacialRemote
 
                     var frameNumArray = new int[1];
 
-                    while (streamActive)
+                    while (m_ServerActive)
                     {
                         if (m_Socket.Connected)
                         {
                             try
                             {
-                                if (m_BlendShapeReader.streamSource != this)
-                                    m_BlendShapeReader.SetStreamSource(this);
-
                                 var buffer = m_UnusedBuffers.Count == 0 ? new byte[m_BlendShapeReader.streamSettings.BufferSize]
                                 : m_UnusedBuffers.Dequeue();
                                 for (var i = 0; i < m_BlendShapeReader.streamSettings.BufferSize; i++)
@@ -121,28 +165,30 @@ namespace Unity.Labs.FacialRemote
                                 }
 
                                 m_Socket.Receive(buffer);
-                                if (buffer[0] == ErrorCheck)
+                                if (buffer[0] == m_BlendShapeReader.streamSettings.errorCheck)
                                 {
-                                    m_BufferQueue.Enqueue(buffer);
-
-                                    if (m_PlaybackData != null)
+                                    if (streamActive)
                                     {
+                                        m_BufferQueue.Enqueue(buffer);
+
                                         if (isRecording)
                                         {
-                                            m_PlaybackData.activeByteQueue.Enqueue(buffer);
+                                            // TODO better data copy
+                                            m_PlaybackData.activeByteRecord.Add(buffer.ToArray());
                                         }
+
+                                        Buffer.BlockCopy(buffer, m_BlendShapeReader.streamSettings.FrameNumberOffset, frameNumArray, 0, sizeof(int));
+
+                                        var frameNum = frameNumArray[0];
+//                                        Debug.Log(frameNum);
+                                        if (m_UseDebug)
+                                        {
+                                            if (m_LastFrameNum != frameNum - 1)
+                                                Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                        }
+
+                                        m_LastFrameNum = frameNum;
                                     }
-
-                                    Buffer.BlockCopy(buffer, m_BlendShapeReader.streamSettings.FrameNumberOffset, frameNumArray, 0, sizeof(int));
-
-                                    var frameNum = frameNumArray[0];
-                                    if (m_UseDebug)
-                                    {
-                                        if (m_LastFrameNum != frameNum - 1)
-                                            Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
-                                    }
-
-                                    m_LastFrameNum = frameNum;
                                 }
                             }
                             catch (Exception e)
@@ -166,9 +212,16 @@ namespace Unity.Labs.FacialRemote
                 StopRecording();
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            m_ServerActive = false;
+        }
+
         public void StartRecording()
         {
-            isRecording = true;
+            if (m_BlendShapeReader.streamSource == this)
+                isRecording = true;
         }
 
         public void StopRecording()
@@ -197,8 +250,13 @@ namespace Unity.Labs.FacialRemote
             m_UnusedBuffers.Enqueue(buffer);
         }
 
-        void Update()
+        protected override void Update()
         {
+            if (m_BlendShapeReader.streamSource != this && isRecording)
+                StopRecording();
+
+            base.Update();
+
             m_BufferSize = m_BufferQueue.Count;
             if (m_UseDebug)
             {
@@ -208,11 +266,5 @@ namespace Unity.Labs.FacialRemote
 
             DequeueBuffer();
         }
-
-        void OnDestroy()
-        {
-            streamActive = false;
-        }
     }
-
 }
