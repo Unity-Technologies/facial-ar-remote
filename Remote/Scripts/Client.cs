@@ -46,6 +46,7 @@ namespace Unity.Labs.FacialRemote
 
             m_Buffer = new byte[m_StreamSettings.BufferSize];
             m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
+            m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
