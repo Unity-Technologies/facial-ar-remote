@@ -14,7 +14,7 @@ namespace Unity.Labs.FacialRemote
         int PoseSize { get; }
         int FrameNumberSize { get; }
         int FrameTimeSize { get; }
-        int PoseOffset { get; }
+        int HeadPoseOffset { get; }
         int CameraPoseOffset { get; }
         int FrameNumberOffset  { get; }
         int FrameTimeOffset { get; }
@@ -46,7 +46,7 @@ namespace Unity.Labs.FacialRemote
         public int PoseSize { get; private set; }
         public int FrameNumberSize { get; private set; }
         public int FrameTimeSize { get; private set; }
-        public int PoseOffset { get; private set; }
+        public int HeadPoseOffset { get; private set; }
         public int CameraPoseOffset  { get; private set; }
         public int FrameNumberOffset  { get; private set; }
         public int FrameTimeOffset { get; private set; }
@@ -92,8 +92,8 @@ namespace Unity.Labs.FacialRemote
                 PoseSize = sizeof(float) * 7;
                 FrameNumberSize = sizeof(int);
                 FrameTimeSize = sizeof(float);
-                PoseOffset = BlendShapeSize + 1;
-                CameraPoseOffset = PoseOffset + PoseSize;
+                HeadPoseOffset = BlendShapeSize + 1;
+                CameraPoseOffset = HeadPoseOffset + PoseSize;
                 FrameNumberOffset = CameraPoseOffset + PoseSize;
                 FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
                 BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
