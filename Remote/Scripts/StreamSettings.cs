@@ -5,24 +5,43 @@ using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
+    public interface IStreamSettings
+    {
+        bool Initialized { get; }
+        byte ErrorCheck { get; }
+        int BlendShapeCount { get; }
+        int BlendShapeSize { get; }
+        int PoseSize { get; }
+        int PoseOffset { get; }
+        int CameraPoseOffset { get; }
+        int FrameNumberOffset  { get; }
+        int BufferSize { get; }
+
+        void Initialize();
+    }
+
     [Serializable]
     [CreateAssetMenu(fileName = "Stream Settings", menuName = "FacialRemote/Stream Settings")]
-    public class StreamSettings : ScriptableObject
+    public class StreamSettings : ScriptableObject, IStreamSettings
     {
         [SerializeField]
         byte m_ErrorCheck = 42;
+
         [SerializeField]
         int m_BlendShapeCount = 51;
+
+        [SerializeField]
+        Mapping[] m_Mappings = {};
 
         [NonSerialized]
         bool m_Initialized;
 
-        public bool initialized { get { return m_Initialized; } }
-        public byte errorCheck { get { return m_ErrorCheck; } }
-        public int blendShapeCount { get { return m_BlendShapeCount; } }
+        public bool Initialized { get { return m_Initialized; } }
+        public byte ErrorCheck { get { return m_ErrorCheck; } }
+        public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get; private set; }
-        public int PoseSize  { get; private set; }
-        public int PoseOffset  { get; private set; }
+        public int PoseSize { get; private set; }
+        public int PoseOffset { get; private set; }
         public int CameraPoseOffset  { get; private set; }
         // TODO Frame value is just int. Need to start tracking the time of that frame for proper playback.
         // TODO Right now the frame rate is just assumed to be 60fps.
@@ -35,9 +54,6 @@ namespace Unity.Labs.FacialRemote
         // 261-264 - Frame Number
         // 265 - Active state
         public int BufferSize { get; private set; }
-
-        [SerializeField]
-        Mapping[] m_Mappings;
 
         public Mapping[] mappings { get { return m_Mappings; }}
 
@@ -63,38 +79,35 @@ namespace Unity.Labs.FacialRemote
 
         List<string> m_Locations = new List<string>();
 
-        public void Initialize()
-        {
+         public void Initialize()
+         {
             if (!m_Initialized)
-                Awake();
-        }
-
-        void Awake()
-        {
-            BlendShapeSize = sizeof(float) * m_BlendShapeCount;
-            PoseSize = sizeof(float) * 7;
-            PoseOffset = BlendShapeSize + 1;
-            CameraPoseOffset = PoseOffset + PoseSize;
-            FrameNumberOffset = CameraPoseOffset + PoseSize;
-            BufferSize = 1 + BlendShapeSize + PoseSize * 2 + sizeof(float) + 1;
-            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
-
-            foreach (var location in ARBlendShapeLocation.Locations)
             {
-                m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                BlendShapeSize = sizeof(float) * m_BlendShapeCount;
+                PoseSize = sizeof(float) * 7;
+                PoseOffset = BlendShapeSize + 1;
+                CameraPoseOffset = PoseOffset + PoseSize;
+                FrameNumberOffset = CameraPoseOffset + PoseSize;
+                BufferSize = 1 + BlendShapeSize + PoseSize * 2 + sizeof(float) + 1;
+                Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
+
+                foreach (var location in ARBlendShapeLocation.Locations)
+                {
+                    m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                }
+
+                var mappingLength = m_Mappings.Length;
+                for (var i = 0; i < mappingLength; i++)
+                {
+                    var mapping = m_Mappings[i];
+                    mapping.from = Filter(mapping.from);
+                    mapping.to = Filter(mapping.to);
+                }
+
+                m_Locations.Sort();
+
+                m_Initialized = true;
             }
-
-            var mappingLength = m_Mappings.Length;
-            for (var i = 0; i < mappingLength; i++)
-            {
-                var mapping = m_Mappings[i];
-                mapping.from = Filter(mapping.from);
-                mapping.to = Filter(mapping.to);
-            }
-
-            m_Locations.Sort();
-
-            m_Initialized = true;
         }
 
         void OnDestroy()
@@ -110,6 +123,11 @@ namespace Unity.Labs.FacialRemote
         public static string Filter(string @string)
         {
             return @string.ToLower().Replace("_", "");
+        }
+
+        void OnValidate()
+        {
+            m_Initialized = false;
         }
     }
 }

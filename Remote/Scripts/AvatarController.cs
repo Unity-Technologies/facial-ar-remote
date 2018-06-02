@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
     public class AvatarController : MonoBehaviour
     {
         [SerializeField]
-        BlendShapeReader m_Reader;
+        StreamReader m_Reader;
 
         [SerializeField]
         Animator m_Animator;
@@ -34,6 +34,9 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         float m_Weight = 1;
+
+        [SerializeField]
+        StreamSettings m_StreamSettings;
 
         int m_EyeLookDownLeftIndex;
         int m_EyeLookDownRightIndex;
@@ -117,14 +120,15 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            m_EyeLookDownLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
-            m_EyeLookInLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
-            m_EyeLookInRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
-            m_EyeLookOutLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = m_Reader.streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
+            // TODO use connected stream settings
+            m_EyeLookDownLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
+            m_EyeLookDownRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
+            m_EyeLookInLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
+            m_EyeLookInRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
+            m_EyeLookOutLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
+            m_EyeLookOutRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
+            m_EyeLookUpLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
+            m_EyeLookUpRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
 
 //            m_AnimatorSetup = StartCoroutine(SetupAnimator());
         }

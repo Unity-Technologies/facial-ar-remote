@@ -25,18 +25,27 @@ namespace Unity.Labs.FacialRemote
 
         float m_StartTime;
         bool m_FreshData;
+        float m_TimeStamp;
+        bool m_Once;
         bool m_Running;
 
         byte[] m_Buffer;
         float[] m_BlendShapes;
 
-        Dictionary<string, float> currentBlendShapes;
-        Dictionary<string, int> blendShapeIndices;
+        Dictionary<string, float> m_CurrentBlendShapes;
+        Dictionary<string, int> m_BlendShapeIndices;
 
         void Awake()
         {
+            if (m_StreamSettings == null)
+            {
+                Debug.LogError("Stream settings needs to be assigned!");
+                enabled = false;
+                return;
+            }
+
             m_Buffer = new byte[m_StreamSettings.BufferSize];
-            m_BlendShapes = new float[m_StreamSettings.blendShapeCount];
+            m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
@@ -45,17 +54,17 @@ namespace Unity.Labs.FacialRemote
 
         void FaceAdded (ARFaceAnchor anchorData)
         {
-            currentBlendShapes = anchorData.blendShapes;
+            m_CurrentBlendShapes = anchorData.blendShapes;
 
-            if (blendShapeIndices == null)
+            if (m_BlendShapeIndices == null)
             {
-                blendShapeIndices = new Dictionary<string, int>();
+                m_BlendShapeIndices = new Dictionary<string, int>();
 
-                var names = currentBlendShapes.Keys.ToList();
+                var names = m_CurrentBlendShapes.Keys.ToList();
                 names.Sort();
-                foreach (var kvp in currentBlendShapes)
+                foreach (var kvp in m_CurrentBlendShapes)
                 {
-                    blendShapeIndices[kvp.Key] = names.IndexOf(kvp.Key);
+                    m_BlendShapeIndices[kvp.Key] = names.IndexOf(kvp.Key);
                 }
             }
 
@@ -64,15 +73,15 @@ namespace Unity.Labs.FacialRemote
 
         void FaceUpdated (ARFaceAnchor anchorData)
         {
-            currentBlendShapes = anchorData.blendShapes;
+            m_CurrentBlendShapes = anchorData.blendShapes;
             UpdateBlendShapes();
         }
 
         void UpdateBlendShapes()
         {
-            foreach (var kvp in currentBlendShapes)
+            foreach (var kvp in m_CurrentBlendShapes)
             {
-                m_BlendShapes[blendShapeIndices[kvp.Key]] = kvp.Value;
+                m_BlendShapes[m_BlendShapeIndices[kvp.Key]] = kvp.Value;
             }
         }
 
@@ -85,7 +94,7 @@ namespace Unity.Labs.FacialRemote
             var poseArray = new float[7];
             var cameraPoseArray = new float[7];
             var frameNum = new int[1];
-
+            m_Once = true;
             Application.targetFrameRate = 60;
             m_Running = true;
             new Thread(() =>
@@ -99,7 +108,7 @@ namespace Unity.Labs.FacialRemote
                             if (m_FreshData)
                             {
                                 m_FreshData = false;
-                                m_Buffer[0] = m_StreamSettings.errorCheck;
+                                m_Buffer[0] = m_StreamSettings.ErrorCheck;
                                 Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, m_StreamSettings.BlendShapeSize);
 
                                 var pose = UnityARFaceAnchorManager.Pose;
@@ -130,7 +139,7 @@ namespace Unity.Labs.FacialRemote
                         TryTimeout();
                     }
 
-                    Thread.Sleep(5);
+                    Thread.Sleep(1);
                 }
             }).Start();
         }
@@ -150,8 +159,13 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
+            // TODO think may want to update information in LateUpdate
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
+            if (m_Once)
+                m_TimeStamp = 0f;
+            else
+                m_TimeStamp += Time.deltaTime;
         }
 
         void TryTimeout()
@@ -160,6 +174,7 @@ namespace Unity.Labs.FacialRemote
             {
                 enabled = false;
                 m_ClientGUI.enabled = true;
+                m_TimeStamp = 0f;
             }
         }
 

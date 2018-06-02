@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class BlendShapeReader : MonoBehaviour
+    public class StreamReader : MonoBehaviour
     {
         Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
@@ -24,25 +25,8 @@ namespace Unity.Labs.FacialRemote
         int m_TrackingLossCount;
 
         [SerializeField]
-        StreamSettings m_StreamSettings;
-
-        [SerializeField]
         [Range(1, 512)]
         int m_TrackingLossPadding = 64;
-
-        public StreamSettings streamSettings
-        {
-            get
-            {
-                if (m_StreamSettings == null)
-                    return null;
-
-                if (!m_StreamSettings.initialized)
-                    m_StreamSettings.Initialize();
-
-                return m_StreamSettings;
-            }
-        }
 
         public float[] blendShapesBuffer { get { return m_BlendShapesBuffer; } }
         public float[] headPoseArray { get { return m_HeadPoseArray; } }
@@ -52,9 +36,16 @@ namespace Unity.Labs.FacialRemote
         float[] m_HeadPoseArray = new float[7];
         float[] m_CameraPoseArray = new float[7];
 
+        List<IConnectedController> m_ConnectedControllers = new List<IConnectedController>();
+
         public void SetStreamSource(StreamSource source)
         {
+            if (source == null || source.GetStreamSettings() == null)
+                return;
             streamSource = source;
+            m_BlendShapesBuffer = new float[source.GetStreamSettings().BlendShapeCount];
+
+            UpdateStreamSettings(source.GetStreamSettings());
         }
 
         public void UnSetStreamSource()
@@ -62,8 +53,14 @@ namespace Unity.Labs.FacialRemote
             streamSource = null;
         }
 
-        public void UpdateStreamData(ref byte[] buffer, int position)
+        public void UpdateStreamData(StreamSource source, ref byte[] buffer, int position)
         {
+            if (source == null || source != streamSource || streamSource.GetStreamSettings() == null)
+            {
+                return;
+            }
+            var m_StreamSettings = streamSource.GetStreamSettings();
+
             Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, m_StreamSettings.BlendShapeSize);
             Buffer.BlockCopy(buffer, position + m_StreamSettings.PoseOffset, m_HeadPoseArray, 0, m_StreamSettings.PoseSize);
             Buffer.BlockCopy(buffer, position + m_StreamSettings.CameraPoseOffset, m_CameraPoseArray, 0, m_StreamSettings.PoseSize);
@@ -76,18 +73,24 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void Awake()
+        public void AddConnectedController(IConnectedController connectedController)
         {
-            if (streamSettings == null)
+            if (!m_ConnectedControllers.Contains(connectedController))
+                m_ConnectedControllers.Add(connectedController);
+        }
+
+        public void RemoveConnectedController(IConnectedController connectedController)
+        {
+            if (m_ConnectedControllers.Contains(connectedController))
+                m_ConnectedControllers.Remove(connectedController);
+        }
+
+        public void UpdateStreamSettings(IStreamSettings streamSettings)
+        {
+            foreach (var controller in m_ConnectedControllers)
             {
-                enabled = false;
-                return;
+                controller.SetStreamSettings(streamSettings);
             }
-
-            if (!streamSettings.initialized)
-                streamSettings.Initialize();
-
-            m_BlendShapesBuffer = new float[m_StreamSettings.blendShapeCount];
         }
 
         void Update()

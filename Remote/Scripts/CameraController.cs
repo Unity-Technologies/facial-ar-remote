@@ -6,7 +6,7 @@ namespace Unity.Labs.FacialRemote
     public class CameraController : MonoBehaviour
     {
         [SerializeField]
-        BlendShapeReader m_Reader;
+        StreamReader m_Reader;
 
         [Range(0.1f, 1)]
         [SerializeField]
