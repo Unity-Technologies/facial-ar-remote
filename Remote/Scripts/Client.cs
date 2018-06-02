@@ -35,17 +35,31 @@ namespace Unity.Labs.FacialRemote
         Dictionary<string, float> m_CurrentBlendShapes;
         Dictionary<string, int> m_BlendShapeIndices;
 
+        public StreamSettings streamSettings
+        {
+            get
+            {
+                if (m_StreamSettings == null)
+                    return null;
+
+                if (!m_StreamSettings.Initialized)
+                    m_StreamSettings.Initialize();
+
+                return m_StreamSettings;
+            }
+        }
+
         void Awake()
         {
-            if (m_StreamSettings == null)
+            if (streamSettings == null)
             {
                 Debug.LogError("Stream settings needs to be assigned!");
                 enabled = false;
                 return;
             }
 
-            m_Buffer = new byte[m_StreamSettings.BufferSize];
-            m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
+            m_Buffer = new byte[streamSettings.BufferSize];
+            m_BlendShapes = new float[streamSettings.BlendShapeCount];
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -110,8 +124,8 @@ namespace Unity.Labs.FacialRemote
                             if (m_FreshData)
                             {
                                 m_FreshData = false;
-                                m_Buffer[0] = m_StreamSettings.ErrorCheck;
-                                Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, m_StreamSettings.BlendShapeSize);
+                                m_Buffer[0] = streamSettings.ErrorCheck;
+                                Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
 
                                 var pose = UnityARFaceAnchorManager.Pose;
                                 PoseToArray(pose, poseArray);
@@ -119,10 +133,10 @@ namespace Unity.Labs.FacialRemote
 
                                 frameNum[0] = count++;
                                 frameTime[0] = m_TimeStamp;
-                                Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.PoseOffset, m_StreamSettings.PoseSize);
-                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, m_StreamSettings.PoseSize);
-                                Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
-                                Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
+                                Buffer.BlockCopy(poseArray, 0, m_Buffer, streamSettings.PoseOffset, streamSettings.PoseSize);
+                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
+                                Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
+                                Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
                                 m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 
                                 m_Socket.Send(m_Buffer);
