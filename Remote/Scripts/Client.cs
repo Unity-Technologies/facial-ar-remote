@@ -173,6 +173,9 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
+            if(m_Socket == null || m_CameraTransform == null)
+                return;
+            
             // TODO think may want to update information in LateUpdate
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
