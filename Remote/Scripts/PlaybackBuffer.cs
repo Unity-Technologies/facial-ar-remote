@@ -113,7 +113,7 @@ namespace Unity.Labs.FacialRemote
             m_ErrorCheck = streamSettings.ErrorCheck;
             m_BlendShapeCount = streamSettings.BlendShapeCount;
             m_BlendShapeSize = streamSettings.BlendShapeSize;
-            m_PoseSize = streamSettings.HeadPoseOffset;
+            m_PoseSize = streamSettings.PoseSize;
             m_HeadPoseOffset = streamSettings.HeadPoseOffset;
             m_CameraPoseOffset = streamSettings.CameraPoseOffset;
             m_FrameNumberOffset = streamSettings.FrameNumberOffset;

@@ -11,18 +11,15 @@ namespace Unity.Labs.FacialRemote
 
         public bool playing { get; private set; }
 
-        float m_StartTime;
+        float m_PlaybackStartTime;
 
         [SerializeField]
         float m_TimeStep = 0.016f;
 
-        int m_CurrentFrame = 0;
-        int m_NextFrame;
         int m_BufferPosition;
         byte[] m_CurrentFrameBuffer;
         byte[] m_NextFrameBuffer;
 
-        float m_CurrentFrameTime;
         float m_NextFrameTime;
         float m_CurrentTime;
 
@@ -39,30 +36,9 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
+            m_ActivePlaybackBuffer.Initialize();
+
             base.Awake();
-
-//            m_BufferPosition = 0;
-//            m_CurrentFrameBuffer = new byte[m_StreamReader.streamSettings.BufferSize];
-//            m_NextFrameBuffer = new byte[m_StreamReader.streamSettings.BufferSize];
-//            for (var i = 0; i < m_StreamReader.streamSettings.BufferSize; i++)
-//            {
-//                m_CurrentFrameBuffer[i] = 0;
-//                m_NextFrameBuffer[i] = 0;
-//            }
-//
-//            if (m_PlaybackData.playbackBuffers.Length == 0)
-//            {
-//                enabled = false;
-//                return;
-//            }
-
-//            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[m_PlaybackData.playbackBuffers.Length-1];
-//            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[0];
-//            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_StreamReader.streamSettings.BufferSize)
-//            {
-//                enabled = false;
-//                return;
-//            }
 
             var streamSettings = GetStreamSettings();
 
@@ -78,50 +54,23 @@ namespace Unity.Labs.FacialRemote
             if (m_PlaybackData.playbackBuffers.Length == 0)
             {
                 enabled = false;
-                return;
             }
         }
+
+        bool m_LastFrame;
 
         void Start()
         {
             m_StreamerActive = true;
             new Thread(() =>
             {
-                var frameNumArray = new int[1];
-
                 while (m_StreamerActive)
                 {
                     if (playing)
                     {
-                        Debug.Log("is playing");
                         try
                         {
-                            if (m_CurrentTime >= m_NextFrameTime)
-                            {
-                                var streamSettings = GetStreamSettings();
-
-                                m_CurrentFrame = m_NextFrame;
-                                Debug.Log(m_CurrentFrame);
-                                Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
-                                    m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
-
-                                Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameNumberOffset,
-                                    frameNumArray, 0, sizeof(int));
-                                m_CurrentFrame = frameNumArray[0];
-
-                                m_BufferPosition += streamSettings.BufferSize;
-                                Debug.Log(string.Format("buffer position: {0}", m_BufferPosition));
-
-                                Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
-                                    m_NextFrameBuffer, 0, streamSettings.BufferSize);
-
-                                Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameNumberOffset,
-                                    frameNumArray, 0, sizeof(int));
-                                m_NextFrame = frameNumArray[0];
-
-                                m_NextFrameTime = m_StartTime + m_NextFrame * m_TimeStep;
-                                Debug.Log(string.Format("c: {0} : {1} n: {2} : {3}", m_CurrentFrame, m_CurrentTime, m_NextFrame, m_NextFrameTime));
-                            }
+                            PlayBackLoop();
                         }
                         catch (Exception e)
                         {
@@ -129,20 +78,55 @@ namespace Unity.Labs.FacialRemote
                             playing = false;
                         }
                     }
-                    Thread.Sleep(4);
 
+                    Thread.Sleep(4);
                 }
             }).Start();
         }
 
+        void PlayBackLoop()
+        {
+            if (m_PlayBackCurrentTime >= m_NextFrameTime)
+            {
+                var streamSettings = GetStreamSettings();
+
+                Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+                Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
+
+                if (!m_LastFrame)
+                {
+                    if (m_BufferPosition + streamSettings.BufferSize > m_ActivePlaybackBuffer.recordStream.Length)
+                    {
+                        m_LastFrame = true;
+                        m_NextFrameTime += m_TimeStep;
+                    }
+                    else
+                    {
+                        Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
+                            m_NextFrameBuffer, 0, streamSettings.BufferSize);
+                        Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
+                            streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
+
+                        m_BufferPosition += streamSettings.BufferSize;
+                        m_NextFrameTime = m_FrameTimes[1];
+                    }
+                }
+                else
+                {
+                    StopPlayBack();
+                }
+            }
+        }
+
         void FixedUpdate()
         {
-            m_CurrentTime = Time.timeSinceLevelLoad;
+            UpdateTimes();
         }
 
         protected override void Update()
         {
-            m_CurrentTime = Time.timeSinceLevelLoad;
+            UpdateTimes();
+
             if (m_StreamReader.streamSource != this && playing)
                 playing = false;
 
@@ -153,7 +137,7 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            m_CurrentTime = Time.timeSinceLevelLoad;
+            UpdateTimes();
         }
 
         protected override void OnDestroy()
@@ -165,16 +149,46 @@ namespace Unity.Labs.FacialRemote
 
         public override IStreamSettings GetStreamSettings()
         {
-            return m_ActivePlaybackBuffer == null ? null : m_ActivePlaybackBuffer;
+            if (m_ActivePlaybackBuffer == null)
+                Debug.LogError("Playback Buffer is Null!");
+
+            return m_ActivePlaybackBuffer;
+        }
+
+        float[] m_FrameTimes = new float[2];
+        float m_LocalDeltaTime;
+        float m_FirstFrameTime;
+        float m_PlayBackCurrentTime;
+
+        void UpdateTimes()
+        {
+            m_CurrentTime = Time.timeSinceLevelLoad;
+            m_LocalDeltaTime = m_CurrentTime - m_PlaybackStartTime;
+
+            m_PlayBackCurrentTime = m_FirstFrameTime + m_LocalDeltaTime;
         }
 
         public void StartPlayBack()
         {
+            var streamSettings = GetStreamSettings();
+
+            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
+                streamSettings.FrameTimeSize);
+            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, streamSettings.BufferSize + streamSettings.FrameTimeOffset,
+                m_FrameTimes, streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
+
+            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, 0, m_NextFrameBuffer, 0, streamSettings.BufferSize);
+
             m_CurrentTime = Time.timeSinceLevelLoad;
-            m_StartTime = m_CurrentTime;
-            m_NextFrameTime = m_StartTime;
+            m_PlaybackStartTime = Time.timeSinceLevelLoad;
+            m_LocalDeltaTime = 0f;
+            m_FirstFrameTime = m_FrameTimes[0];
+            m_PlayBackCurrentTime = m_FrameTimes[0];
+            m_NextFrameTime = m_FrameTimes[0];
             m_BufferPosition = 0;
 
+            m_LastFrame = false;
             playing = true;
         }
 

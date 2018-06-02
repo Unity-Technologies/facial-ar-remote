@@ -53,6 +53,9 @@ namespace Unity.Labs.FacialRemote
             streamSource = null;
         }
 
+        int[] frameNumArray = new int[1];
+        float[] frameTimeArray = new float[1];
+
         public void UpdateStreamData(StreamSource source, ref byte[] buffer, int position)
         {
             if (source == null || source != streamSource || streamSource.GetStreamSettings() == null)
@@ -65,6 +68,11 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, position + streamSettings.HeadPoseOffset, m_HeadPoseArray, 0, streamSettings.PoseSize);
             Buffer.BlockCopy(buffer, position + streamSettings.CameraPoseOffset, m_CameraPoseArray, 0, streamSettings.PoseSize);
             faceActive = buffer[position + streamSettings.BufferSize - 1] == 1;
+
+            Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
+            Buffer.BlockCopy(buffer, streamSettings.FrameTimeOffset, frameTimeArray, 0, streamSettings.FrameTimeSize);
+
+//            Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
 
             if (faceActive)
             {
