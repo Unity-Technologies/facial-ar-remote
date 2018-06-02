@@ -133,7 +133,7 @@ namespace Unity.Labs.FacialRemote
 
                                 frameNum[0] = count++;
                                 frameTime[0] = m_TimeStamp;
-                                Buffer.BlockCopy(poseArray, 0, m_Buffer, streamSettings.PoseOffset, streamSettings.PoseSize);
+                                Buffer.BlockCopy(poseArray, 0, m_Buffer, streamSettings.HeadPoseOffset, streamSettings.PoseSize);
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
@@ -176,8 +176,12 @@ namespace Unity.Labs.FacialRemote
             // TODO think may want to update information in LateUpdate
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
-            if (m_Once)
+
+            if (m_Socket.Connected && m_Once)
+            {
                 m_TimeStamp = 0f;
+                m_Once = false;
+            }
             else
                 m_TimeStamp += Time.deltaTime;
         }
@@ -188,7 +192,7 @@ namespace Unity.Labs.FacialRemote
             {
                 enabled = false;
                 m_ClientGUI.enabled = true;
-                m_TimeStamp = 0f;
+                m_Once = true;
             }
         }
 

@@ -202,15 +202,15 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 var frameNumArray = new int[1];
+                var frameTimeArray = new float[1];
                 var foo = m_ActivePlaybackBuffer.recordQueue.ToArray();
                 for (var i = 0; i < foo.Length; i++)
                 {
-                    Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, i* streamSettings.BufferSize, temp, 0, streamSettings.BufferSize);
-                    Buffer.BlockCopy(temp, streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
-                    Debug.Log(frameNumArray[0]);
+                    Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, i * streamSettings.BufferSize, temp, 0, streamSettings.BufferSize);
+                    Buffer.BlockCopy(temp, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
+                    Buffer.BlockCopy(temp, streamSettings.FrameTimeOffset, frameTimeArray, 0, streamSettings.FrameTimeSize);
 
-                    Buffer.BlockCopy(foo[i], streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
-                    Debug.Log(frameNumArray[0]);
+                    Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
                 }
 
                 once = false;

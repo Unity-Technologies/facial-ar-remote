@@ -14,8 +14,7 @@ namespace Unity.Labs.FacialRemote
         [HideInInspector]
         byte[] m_RecordStream = { };
 
-        [SerializeField]
-        [HideInInspector]
+        [NonSerialized]
         bool m_Initialized;
 
         [SerializeField]
@@ -69,7 +68,7 @@ namespace Unity.Labs.FacialRemote
         public int PoseSize { get { return m_PoseSize; } }
         public int FrameNumberSize { get { return m_FrameNumberSize; } }
         public int FrameTimeSize { get { return m_FrameTimeSize; } }
-        public int PoseOffset { get { return m_HeadPoseOffset; } }
+        public int HeadPoseOffset { get { return m_HeadPoseOffset; } }
         public int CameraPoseOffset { get { return m_CameraPoseOffset; } }
         public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
         public int FrameTimeOffset { get { return m_FrameTimeOffset; } }
@@ -114,8 +113,8 @@ namespace Unity.Labs.FacialRemote
             m_ErrorCheck = streamSettings.ErrorCheck;
             m_BlendShapeCount = streamSettings.BlendShapeCount;
             m_BlendShapeSize = streamSettings.BlendShapeSize;
-            m_PoseSize = streamSettings.PoseOffset;
-            m_HeadPoseOffset = streamSettings.PoseOffset;
+            m_PoseSize = streamSettings.HeadPoseOffset;
+            m_HeadPoseOffset = streamSettings.HeadPoseOffset;
             m_CameraPoseOffset = streamSettings.CameraPoseOffset;
             m_FrameNumberOffset = streamSettings.FrameNumberOffset;
         }
