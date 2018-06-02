@@ -7,57 +7,6 @@ using UnityEngine;
 namespace Unity.Labs.FacialRemote
 {
     [Serializable]
-    public class PlaybackBuffer
-    {
-        [SerializeField]
-        string m_Name;
-
-        [SerializeField]
-        [HideInInspector]
-        byte[] m_RecordStream = { };
-
-        public string name
-        {
-            get { return m_Name; }
-            set { m_Name = value; }
-        }
-
-        public byte[] recordStream { get { return m_RecordStream; } set { m_RecordStream = value; } }
-
-        Queue<byte[]> m_RecordQueue;
-
-        public Queue<byte[]> recordQueue
-        {
-            get
-            {
-                if (m_RecordQueue == null)
-                {
-                    m_RecordQueue = QueueRecordStream(recordStream, 266);
-                }
-                return m_RecordQueue;
-            }
-        }
-
-        static Queue<byte[]> QueueRecordStream(byte[] stream, int bufferSize = 266)
-        {
-            var queue = new Queue<byte[]>();
-            var empty = new byte();
-            for (var i = 0; i < stream.Length;)
-            {
-                var bytes = new byte[bufferSize];
-                for (var b = 0; b < bytes.Length; b++)
-                {
-                    bytes[b] = i + b < stream.Length ? stream[i + b] : empty;
-                }
-
-                queue.Enqueue(bytes);
-                i += bufferSize;
-            }
-            return queue;
-        }
-    }
-
-    [Serializable]
     [CreateAssetMenu(fileName = "PlaybackData", menuName = "FacialRemote/PlaybackData")]
     public class PlaybackData : ScriptableObject
     {
@@ -95,12 +44,12 @@ namespace Unity.Labs.FacialRemote
             {
                 if (m_ActiveBuffer != null)
                 {
-                    m_LastRecord = new byte[activeByteRecord.Count * 266];
-                    var buffer = new byte[266];
+                    m_LastRecord = new byte[activeByteRecord.Count * m_ActiveBuffer.BufferSize];
+                    var buffer = new byte[m_ActiveBuffer.BufferSize];
                     for (var i = 0; i < activeByteRecord.Count; i++)
                     {
                         buffer = activeByteRecord[i];
-                        Buffer.BlockCopy(buffer, 0, m_LastRecord, i * 266, 266);
+                        Buffer.BlockCopy(buffer, 0, m_LastRecord, i * m_ActiveBuffer.BufferSize, m_ActiveBuffer.BufferSize);
                         if (buffer[0] != errorCheck)
                             Debug.LogError(string.Format("Error in buffer {0}", i));
                     }
@@ -120,10 +69,10 @@ namespace Unity.Labs.FacialRemote
         }
 #endif
 
-        public void CreatePlaybackBuffer()
+        public void CreatePlaybackBuffer(IStreamSettings streamSettings)
         {
             var buffers = m_PlaybackBuffers.ToList();
-            var buffer = new PlaybackBuffer();
+            var buffer = new PlaybackBuffer(streamSettings);
             buffer.name = DateTime.Now.ToString("yyyyMMddHHmmssffff");
             buffers.Add(buffer);
             m_PlaybackBuffers = buffers.ToArray();

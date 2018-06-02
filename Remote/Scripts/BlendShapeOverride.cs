@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Unity.Labs.FacialRemote.Unity.Labs.FacialRemote
+namespace Unity.Labs.FacialRemote
 {
     [Serializable]
     public class BlendShapeOverride

@@ -32,26 +32,50 @@ namespace Unity.Labs.FacialRemote
 
         protected override void Awake()
         {
+            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[0];
+            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_ActivePlaybackBuffer.BufferSize)
+            {
+                enabled = false;
+                return;
+            }
+
             base.Awake();
 
+//            m_BufferPosition = 0;
+//            m_CurrentFrameBuffer = new byte[m_StreamReader.streamSettings.BufferSize];
+//            m_NextFrameBuffer = new byte[m_StreamReader.streamSettings.BufferSize];
+//            for (var i = 0; i < m_StreamReader.streamSettings.BufferSize; i++)
+//            {
+//                m_CurrentFrameBuffer[i] = 0;
+//                m_NextFrameBuffer[i] = 0;
+//            }
+//
+//            if (m_PlaybackData.playbackBuffers.Length == 0)
+//            {
+//                enabled = false;
+//                return;
+//            }
+
+//            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[m_PlaybackData.playbackBuffers.Length-1];
+//            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[0];
+//            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_StreamReader.streamSettings.BufferSize)
+//            {
+//                enabled = false;
+//                return;
+//            }
+
+            var streamSettings = GetStreamSettings();
+
             m_BufferPosition = 0;
-            m_CurrentFrameBuffer = new byte[m_BlendShapeReader.streamSettings.BufferSize];
-            m_NextFrameBuffer = new byte[m_BlendShapeReader.streamSettings.BufferSize];
-            for (var i = 0; i < m_BlendShapeReader.streamSettings.BufferSize; i++)
+            m_CurrentFrameBuffer = new byte[streamSettings.BufferSize];
+            m_NextFrameBuffer = new byte[streamSettings.BufferSize];
+            for (var i = 0; i < streamSettings.BufferSize; i++)
             {
                 m_CurrentFrameBuffer[i] = 0;
                 m_NextFrameBuffer[i] = 0;
             }
 
             if (m_PlaybackData.playbackBuffers.Length == 0)
-            {
-                enabled = false;
-                return;
-            }
-
-//            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[m_PlaybackData.playbackBuffers.Length-1];
-            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[0];
-            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_BlendShapeReader.streamSettings.BufferSize)
             {
                 enabled = false;
                 return;
@@ -72,30 +96,32 @@ namespace Unity.Labs.FacialRemote
                         Debug.Log("is playing");
                         try
                         {
-//                            if (m_CurrentTime >= m_NextFrameTime)
-//                            {
+                            if (m_CurrentTime >= m_NextFrameTime)
+                            {
+                                var streamSettings = GetStreamSettings();
+
                                 m_CurrentFrame = m_NextFrame;
                                 Debug.Log(m_CurrentFrame);
                                 Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
-                                    m_CurrentFrameBuffer, 0, m_BlendShapeReader.streamSettings.BufferSize);
+                                    m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
 
-                                Buffer.BlockCopy(m_CurrentFrameBuffer, m_BlendShapeReader.streamSettings.FrameNumberOffset,
+                                Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameNumberOffset,
                                     frameNumArray, 0, sizeof(int));
                                 m_CurrentFrame = frameNumArray[0];
 
-                                m_BufferPosition += m_BlendShapeReader.streamSettings.BufferSize;
+                                m_BufferPosition += streamSettings.BufferSize;
                                 Debug.Log(string.Format("buffer position: {0}", m_BufferPosition));
 
                                 Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
-                                    m_NextFrameBuffer, 0, m_BlendShapeReader.streamSettings.BufferSize);
+                                    m_NextFrameBuffer, 0, streamSettings.BufferSize);
 
-                                Buffer.BlockCopy(m_NextFrameBuffer, m_BlendShapeReader.streamSettings.FrameNumberOffset,
+                                Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameNumberOffset,
                                     frameNumArray, 0, sizeof(int));
                                 m_NextFrame = frameNumArray[0];
 
                                 m_NextFrameTime = m_StartTime + m_NextFrame * m_TimeStep;
                                 Debug.Log(string.Format("c: {0} : {1} n: {2} : {3}", m_CurrentFrame, m_CurrentTime, m_NextFrame, m_NextFrameTime));
-//                            }
+                            }
                         }
                         catch (Exception e)
                         {
@@ -118,7 +144,7 @@ namespace Unity.Labs.FacialRemote
         protected override void Update()
         {
             m_CurrentTime = Time.timeSinceLevelLoad;
-            if (m_BlendShapeReader.streamSource != this && playing)
+            if (m_StreamReader.streamSource != this && playing)
                 playing = false;
 
             base.Update();
@@ -136,6 +162,11 @@ namespace Unity.Labs.FacialRemote
             base.OnDestroy();
             playing = false;
             m_StreamerActive = false;
+        }
+
+        public override IStreamSettings GetStreamSettings()
+        {
+            return m_ActivePlaybackBuffer == null ? null : m_ActivePlaybackBuffer;
         }
 
         public void StartPlayBack()
@@ -158,12 +189,14 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateReader()
         {
-            if (m_BlendShapeReader.streamSource == this && playing)
-                m_BlendShapeReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
+            if (m_StreamReader.streamSource == this && playing)
+                m_StreamReader.UpdateStreamData(this, ref m_CurrentFrameBuffer, 0);
 
             if (once)
             {
-                var temp = new byte[m_BlendShapeReader.streamSettings.BufferSize];
+                var streamSettings = GetStreamSettings();
+
+                var temp = new byte[streamSettings.BufferSize];
                 for (var i = 0; i < temp.Length; i++)
                 {
                     temp[i] = 0;
@@ -173,11 +206,11 @@ namespace Unity.Labs.FacialRemote
                 var foo = m_ActivePlaybackBuffer.recordQueue.ToArray();
                 for (var i = 0; i < foo.Length; i++)
                 {
-                    Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, i* m_BlendShapeReader.streamSettings.BufferSize, temp, 0, m_BlendShapeReader.streamSettings.BufferSize);
-                    Buffer.BlockCopy(temp, m_BlendShapeReader.streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
+                    Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, i* streamSettings.BufferSize, temp, 0, streamSettings.BufferSize);
+                    Buffer.BlockCopy(temp, streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
                     Debug.Log(frameNumArray[0]);
 
-                    Buffer.BlockCopy(foo[i], m_BlendShapeReader.streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
+                    Buffer.BlockCopy(foo[i], streamSettings.FrameNumberOffset,frameNumArray, 0, sizeof(int));
                     Debug.Log(frameNumArray[0]);
                 }
 
