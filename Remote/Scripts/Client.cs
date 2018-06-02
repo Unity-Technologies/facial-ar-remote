@@ -94,6 +94,7 @@ namespace Unity.Labs.FacialRemote
             var poseArray = new float[7];
             var cameraPoseArray = new float[7];
             var frameNum = new int[1];
+            var frameTime = new float[1];
             m_Once = true;
             Application.targetFrameRate = 60;
             m_Running = true;
@@ -115,14 +116,12 @@ namespace Unity.Labs.FacialRemote
                                 PoseToArray(pose, poseArray);
                                 PoseToArray(m_CameraPose, cameraPoseArray);
 
-                                var poseOffset = m_StreamSettings.BlendShapeSize + 1;
-                                var cameraPoseOffset = poseOffset + m_StreamSettings.PoseSize;
-                                var frameNumOffset = cameraPoseOffset + m_StreamSettings.PoseSize;
-
                                 frameNum[0] = count++;
-                                Buffer.BlockCopy(poseArray, 0, m_Buffer, poseOffset, m_StreamSettings.PoseSize);
-                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, cameraPoseOffset, m_StreamSettings.PoseSize);
-                                Buffer.BlockCopy(frameNum, 0, m_Buffer, frameNumOffset, sizeof(int));
+                                frameTime[0] = m_TimeStamp;
+                                Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.PoseOffset, m_StreamSettings.PoseSize);
+                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, m_StreamSettings.PoseSize);
+                                Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
+                                Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
                                 m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
 
                                 m_Socket.Send(m_Buffer);
@@ -139,7 +138,7 @@ namespace Unity.Labs.FacialRemote
                         TryTimeout();
                     }
 
-                    Thread.Sleep(1);
+                    Thread.Sleep(4);
                 }
             }).Start();
         }

@@ -59,12 +59,12 @@ namespace Unity.Labs.FacialRemote
             {
                 return;
             }
-            var m_StreamSettings = streamSource.GetStreamSettings();
+            var streamSettings = streamSource.GetStreamSettings();
 
-            Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, m_StreamSettings.BlendShapeSize);
-            Buffer.BlockCopy(buffer, position + m_StreamSettings.PoseOffset, m_HeadPoseArray, 0, m_StreamSettings.PoseSize);
-            Buffer.BlockCopy(buffer, position + m_StreamSettings.CameraPoseOffset, m_CameraPoseArray, 0, m_StreamSettings.PoseSize);
-            faceActive = buffer[position + m_StreamSettings.BufferSize - 1] == 1;
+            Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, streamSettings.BlendShapeSize);
+            Buffer.BlockCopy(buffer, position + streamSettings.PoseOffset, m_HeadPoseArray, 0, streamSettings.PoseSize);
+            Buffer.BlockCopy(buffer, position + streamSettings.CameraPoseOffset, m_CameraPoseArray, 0, streamSettings.PoseSize);
+            faceActive = buffer[position + streamSettings.BufferSize - 1] == 1;
 
             if (faceActive)
             {

@@ -129,8 +129,7 @@ namespace Unity.Labs.FacialRemote
                             playing = false;
                         }
                     }
-//                    Thread.Sleep(1);
-                    Thread.Sleep(16);
+                    Thread.Sleep(4);
 
                 }
             }).Start();

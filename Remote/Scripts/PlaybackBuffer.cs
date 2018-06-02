@@ -16,10 +16,6 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
-        int m_BufferSize = 266;
-
-        [SerializeField]
-        [HideInInspector]
         bool m_Initialized;
 
         [SerializeField]
@@ -40,6 +36,14 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
+        int m_FrameNumberSize = sizeof(int);
+
+        [SerializeField]
+        [HideInInspector]
+        int m_FrameTimeSize = sizeof(float);
+
+        [SerializeField]
+        [HideInInspector]
         int m_HeadPoseOffset = 205;
 
         [SerializeField]
@@ -48,17 +52,29 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
-        int m_FrameNumberOffset = 233;
+        int m_FrameNumberOffset = 261;
+
+        [SerializeField]
+        [HideInInspector]
+        int m_FrameTimeOffset = 265;
+
+        [SerializeField]
+        [HideInInspector]
+        int m_BufferSize = 270;
 
         public bool Initialized { get { return m_Initialized; } }
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get { return m_BlendShapeSize; } }
         public int PoseSize { get { return m_PoseSize; } }
+        public int FrameNumberSize { get { return m_FrameNumberSize; } }
+        public int FrameTimeSize { get { return m_FrameTimeSize; } }
         public int PoseOffset { get { return m_HeadPoseOffset; } }
         public int CameraPoseOffset { get { return m_CameraPoseOffset; } }
-        public int BufferSize { get { return m_BufferSize; } }
         public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
+        public int FrameTimeOffset { get { return m_FrameTimeOffset; } }
+        public int BufferSize { get { return m_BufferSize; } }
+
 
         public string name
         {

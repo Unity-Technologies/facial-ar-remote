@@ -196,7 +196,7 @@ namespace Unity.Labs.FacialRemote
                                             m_PlaybackData.activeByteRecord.Add(buffer.ToArray());
                                         }
 
-                                        Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, sizeof(int));
+                                        Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
 
                                         var frameNum = frameNumArray[0];
                                         if (m_UseDebug)
