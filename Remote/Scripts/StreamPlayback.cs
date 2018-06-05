@@ -26,35 +26,23 @@ namespace Unity.Labs.FacialRemote
         PlaybackBuffer m_ActivePlaybackBuffer;
 
         bool m_StreamerActive;
+        float[] m_FrameTimes = new float[2];
+        float m_LocalDeltaTime;
+        float m_FirstFrameTime;
+        float m_PlayBackCurrentTime;
+
+        public PlaybackData playbackData { get { return m_PlaybackData; } }
+        public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; }}
+
 
         protected override void Awake()
         {
-            m_ActivePlaybackBuffer = m_PlaybackData.playbackBuffers[0];
-            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_ActivePlaybackBuffer.BufferSize)
-            {
-                enabled = false;
+            if (!SetPlaybackBuffer(m_PlaybackData.playbackBuffers[0], false))
                 return;
-            }
-
-            m_ActivePlaybackBuffer.Initialize();
 
             base.Awake();
 
-            var streamSettings = GetStreamSettings();
-
-            m_BufferPosition = 0;
-            m_CurrentFrameBuffer = new byte[streamSettings.BufferSize];
-            m_NextFrameBuffer = new byte[streamSettings.BufferSize];
-            for (var i = 0; i < streamSettings.BufferSize; i++)
-            {
-                m_CurrentFrameBuffer[i] = 0;
-                m_NextFrameBuffer[i] = 0;
-            }
-
-            if (m_PlaybackData.playbackBuffers.Length == 0)
-            {
-                enabled = false;
-            }
+            RefreshStreamSettings();
         }
 
         bool m_LastFrame;
@@ -82,40 +70,6 @@ namespace Unity.Labs.FacialRemote
                     Thread.Sleep(4);
                 }
             }).Start();
-        }
-
-        void PlayBackLoop()
-        {
-            if (m_PlayBackCurrentTime >= m_NextFrameTime)
-            {
-                var streamSettings = GetStreamSettings();
-
-                Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
-                Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
-
-                if (!m_LastFrame)
-                {
-                    if (m_BufferPosition + streamSettings.BufferSize > m_ActivePlaybackBuffer.recordStream.Length)
-                    {
-                        m_LastFrame = true;
-                        m_NextFrameTime += m_TimeStep;
-                    }
-                    else
-                    {
-                        Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
-                            m_NextFrameBuffer, 0, streamSettings.BufferSize);
-                        Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
-                            streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
-
-                        m_BufferPosition += streamSettings.BufferSize;
-                        m_NextFrameTime = m_FrameTimes[1];
-                    }
-                }
-                else
-                {
-                    StopPlayBack();
-                }
-            }
         }
 
         void FixedUpdate()
@@ -155,17 +109,31 @@ namespace Unity.Labs.FacialRemote
             return m_ActivePlaybackBuffer;
         }
 
-        float[] m_FrameTimes = new float[2];
-        float m_LocalDeltaTime;
-        float m_FirstFrameTime;
-        float m_PlayBackCurrentTime;
-
         void UpdateTimes()
         {
             m_CurrentTime = Time.timeSinceLevelLoad;
             m_LocalDeltaTime = m_CurrentTime - m_PlaybackStartTime;
 
             m_PlayBackCurrentTime = m_FirstFrameTime + m_LocalDeltaTime;
+        }
+
+        public bool SetPlaybackBuffer(PlaybackBuffer buffer, bool refreshStream = true)
+        {
+            if (playing)
+                StopPlayBack();
+
+            m_ActivePlaybackBuffer = buffer;
+            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_ActivePlaybackBuffer.BufferSize)
+            {
+                enabled = false;
+                return false;
+            }
+
+            m_ActivePlaybackBuffer.Initialize();
+            if (refreshStream)
+                RefreshStreamSettings();
+
+            return true;
         }
 
         public void StartPlayBack()
@@ -198,38 +166,63 @@ namespace Unity.Labs.FacialRemote
             playing = false;
         }
 
-        bool once = true;
+        void PlayBackLoop()
+        {
+            if (m_PlayBackCurrentTime >= m_NextFrameTime)
+            {
+                var streamSettings = GetStreamSettings();
+
+                Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+                Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
+
+                if (!m_LastFrame)
+                {
+                    if (m_BufferPosition + streamSettings.BufferSize > m_ActivePlaybackBuffer.recordStream.Length)
+                    {
+                        m_LastFrame = true;
+                        m_NextFrameTime += m_TimeStep;
+                    }
+                    else
+                    {
+                        Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
+                            m_NextFrameBuffer, 0, streamSettings.BufferSize);
+                        Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
+                            streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
+
+                        m_BufferPosition += streamSettings.BufferSize;
+                        m_NextFrameTime = m_FrameTimes[1];
+                    }
+                }
+                else
+                {
+                    StopPlayBack();
+                }
+            }
+        }
 
         void UpdateReader()
         {
             if (m_StreamReader.streamSource == this && playing)
                 m_StreamReader.UpdateStreamData(this, ref m_CurrentFrameBuffer, 0);
+        }
 
-            if (once)
+        void RefreshStreamSettings()
+        {
+            var streamSettings = GetStreamSettings();
+
+            m_BufferPosition = 0;
+            m_CurrentFrameBuffer = new byte[streamSettings.BufferSize];
+            m_NextFrameBuffer = new byte[streamSettings.BufferSize];
+            for (var i = 0; i < streamSettings.BufferSize; i++)
             {
-                var streamSettings = GetStreamSettings();
-
-                var temp = new byte[streamSettings.BufferSize];
-                for (var i = 0; i < temp.Length; i++)
-                {
-                    temp[i] = 0;
-                }
-
-                var frameNumArray = new int[1];
-                var frameTimeArray = new float[1];
-                var foo = m_ActivePlaybackBuffer.recordQueue.ToArray();
-                for (var i = 0; i < foo.Length; i++)
-                {
-                    Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, i * streamSettings.BufferSize, temp, 0, streamSettings.BufferSize);
-                    Buffer.BlockCopy(temp, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
-                    Buffer.BlockCopy(temp, streamSettings.FrameTimeOffset, frameTimeArray, 0, streamSettings.FrameTimeSize);
-
-                    Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
-                }
-
-                once = false;
+                m_CurrentFrameBuffer[i] = 0;
+                m_NextFrameBuffer[i] = 0;
             }
 
+            if (m_PlaybackData.playbackBuffers.Length == 0)
+            {
+                enabled = false;
+            }
         }
     }
 }
