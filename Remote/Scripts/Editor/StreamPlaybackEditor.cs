@@ -24,11 +24,6 @@ namespace Unity.Labs.FacialRemote
                         streamPlayback.DeactivateStreamSource();
                 }
 
-                if (GUILayout.Button("Select Record Stream"))
-                {
-                    ShowRecordStreamMenu(streamPlayback, streamPlayback.playbackData.playbackBuffers);
-                }
-
                 using (new EditorGUI.DisabledGroupScope(!streamPlayback.streamActive))
                 {
                     if (streamPlayback.playing)
@@ -40,6 +35,49 @@ namespace Unity.Labs.FacialRemote
                     {
                         if (GUILayout.Button("Start PlayBack"))
                             streamPlayback.StartPlayBack();
+                    }
+                }
+            }
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Select Record Stream"))
+            {
+                ShowRecordStreamMenu(streamPlayback, streamPlayback.playbackData.playbackBuffers);
+            }
+
+            var clipName = streamPlayback.activePlaybackBuffer == null ? string.Empty : streamPlayback.activePlaybackBuffer.name;
+            EditorGUILayout.LabelField(new GUIContent("Active Clip Name: "), new GUIContent(clipName));
+            using (new EditorGUI.DisabledGroupScope(streamPlayback.activePlaybackBuffer == null))
+            {
+                if (GUILayout.Button("Bake Animation Clip"))
+                {
+                    streamPlayback.DeactivateStreamSource();
+
+                    var assetPath = Application.dataPath;
+                    var path = EditorUtility.SaveFilePanel("Save stream as animation clip", assetPath, clipName + ".anim", "anim");
+
+                    path = path.Replace(assetPath, "Assets");
+
+                    if (path.Length != 0)
+                    {
+                        var blendShapeController = streamPlayback.blendShapesController;
+                        blendShapeController.Init();
+
+                        streamPlayback.ActivateStreamSource();
+                        streamPlayback.RefreshStreamSettings();
+                        streamPlayback.StartPlayBack();
+
+                        var animClip = new AnimationClip();
+                        var clipBaker = new ClipBaker(animClip, streamPlayback, blendShapeController);
+
+                        // TODO needs to be animator transform
+                        clipBaker.BakeClip(blendShapeController.transform);
+
+                        // TODO stop saving over asset creating new guid
+                        AssetDatabase.CreateAsset(animClip, path);
+
+                        streamPlayback.DeactivateStreamSource();
                     }
                 }
             }
