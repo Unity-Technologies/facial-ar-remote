@@ -51,7 +51,12 @@ namespace Unity.Labs.FacialRemote
         public virtual void ActivateStreamSource()
         {
             if (m_StreamReader == null)
-                return;
+            {
+                // TODO Hack!
+                Awake();
+                if (m_StreamReader == null)
+                    return;
+            }
 
             if (m_StreamReader.streamSource != this)
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,6 +8,19 @@ namespace Unity.Labs.FacialRemote
     public interface IConnectedController
     {
         void SetStreamSettings(IStreamSettings streamSettings);
+    }
+
+    [Serializable]
+    public class BlendShapeIndexData
+    {
+        public int index;
+        public string name;
+
+        public BlendShapeIndexData(int index, string name)
+        {
+            this.index = index;
+            this.name = name;
+        }
     }
 
     public class BlendShapesController : MonoBehaviour, IConnectedController
@@ -45,9 +59,14 @@ namespace Unity.Labs.FacialRemote
 
         IStreamSettings m_ConnectedStreamSettings;
 
-        readonly Dictionary<SkinnedMeshRenderer, int[]> m_Indices = new Dictionary<SkinnedMeshRenderer, int[]>();
+        readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         float[] m_BlendShapes;
         float[] m_BlendShapesScaled;
+
+        public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
+        public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
+
+        public float[] blendShapesScaled { get { return m_BlendShapesScaled; } }
 
         void Awake()
         {
@@ -57,10 +76,14 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
+            Init();
+        }
+
+        // HACK
+        public void Init()
+        {
             m_Reader.AddConnectedController(this);
 
-//            m_BlendShapes = new float[m_Reader.streamSettings.BlendShapeCount];
-//            m_BlendShapesScaled = new float[m_Reader.streamSettings.BlendShapeCount];
         }
 
         void Start()
@@ -80,15 +103,21 @@ namespace Unity.Labs.FacialRemote
             }
 
             // TODO should get data from connected settings
+            SetupBlendShapeIndices();
+        }
+
+        public void SetupBlendShapeIndices()
+        {
+            m_Indices.Clear();
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
                 var mesh = meshRenderer.sharedMesh;
                 var count = mesh.blendShapeCount;
-                var indices = new int[count];
+                var indices = new BlendShapeIndexData[count];
                 for (var i = 0; i < count; i++)
                 {
-                    var name = mesh.GetBlendShapeName(i);
-                    var lower = StreamSettings.Filter(name);
+                    var shapeName = mesh.GetBlendShapeName(i);
+                    var lower = StreamSettings.Filter(shapeName);
                     var index = -1;
                     foreach (var mapping in m_StreamSettings.mappings)
                     {
@@ -108,10 +137,10 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
 
-                    indices[i] = index;
+                    indices[i] = new BlendShapeIndexData(index, shapeName);;
 
                     if (index < 0)
-                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", name);
+                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
                 }
 
                 m_Indices.Add(meshRenderer, indices);
@@ -133,7 +162,25 @@ namespace Unity.Labs.FacialRemote
             if (!m_Reader.streamActive)
                 return;
 
-            //Interpolate blend shapes
+            InterpolateBlendShapes();
+
+            foreach (var renderer in m_SkinnedMeshRenderers)
+            {
+                var indices = m_Indices[renderer];
+                var length = indices.Length;
+                for (var i = 0; i < length; i++)
+                {
+                    var datum = indices[i];
+                    if (datum.index < 0)
+                        continue;
+
+                    renderer.SetBlendShapeWeight(i, m_BlendShapesScaled[datum.index]);
+                }
+            }
+        }
+
+        public void InterpolateBlendShapes(bool force = false)
+        {
             for (var i = 0; i < m_StreamSettings.BlendShapeCount; i++)
             {
                 var blendShape = m_BlendShapes[i];
@@ -141,7 +188,7 @@ namespace Unity.Labs.FacialRemote
                 var threshold = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
                 var smoothing = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                if (m_Reader.trackingActive)
+                if (force || m_Reader.trackingActive)
                 {
                     if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
                         m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
@@ -158,20 +205,6 @@ namespace Unity.Labs.FacialRemote
                 else
                 {
                     m_BlendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_BlendShapeCoefficient, m_BlendShapeMax);
-                }
-            }
-
-            foreach (var renderer in m_SkinnedMeshRenderers)
-            {
-                var indices = m_Indices[renderer];
-                var length = indices.Length;
-                for (var i = 0; i < length; i++)
-                {
-                    var index = indices[i];
-                    if (index < 0)
-                        continue;
-
-                    renderer.SetBlendShapeWeight(i, m_BlendShapesScaled[index]);
                 }
             }
         }

@@ -9,6 +9,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         PlaybackData m_PlaybackData;
 
+        [SerializeField]
+        BlendShapesController m_BlendShapesController;
+
+        [SerializeField]
+        Transform m_RootBone;
+
         public bool playing { get; private set; }
 
         float m_PlaybackStartTime;
@@ -32,8 +38,10 @@ namespace Unity.Labs.FacialRemote
         float m_PlayBackCurrentTime;
 
         public PlaybackData playbackData { get { return m_PlaybackData; } }
-        public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; }}
-
+        public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
+        public byte[] currentFrameBuffer { get { return m_CurrentFrameBuffer; } }
+        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
+        public Transform rootBone {get { return m_RootBone; }}
 
         protected override void Awake()
         {
@@ -58,7 +66,8 @@ namespace Unity.Labs.FacialRemote
                     {
                         try
                         {
-                            PlayBackLoop();
+                            if(!PlayBackLoop())
+                                StopPlayBack();
                         }
                         catch (Exception e)
                         {
@@ -166,9 +175,9 @@ namespace Unity.Labs.FacialRemote
             playing = false;
         }
 
-        void PlayBackLoop()
+        public bool PlayBackLoop(bool forceNext = false)
         {
-            if (m_PlayBackCurrentTime >= m_NextFrameTime)
+            if (forceNext || m_PlayBackCurrentTime >= m_NextFrameTime)
             {
                 var streamSettings = GetStreamSettings();
 
@@ -195,18 +204,20 @@ namespace Unity.Labs.FacialRemote
                 }
                 else
                 {
-                    StopPlayBack();
+                    //StopPlayBack();
+                    return false;
                 }
             }
+            return true;
         }
 
-        void UpdateReader()
+        public void UpdateReader(bool force = false)
         {
-            if (m_StreamReader.streamSource == this && playing)
+            if (force || m_StreamReader.streamSource == this && playing)
                 m_StreamReader.UpdateStreamData(this, ref m_CurrentFrameBuffer, 0);
         }
 
-        void RefreshStreamSettings()
+        public void RefreshStreamSettings()
         {
             var streamSettings = GetStreamSettings();
 
