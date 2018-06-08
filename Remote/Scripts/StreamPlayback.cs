@@ -6,21 +6,11 @@ namespace Unity.Labs.FacialRemote
 {
     public class StreamPlayback : StreamSource
     {
-        [SerializeField]
-        PlaybackData m_PlaybackData;
-
-        [SerializeField]
-        BlendShapesController m_BlendShapesController;
-
-        [SerializeField]
-        Transform m_RootBone;
-
         public bool playing { get; private set; }
 
         float m_PlaybackStartTime;
 
-        [SerializeField]
-        float m_TimeStep = 0.016f;
+        const float k_TimeStep = 0.016f;
 
         int m_BufferPosition;
         byte[] m_CurrentFrameBuffer;
@@ -31,43 +21,28 @@ namespace Unity.Labs.FacialRemote
 
         PlaybackBuffer m_ActivePlaybackBuffer;
 
-        bool m_StreamerActive;
         float[] m_FrameTimes = new float[2];
         float m_LocalDeltaTime;
         float m_FirstFrameTime;
         float m_PlayBackCurrentTime;
 
-        public PlaybackData playbackData { get { return m_PlaybackData; } }
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
         public byte[] currentFrameBuffer { get { return m_CurrentFrameBuffer; } }
-        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
-        public Transform rootBone {get { return m_RootBone; }}
-
-        protected override void Awake()
-        {
-            if (!SetPlaybackBuffer(m_PlaybackData.playbackBuffers[0], false))
-                return;
-
-            base.Awake();
-
-            RefreshStreamSettings();
-        }
 
         bool m_LastFrame;
 
-        void Start()
+        public override void StartStreamThread()
         {
-            m_StreamerActive = true;
             new Thread(() =>
             {
-                while (m_StreamerActive)
+                while (streamThreadActive)
                 {
                     if (playing)
                     {
                         try
                         {
                             if(!PlayBackLoop())
-                                StopPlayBack();
+                                StopPlaybackDataUsage();
                         }
                         catch (Exception e)
                         {
@@ -81,44 +56,26 @@ namespace Unity.Labs.FacialRemote
             }).Start();
         }
 
-        void FixedUpdate()
+        public override void StreamSourceUpdate()
         {
-            UpdateTimes();
-        }
-
-        protected override void Update()
-        {
-            UpdateTimes();
-
-            if (m_StreamReader.streamSource != this && playing)
+            if (!isStreamSource() && playing)
                 playing = false;
 
-            base.Update();
+            if (!streamActive || !isStreamSource())
+                return;
 
-            UpdateReader();
+            UpdateCurrentFrameBuffer();
         }
 
-        void LateUpdate()
-        {
-            UpdateTimes();
-        }
+//        protected override IStreamSettings GetStreamSettings()
+//        {
+//            if (m_ActivePlaybackBuffer == null)
+//                Debug.LogError("Playback Buffer is Null!");
+//
+//            return m_ActivePlaybackBuffer;
+//        }
 
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            playing = false;
-            m_StreamerActive = false;
-        }
-
-        public override IStreamSettings GetStreamSettings()
-        {
-            if (m_ActivePlaybackBuffer == null)
-                Debug.LogError("Playback Buffer is Null!");
-
-            return m_ActivePlaybackBuffer;
-        }
-
-        void UpdateTimes()
+        public void UpdateTimes()
         {
             m_CurrentTime = Time.timeSinceLevelLoad;
             m_LocalDeltaTime = m_CurrentTime - m_PlaybackStartTime;
@@ -126,28 +83,35 @@ namespace Unity.Labs.FacialRemote
             m_PlayBackCurrentTime = m_FirstFrameTime + m_LocalDeltaTime;
         }
 
-        public bool SetPlaybackBuffer(PlaybackBuffer buffer, bool refreshStream = true)
+        public bool SetPlaybackBuffer(PlaybackBuffer buffer)
         {
             if (playing)
-                StopPlayBack();
+                StopPlaybackDataUsage();
 
             m_ActivePlaybackBuffer = buffer;
             if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_ActivePlaybackBuffer.BufferSize)
             {
-                enabled = false;
+//                enabled = false;
                 return false;
             }
 
             m_ActivePlaybackBuffer.Initialize();
-            if (refreshStream)
-                RefreshStreamSettings();
+
+            SetStreamSettings();
 
             return true;
         }
 
-        public void StartPlayBack()
+        public override void SetStreamSettings()
         {
-            var streamSettings = GetStreamSettings();
+            streamReader.SetActiveStreamSettings(activePlaybackBuffer);
+        }
+
+        public override void StartPlaybackDataUsage()
+        {
+//            var streamSettings = GetStreamSettings();
+            if (streamSettings != m_ActivePlaybackBuffer)
+                SetStreamSettings();
 
             Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
                 streamSettings.FrameTimeSize);
@@ -169,7 +133,7 @@ namespace Unity.Labs.FacialRemote
             playing = true;
         }
 
-        public void StopPlayBack()
+        public override void StopPlaybackDataUsage()
         {
             m_NextFrameTime = float.PositiveInfinity;
             playing = false;
@@ -179,7 +143,7 @@ namespace Unity.Labs.FacialRemote
         {
             if (forceNext || m_PlayBackCurrentTime >= m_NextFrameTime)
             {
-                var streamSettings = GetStreamSettings();
+//                var streamSettings = GetStreamSettings();
 
                 Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
                 Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
@@ -189,7 +153,7 @@ namespace Unity.Labs.FacialRemote
                     if (m_BufferPosition + streamSettings.BufferSize > m_ActivePlaybackBuffer.recordStream.Length)
                     {
                         m_LastFrame = true;
-                        m_NextFrameTime += m_TimeStep;
+                        m_NextFrameTime += k_TimeStep;
                     }
                     else
                     {
@@ -211,15 +175,15 @@ namespace Unity.Labs.FacialRemote
             return true;
         }
 
-        public void UpdateReader(bool force = false)
+        public override void UpdateCurrentFrameBuffer(bool force = false)
         {
-            if (force || m_StreamReader.streamSource == this && playing)
-                m_StreamReader.UpdateStreamData(this, ref m_CurrentFrameBuffer, 0);
+            if (force || isStreamSource() && playing)
+                streamReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
         }
 
-        public void RefreshStreamSettings()
+        protected override void OnStreamSettingsChangeChange()
         {
-            var streamSettings = GetStreamSettings();
+//            var streamSettings = GetStreamSettings();
 
             m_BufferPosition = 0;
             m_CurrentFrameBuffer = new byte[streamSettings.BufferSize];
@@ -228,11 +192,6 @@ namespace Unity.Labs.FacialRemote
             {
                 m_CurrentFrameBuffer[i] = 0;
                 m_NextFrameBuffer[i] = 0;
-            }
-
-            if (m_PlaybackData.playbackBuffers.Length == 0)
-            {
-                enabled = false;
             }
         }
     }

@@ -8,164 +8,139 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    [Serializable]
-    public class Mapping
+    public interface IStreamSource
     {
-        public string from;
-        public string to;
+        bool streamActive { get;}
+        bool streamThreadActive { get; set;}
+        Func<bool> isStreamSource { get; set; }
+        Func<StreamReader> getStreamReader { get; set; }
+
+        Func<PlaybackData> getPlaybackData { get; set; }
+        Func<bool> getUseDebug { get; set; }
+
+        Func<IStreamSettings> getStreamSettings { get; set; }
+
+        void StartStreamThread();
+        void ActivateStreamSource();
+        void DeactivateStreamSource();
+
+        Action StreamSettingsChangeCallback { get; }
+        void SetStreamSettings();
     }
 
-    [RequireComponent(typeof(StreamReader))]
-    public abstract class StreamSource : MonoBehaviour
+    public interface IServerSettings
     {
-        public bool streamActive { get; protected set; }
-        protected StreamReader m_StreamReader;
+        Func<int> getPortNumber { get; set; }
+        Func<int> getFrameCatchupSize { get; set; }
+    }
 
-        protected virtual void Awake()
+    public abstract class StreamSource : IStreamSource
+    {
+        public Func<bool> isStreamSource { get; set; }
+        public Func<IStreamSettings> getStreamSettings { get; set; }
+        public Func<PlaybackData> getPlaybackData { get; set; }
+        public Func<bool> getUseDebug { get; set; }
+        public Func<StreamReader> getStreamReader { get; set; }
+
+        public bool streamActive { get { return isStreamSource(); } }
+        public bool streamThreadActive { get; set; }
+
+        public Action StreamSettingsChangeCallback { get; private set; }
+
+        protected StreamReader streamReader { get { return getStreamReader(); } }
+        protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
+        protected PlaybackData playbackData { get { return getPlaybackData(); } }
+        protected bool useDebug { get { return getUseDebug(); } }
+
+        public virtual void Initialize()
         {
-            m_StreamReader = GetComponent<StreamReader>();
-            if (m_StreamReader == null || GetStreamSettings() == null)
-            {
-                enabled = false;
-                return;
-            }
+            StreamSettingsChangeCallback += OnStreamSettingsChangeChange;
         }
 
-        protected virtual void Update()
-        {
-            if (!streamActive)
-                return;
-
-            if (m_StreamReader.streamSource != this)
-            {
-                streamActive = false;
-                return;
-            }
-        }
-
-        protected virtual void OnDestroy()
-        {
-            streamActive = false;
-        }
+        public abstract void StreamSourceUpdate();
+        protected abstract void OnStreamSettingsChangeChange();
+        public abstract void SetStreamSettings();
 
         public virtual void ActivateStreamSource()
         {
-            if (m_StreamReader == null)
+            if (!isStreamSource())
             {
-                // TODO Hack!
-                Awake();
-                if (m_StreamReader == null)
-                    return;
-            }
-
-            if (m_StreamReader.streamSource != this)
-            {
-                m_StreamReader.UnSetStreamSource();
-                m_StreamReader.SetStreamSource(this);
-                streamActive = true;
+                streamReader.UnSetStreamSource();
+                streamReader.SetStreamSource(this);
             }
         }
 
         public virtual void DeactivateStreamSource()
         {
-            if (m_StreamReader == null || m_StreamReader.streamSource == null)
-                return;
-
-            if (m_StreamReader.streamSource == this)
+            if (isStreamSource())
             {
-                m_StreamReader.UnSetStreamSource();
-                streamActive = false;
+                streamReader.UnSetStreamSource();
             }
         }
 
-        public abstract IStreamSettings GetStreamSettings();
+        public abstract void StartStreamThread();
+        public abstract void StartPlaybackDataUsage();
+        public abstract void StopPlaybackDataUsage();
+        public abstract void UpdateCurrentFrameBuffer(bool force = false);
+//        protected abstract IStreamSettings GetStreamSettings();
     }
 
-    public class Server : StreamSource
+    public class Server : StreamSource, IServerSettings
     {
         const int k_BufferPrewarm = 16;
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
 
-        [SerializeField]
-        StreamSettings m_StreamSettings;
+        public Func<int> getPortNumber { get; set; }
+        public Func<int> getFrameCatchupSize { get; set; }
 
-        [SerializeField]
-        int m_Port = 9000;
-
-        [SerializeField]
-        int m_CatchupSize = 2;
-
-        [SerializeField]
-        bool m_UseDebug;
-
-        [SerializeField]
-        PlaybackData m_PlaybackData;
+//        IStreamSettings streamSettings { get { return getStreamSettings(); }  }
+        int portNumber {get { return getPortNumber(); } }
+        int catchupSize {get { return getFrameCatchupSize(); } }
 
         Socket m_Socket;
-
-        bool m_ServerActive;
-
         int m_LastFrameNum;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>(k_BufferPrewarm);
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>(k_BufferPrewarm);
 
-        public StreamSettings streamSettings
-        {
-            get
-            {
-                if (m_StreamSettings == null)
-                    return null;
-
-                if (!m_StreamSettings.Initialized)
-                    m_StreamSettings.Initialize();
-
-                return m_StreamSettings;
-            }
-        }
-
-        [SerializeField]
-        float m_BufferSize;
-
-        [SerializeField]
-        [Range(1, 512)]
-        int m_TrackingLossPadding = 64;
-
         public bool useRecorder
         {
-            get { return m_ServerActive && Application.isEditor && Application.isPlaying && m_PlaybackData != null; }
+            get { return streamThreadActive && Application.isEditor && Application.isPlaying && playbackData != null; }
         }
 
         public bool isRecording { get; private set; }
 
-        protected override void Awake()
-        {
-            base.Awake();
+//        public override void Initialize()
+//        {
+//            base.Initialize();
+//
+//            for (var i = 0; i < k_BufferPrewarm; i++)
+//            {
+//                m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
+//            }
+//
+//            if (playbackData != null)
+//            {
+//                playbackData.CreatePlaybackBuffer(streamSettings);
+//            }
+//        }
 
-            Application.targetFrameRate = 60;
-            for (var i = 0; i < k_BufferPrewarm; i++)
-            {
-                m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
-            }
+//        protected override IStreamSettings GetStreamSettings()
+//        {
+//            return streamSettings;
+//        }
 
-            if (m_PlaybackData != null)
-            {
-                m_PlaybackData.CreatePlaybackBuffer(streamSettings);
-            }
-        }
-
-        void Start()
+        public override void StartStreamThread()
         {
             Debug.Log("Possible IP addresses:");
             foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             {
                 Debug.Log(address);
 
-                var endPoint = new IPEndPoint(address, m_Port);
+                var endPoint = new IPEndPoint(address, portNumber);
                 m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 m_Socket.Bind(endPoint);
                 m_Socket.Listen(100);
-                m_ServerActive = true;
                 m_LastFrameNum = -1;
                 var connectionAddress = address;
                 new Thread(() =>
@@ -175,7 +150,7 @@ namespace Unity.Labs.FacialRemote
 
                     var frameNumArray = new int[1];
 
-                    while (m_ServerActive)
+                    while (streamThreadActive)
                     {
                         if (m_Socket.Connected)
                         {
@@ -198,13 +173,13 @@ namespace Unity.Labs.FacialRemote
                                         if (isRecording)
                                         {
                                             // TODO better data copy
-                                            m_PlaybackData.activeByteRecord.Add(buffer.ToArray());
+                                            playbackData.activeByteRecord.Add(buffer.ToArray());
                                         }
 
                                         Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
 
                                         var frameNum = frameNumArray[0];
-                                        if (m_UseDebug)
+                                        if (useDebug)
                                         {
                                             if (m_LastFrameNum != frameNum - 1)
                                                 Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
@@ -229,42 +204,33 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void OnDisable()
+        public override void StartPlaybackDataUsage()
         {
-            if (isRecording)
-                StopRecording();
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            m_ServerActive = false;
-        }
-
-        public override IStreamSettings GetStreamSettings()
-        {
-            return streamSettings;
-        }
-
-        public void StartRecording()
-        {
-            if (m_StreamReader.streamSource == this)
+            if (isStreamSource())
+            {
+                SetStreamSettings();
                 isRecording = true;
+            }
         }
 
-        public void StopRecording()
+        public override void SetStreamSettings()
+        {
+            streamReader.UseStreamReaderSettings();
+        }
+
+        public override void StopPlaybackDataUsage()
         {
             isRecording = false;
         }
 
-        void DequeueBuffer()
+        public override void UpdateCurrentFrameBuffer(bool force = false)
         {
             if (m_BufferQueue.Count == 0)
                 return;
 
-            if (m_BufferQueue.Count > m_CatchupSize)
+            if (m_BufferQueue.Count > catchupSize)
             {
-                for (var i = 0; i < m_CatchupSize; i++)
+                for (var i = 0; i < catchupSize; i++)
                 {
                     m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue()); // Throw out an old frame
                 }
@@ -272,27 +238,46 @@ namespace Unity.Labs.FacialRemote
 
             var buffer = m_BufferQueue.Dequeue();
 
-            if (m_StreamReader.streamSource == this)
-                m_StreamReader.UpdateStreamData(this, ref buffer, 0);
+            if (force || isStreamSource())
+                streamReader.UpdateStreamData(ref buffer, 0);
 
             m_UnusedBuffers.Enqueue(buffer);
         }
 
-        protected override void Update()
+        public override void StreamSourceUpdate()
         {
-            if (m_StreamReader.streamSource != this && isRecording)
-                StopRecording();
+            if (!isStreamSource() && isRecording)
+                StopPlaybackDataUsage();
 
-            base.Update();
+            if (!streamActive || !isStreamSource())
+                return;
 
-            m_BufferSize = m_BufferQueue.Count;
-            if (m_UseDebug)
+//            m_BufferSize = m_BufferQueue.Count;
+//            if (useDebug)
+//            {
+//                if (m_BufferSize > catchupSize)
+//                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", m_BufferSize, catchupSize));
+//            }
+
+            UpdateCurrentFrameBuffer();
+        }
+
+        protected override void OnStreamSettingsChangeChange()
+        {
+            StopPlaybackDataUsage();
+
+            m_UnusedBuffers.Clear();
+            m_BufferQueue.Clear();
+
+            for (var i = 0; i < k_BufferPrewarm; i++)
             {
-                if (m_BufferSize > m_CatchupSize)
-                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", m_BufferSize, m_CatchupSize));
+                m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
             }
 
-            DequeueBuffer();
+            if (playbackData != null)
+            {
+                playbackData.CreatePlaybackBuffer(streamSettings);
+            }
         }
     }
 }

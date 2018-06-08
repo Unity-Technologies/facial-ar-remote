@@ -38,6 +38,10 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         StreamSettings m_StreamSettings;
 
+        [SerializeField]
+        [Range(0f, 1f)]
+        float m_TrackingLossSmoothing = 0.1f;
+
         int m_EyeLookDownLeftIndex;
         int m_EyeLookDownRightIndex;
         int m_EyeLookInLeftIndex;
@@ -120,17 +124,20 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            // TODO use connected stream settings
-            m_EyeLookDownLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
-            m_EyeLookInLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
-            m_EyeLookInRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
-            m_EyeLookOutLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = m_StreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
-
+            SetupBlendShapeIndices(m_StreamSettings);
 //            m_AnimatorSetup = StartCoroutine(SetupAnimator());
+        }
+
+        public void SetupBlendShapeIndices(StreamSettings streamSettings)
+        {
+            m_EyeLookDownLeftIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
+            m_EyeLookDownRightIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
+            m_EyeLookInLeftIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
+            m_EyeLookInRightIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
+            m_EyeLookOutLeftIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
+            m_EyeLookOutRightIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
+            m_EyeLookUpLeftIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
+            m_EyeLookUpRightIndex = streamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
         }
 
         void OnEnable()
@@ -163,7 +170,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        IEnumerator SetupAnimator()
+        public IEnumerator SetupAnimator()
         {
             while (m_Animator.isInitialized)
             {
@@ -357,10 +364,6 @@ namespace Unity.Labs.FacialRemote
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
             }
         }
-
-        [SerializeField]
-        [Range(0f, 1f)]
-        float m_TrackingLossSmoothing = 0.1f;
 
         void OnAnimatorIK(int layerIndex)
         {

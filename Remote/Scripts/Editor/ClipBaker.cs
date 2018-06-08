@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace Unity.Labs.FacialRemote
 {
     [Serializable]
-    public class ClipBaker
+    public class ClipBaker : IUseEditorCallbackTicker
     {
         const string k_BlendShapeProp = "blendShape.{0}";
 
@@ -34,6 +34,24 @@ namespace Unity.Labs.FacialRemote
         Dictionary<Object, string> m_ComponentPaths = new Dictionary<Object, string>();
 
         List<AnimationClipCurveData> m_AnimationClipCurveData = new List<AnimationClipCurveData>();
+
+        public bool Attached { get; private set; }
+
+        public void EditorTick()
+        {
+        }
+
+        public void Attach()
+        {
+            EditorCallbackTicker.AttachObject(this);
+            Attached = true;
+        }
+
+        public void Detach()
+        {
+            EditorCallbackTicker.DetachObject(this);
+            Attached = false;
+        }
 
         public ClipBaker(AnimationClip clip, StreamPlayback streamPlayback, BlendShapesController blendShapesController)
         {
@@ -110,7 +128,10 @@ namespace Unity.Labs.FacialRemote
             SetupClipBaker(transform);
 
             // bake frames
-            var streamSettings = m_StreamPlayback.GetStreamSettings();
+            var streamSettings = m_StreamPlayback.activePlaybackBuffer as IStreamSettings;
+            if (streamSettings == null)
+                return;
+
             var frameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
             var startFrameBuffer = new byte[streamSettings.BufferSize];
             Buffer.BlockCopy(m_StreamPlayback.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0, streamSettings.BufferSize);
@@ -120,7 +141,7 @@ namespace Unity.Labs.FacialRemote
             for (var i = 0; i < frameCount; i++)
             {
                 m_StreamPlayback.PlayBackLoop(true);
-                m_StreamPlayback.UpdateReader(true);
+                m_StreamPlayback.UpdateCurrentFrameBuffer(true);
                 m_BlendShapesController.InterpolateBlendShapes(true);
                 Buffer.BlockCopy(m_StreamPlayback.currentFrameBuffer, streamSettings.FrameTimeOffset, frameTimes, sizeof(float), sizeof(float));
 
