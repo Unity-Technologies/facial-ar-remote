@@ -42,7 +42,7 @@ namespace Unity.Labs.FacialRemote
             byte errorCheck = 42;
             if (state == PlayModeStateChange.ExitingPlayMode)
             {
-                if (m_ActiveBuffer != null)
+                if (m_ActiveBuffer != null && activeByteRecord != null)
                 {
                     m_LastRecord = new byte[activeByteRecord.Count * m_ActiveBuffer.BufferSize];
                     var buffer = new byte[m_ActiveBuffer.BufferSize];

@@ -24,6 +24,13 @@ namespace Unity.Labs.FacialRemote
     }
 
     [Serializable]
+    public class Mapping
+    {
+        public string from;
+        public string to;
+    }
+
+    [Serializable]
     [CreateAssetMenu(fileName = "Stream Settings", menuName = "FacialRemote/Stream Settings")]
     public class StreamSettings : ScriptableObject, IStreamSettings
     {

@@ -6,6 +6,31 @@ namespace Unity.Labs.FacialRemote
 {
     public class StreamReader : MonoBehaviour
     {
+        [Header("General Settings")]
+        [SerializeField]
+        StreamSettings m_StreamSettings;
+
+        [SerializeField]
+        bool m_UseDebug;
+
+        [SerializeField]
+        PlaybackData m_PlaybackData;
+
+        [Header("Server Settings")]
+        [SerializeField]
+        int m_Port = 9000;
+
+        [SerializeField]
+        int m_CatchupSize = 2;
+
+        [SerializeField]
+        [Range(1, 512)]
+        int m_TrackingLossPadding = 64;
+
+        [Header("Server Settings")]
+        [SerializeField]
+        BlendShapesController m_BlendShapesController;
+
         Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
 
@@ -14,19 +39,37 @@ namespace Unity.Labs.FacialRemote
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
 
+        public PlaybackData playbackData { get { return m_PlaybackData; } }
+        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
+
         public bool streamActive
         {
-            get { return enabled && streamSource != null && streamSource.streamActive; }
+            get { return enabled && activeStreamSource != null && activeStreamSource.streamActive; }
         }
 
-        public StreamSource streamSource { get; private set; }
+        public IStreamSource activeStreamSource { get; private set; }
+        public IStreamSettings ActiveStreamSettings { get; private set; }
+
+        public void UseStreamReaderSettings()
+        {
+            if (ActiveStreamSettings.Equals(m_StreamSettings))
+                return;
+
+            ActiveStreamSettings = m_StreamSettings;
+            OnStreamSettingsChange.Invoke();
+        }
+
+        public void SetActiveStreamSettings(IStreamSettings settings)
+        {
+            if (ActiveStreamSettings.Equals(settings))
+                return;
+
+            ActiveStreamSettings = settings;
+            OnStreamSettingsChange.Invoke();
+        }
 
         Vector3 m_LastPose;
         int m_TrackingLossCount;
-
-        [SerializeField]
-        [Range(1, 512)]
-        int m_TrackingLossPadding = 64;
 
         public float[] blendShapesBuffer { get { return m_BlendShapesBuffer; } }
         public float[] headPoseArray { get { return m_HeadPoseArray; } }
@@ -37,32 +80,53 @@ namespace Unity.Labs.FacialRemote
         float[] m_CameraPoseArray = new float[7];
 
         List<IConnectedController> m_ConnectedControllers = new List<IConnectedController>();
+        HashSet<IStreamSource> m_StreamSources = new HashSet<IStreamSource>();
 
-        public void SetStreamSource(StreamSource source)
+        Server m_Server;
+        StreamPlayback m_StreamPlayback;
+
+        public Server server
         {
-            if (source == null || source.GetStreamSettings() == null)
-                return;
-            streamSource = source;
-            m_BlendShapesBuffer = new float[source.GetStreamSettings().BlendShapeCount];
+            get
+            {
+                if (m_Server == null)
+                    Awake();
 
-            UpdateStreamSettings(source.GetStreamSettings());
+                return m_Server;
+            }
+        }
+
+        public StreamPlayback streamPlayback
+        {
+            get
+            {
+                if (m_StreamPlayback == null)
+                    Awake();
+                return m_StreamPlayback;
+            }
+        }
+
+        public void SetStreamSource(IStreamSource source)
+        {
+            if (source == null || source.getStreamSettings() == null)
+                return;
+            activeStreamSource = source;
+            m_BlendShapesBuffer = new float[source.getStreamSettings().BlendShapeCount];
+
+            UpdateStreamSettings(source.getStreamSettings());
         }
 
         public void UnSetStreamSource()
         {
-            streamSource = null;
+            activeStreamSource = null;
         }
 
         int[] frameNumArray = new int[1];
         float[] frameTimeArray = new float[1];
 
-        public void UpdateStreamData(StreamSource source, ref byte[] buffer, int position)
+        public void UpdateStreamData(ref byte[] buffer, int position)
         {
-            if (source == null || source != streamSource || streamSource.GetStreamSettings() == null)
-            {
-                return;
-            }
-            var streamSettings = streamSource.GetStreamSettings();
+            var streamSettings = activeStreamSource.getStreamSettings();
 
             Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, streamSettings.BlendShapeSize);
             Buffer.BlockCopy(buffer, position + streamSettings.HeadPoseOffset, m_HeadPoseArray, 0, streamSettings.PoseSize);
@@ -72,7 +136,8 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
             Buffer.BlockCopy(buffer, streamSettings.FrameTimeOffset, frameTimeArray, 0, streamSettings.FrameTimeSize);
 
-//            Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
+            if (m_UseDebug)
+                Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
 
             if (faceActive)
             {
@@ -101,6 +166,57 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        Action OnStreamSettingsChange = () => { };
+
+        void Awake()
+        {
+            m_Server = new Server();
+            ConnectInterfaces(m_Server);
+
+            m_StreamPlayback = new StreamPlayback();
+            ConnectInterfaces(m_StreamPlayback);
+
+            m_StreamSources.Add(m_Server);
+            m_StreamSources.Add(m_StreamPlayback);
+
+            ActiveStreamSettings = m_StreamSettings;
+            OnStreamSettingsChange.Invoke();
+        }
+
+        void ConnectInterfaces(object obj)
+        {
+            var streamSource = obj as IStreamSource;
+            if (streamSource != null)
+            {
+                streamSource.getStreamReader = () => this;
+                streamSource.isStreamSource = () => activeStreamSource == streamSource;
+                streamSource.getPlaybackData = () => m_PlaybackData;
+                streamSource.getUseDebug = () => m_UseDebug;
+                streamSource.getStreamSettings = () => ActiveStreamSettings;
+                OnStreamSettingsChange += streamSource.StreamSettingsChangeCallback;
+            }
+
+            var serverSettings = obj as IServerSettings;
+            if (serverSettings != null)
+            {
+                serverSettings.getPortNumber = () => m_Port;
+                serverSettings.getFrameCatchupSize = () => m_CatchupSize;
+            }
+        }
+
+        void Start()
+        {
+            Application.targetFrameRate = 120;
+
+            m_Server.Initialize();
+            m_StreamPlayback.Initialize();
+
+            foreach (var streamSource in m_StreamSources)
+            {
+                streamSource.StartStreamThread();
+            }
+        }
+
         void Update()
         {
             if (m_HeadPose.position == m_LastPose)
@@ -116,6 +232,38 @@ namespace Unity.Labs.FacialRemote
                 m_TrackingLossCount = 0;
             }
             m_LastPose = m_HeadPose.position;
+
+            m_StreamPlayback.UpdateTimes();
+
+            m_Server.StreamSourceUpdate();
+            m_StreamPlayback.StreamSourceUpdate();
+        }
+
+        void FixedUpdate()
+        {
+            m_StreamPlayback.UpdateTimes();
+        }
+
+        void LateUpdate()
+        {
+            m_StreamPlayback.UpdateTimes();
+        }
+
+        void OnDisable()
+        {
+            foreach (var streamSource in m_StreamSources)
+            {
+                streamSource.DeactivateStreamSource();
+            }
+        }
+
+        void OnDestroy()
+        {
+            foreach (var streamSource in m_StreamSources)
+            {
+                streamSource.streamThreadActive = false;
+            }
+            m_StreamSources.Clear();
         }
 
         static void ArrayToPose(float[] poseArray, ref Pose pose)
