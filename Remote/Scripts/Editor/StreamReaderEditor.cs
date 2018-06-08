@@ -127,9 +127,9 @@ namespace Unity.Labs.FacialRemote
                     continue;
 
                 var label = new GUIContent(buffer.name);
-                var buffer1 = buffer;
-                var isActive = streamPlayback.activePlaybackBuffer == buffer1;
-                menu.AddItem(label, isActive, () => streamPlayback.SetPlaybackBuffer(buffer1));
+                var playbackBuffer = buffer;
+                var isActive = streamPlayback.activePlaybackBuffer == playbackBuffer;
+                menu.AddItem(label, isActive, () => streamPlayback.SetPlaybackBuffer(playbackBuffer));
             }
             menu.ShowAsContext();
             Event.current.Use();

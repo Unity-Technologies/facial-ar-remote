@@ -34,6 +34,9 @@ namespace Unity.Labs.FacialRemote
         Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
 
+        int[] m_FrameNumArray = new int[1];
+        float[] m_FrameTimeArray = new float[1];
+
         public bool faceActive { get; private set; }
         public bool trackingActive { get; private set; }
         public Pose headPose { get { return m_HeadPose; } }
@@ -56,7 +59,7 @@ namespace Unity.Labs.FacialRemote
                 return;
 
             ActiveStreamSettings = m_StreamSettings;
-            OnStreamSettingsChange.Invoke();
+            m_OnStreamSettingsChange.Invoke();
         }
 
         public void SetActiveStreamSettings(IStreamSettings settings)
@@ -65,7 +68,7 @@ namespace Unity.Labs.FacialRemote
                 return;
 
             ActiveStreamSettings = settings;
-            OnStreamSettingsChange.Invoke();
+            m_OnStreamSettingsChange.Invoke();
         }
 
         Vector3 m_LastPose;
@@ -121,9 +124,6 @@ namespace Unity.Labs.FacialRemote
             activeStreamSource = null;
         }
 
-        int[] frameNumArray = new int[1];
-        float[] frameTimeArray = new float[1];
-
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
             var streamSettings = activeStreamSource.getStreamSettings();
@@ -133,11 +133,11 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, position + streamSettings.CameraPoseOffset, m_CameraPoseArray, 0, streamSettings.PoseSize);
             faceActive = buffer[position + streamSettings.BufferSize - 1] == 1;
 
-            Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
-            Buffer.BlockCopy(buffer, streamSettings.FrameTimeOffset, frameTimeArray, 0, streamSettings.FrameTimeSize);
+            Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, m_FrameNumArray, 0, streamSettings.FrameNumberSize);
+            Buffer.BlockCopy(buffer, streamSettings.FrameTimeOffset, m_FrameTimeArray, 0, streamSettings.FrameTimeSize);
 
             if (m_UseDebug)
-                Debug.Log(string.Format("{0} : {1}", frameNumArray[0], frameTimeArray[0]));
+                Debug.Log(string.Format("{0} : {1}", m_FrameNumArray[0], m_FrameTimeArray[0]));
 
             if (faceActive)
             {
@@ -166,7 +166,10 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        Action OnStreamSettingsChange = () => { };
+        Action m_OnStreamSettingsChange = () =>
+        {
+            Debug.Log("OnStreamSettingsChange" );
+        };
 
         void Awake()
         {
@@ -180,7 +183,7 @@ namespace Unity.Labs.FacialRemote
             m_StreamSources.Add(m_StreamPlayback);
 
             ActiveStreamSettings = m_StreamSettings;
-            OnStreamSettingsChange.Invoke();
+            m_OnStreamSettingsChange.Invoke();
         }
 
         void ConnectInterfaces(object obj)
@@ -193,7 +196,8 @@ namespace Unity.Labs.FacialRemote
                 streamSource.getPlaybackData = () => m_PlaybackData;
                 streamSource.getUseDebug = () => m_UseDebug;
                 streamSource.getStreamSettings = () => ActiveStreamSettings;
-                OnStreamSettingsChange += streamSource.StreamSettingsChangeCallback;
+//                m_OnStreamSettingsChange += streamSource.StreamSettingsChangeCallback;
+                m_OnStreamSettingsChange += streamSource.OnStreamSettingsChangeChange;
             }
 
             var serverSettings = obj as IServerSettings;

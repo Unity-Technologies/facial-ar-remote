@@ -33,6 +33,7 @@ namespace Unity.Labs.FacialRemote
 
         public override void StartStreamThread()
         {
+            streamThreadActive = true;
             new Thread(() =>
             {
                 while (streamThreadActive)
@@ -89,13 +90,13 @@ namespace Unity.Labs.FacialRemote
                 StopPlaybackDataUsage();
 
             m_ActivePlaybackBuffer = buffer;
-            if (m_ActivePlaybackBuffer == null || m_ActivePlaybackBuffer.recordStream.Length < m_ActivePlaybackBuffer.BufferSize)
+            if (activePlaybackBuffer == null || activePlaybackBuffer.recordStream.Length < activePlaybackBuffer.BufferSize)
             {
 //                enabled = false;
                 return false;
             }
 
-            m_ActivePlaybackBuffer.Initialize();
+            activePlaybackBuffer.Initialize();
 
             SetStreamSettings();
 
@@ -109,17 +110,23 @@ namespace Unity.Labs.FacialRemote
 
         public override void StartPlaybackDataUsage()
         {
+            if (activePlaybackBuffer == null)
+            {
+                Debug.Log("No Playback Buffer Set.");
+                SetPlaybackBuffer(playbackData.playbackBuffers[0]);
+            }
+
 //            var streamSettings = GetStreamSettings();
-            if (streamSettings != m_ActivePlaybackBuffer)
+            if (streamSettings != activePlaybackBuffer)
                 SetStreamSettings();
 
-            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
                 streamSettings.FrameTimeSize);
-            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, streamSettings.BufferSize + streamSettings.FrameTimeOffset,
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.BufferSize + streamSettings.FrameTimeOffset,
                 m_FrameTimes, streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
 
-            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
-            Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, 0, m_NextFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_NextFrameBuffer, 0, streamSettings.BufferSize);
 
             m_CurrentTime = Time.timeSinceLevelLoad;
             m_PlaybackStartTime = Time.timeSinceLevelLoad;
@@ -150,14 +157,14 @@ namespace Unity.Labs.FacialRemote
 
                 if (!m_LastFrame)
                 {
-                    if (m_BufferPosition + streamSettings.BufferSize > m_ActivePlaybackBuffer.recordStream.Length)
+                    if (m_BufferPosition + streamSettings.BufferSize > activePlaybackBuffer.recordStream.Length)
                     {
                         m_LastFrame = true;
                         m_NextFrameTime += k_TimeStep;
                     }
                     else
                     {
-                        Buffer.BlockCopy(m_ActivePlaybackBuffer.recordStream, m_BufferPosition,
+                        Buffer.BlockCopy(activePlaybackBuffer.recordStream, m_BufferPosition,
                             m_NextFrameBuffer, 0, streamSettings.BufferSize);
                         Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
                             streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
@@ -181,7 +188,7 @@ namespace Unity.Labs.FacialRemote
                 streamReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
         }
 
-        protected override void OnStreamSettingsChangeChange()
+        public override void OnStreamSettingsChangeChange()
         {
 //            var streamSettings = GetStreamSettings();
 

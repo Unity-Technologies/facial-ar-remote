@@ -24,7 +24,8 @@ namespace Unity.Labs.FacialRemote
         void ActivateStreamSource();
         void DeactivateStreamSource();
 
-        Action StreamSettingsChangeCallback { get; }
+//        Action StreamSettingsChangeCallback { get; }
+        void OnStreamSettingsChangeChange();
         void SetStreamSettings();
     }
 
@@ -45,7 +46,7 @@ namespace Unity.Labs.FacialRemote
         public bool streamActive { get { return isStreamSource(); } }
         public bool streamThreadActive { get; set; }
 
-        public Action StreamSettingsChangeCallback { get; private set; }
+//        public Action StreamSettingsChangeCallback { get; private set; }
 
         protected StreamReader streamReader { get { return getStreamReader(); } }
         protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
@@ -54,11 +55,11 @@ namespace Unity.Labs.FacialRemote
 
         public virtual void Initialize()
         {
-            StreamSettingsChangeCallback += OnStreamSettingsChangeChange;
+//            StreamSettingsChangeCallback += OnStreamSettingsChangeChange;
         }
 
         public abstract void StreamSourceUpdate();
-        protected abstract void OnStreamSettingsChangeChange();
+        public abstract void OnStreamSettingsChangeChange();
         public abstract void SetStreamSettings();
 
         public virtual void ActivateStreamSource()
@@ -142,6 +143,7 @@ namespace Unity.Labs.FacialRemote
                 m_Socket.Bind(endPoint);
                 m_Socket.Listen(100);
                 m_LastFrameNum = -1;
+                streamThreadActive = true;
                 var connectionAddress = address;
                 new Thread(() =>
                 {
@@ -262,7 +264,7 @@ namespace Unity.Labs.FacialRemote
             UpdateCurrentFrameBuffer();
         }
 
-        protected override void OnStreamSettingsChangeChange()
+        public override void OnStreamSettingsChangeChange()
         {
             StopPlaybackDataUsage();
 
