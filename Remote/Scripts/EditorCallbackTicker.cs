@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -21,18 +22,22 @@ namespace Unity.Labs.FacialRemote
 
         static void EnableTicker()
         {
-            EditorApplication.delayCall += EditorTick;
+            Debug.Log("Start Ticker");
+
+            EditorApplication.update += EditorTick;
             s_Enabled = false;
         }
 
         static void DisableTicker()
         {
-            EditorApplication.delayCall -= EditorTick;
+            Debug.Log("End Ticker");
+            EditorApplication.update -= EditorTick;
             s_Enabled = true;
         }
 
         static void EditorTick()
         {
+            Debug.Log("Tick");
             if (s_AttachedCallbackTickers == null)
             {
                 s_AttachedCallbackTickers = new HashSet<IUseEditorCallbackTicker>();

@@ -71,6 +71,24 @@ namespace Unity.Labs.FacialRemote
             m_OnStreamSettingsChange.Invoke();
         }
 
+        public void SetStreamSource(IStreamSource source)
+        {
+            if (source == null || source.getStreamSettings() == null)
+                return;
+            activeStreamSource = source;
+            m_BlendShapesBuffer = new float[source.getStreamSettings().BlendShapeCount];
+
+            UpdateStreamSettings(source.getStreamSettings());
+        }
+
+        public void UpdateStreamSettings(IStreamSettings streamSettings)
+        {
+            foreach (var controller in m_ConnectedControllers)
+            {
+                controller.SetStreamSettings(streamSettings);
+            }
+        }
+
         Vector3 m_LastPose;
         int m_TrackingLossCount;
 
@@ -107,16 +125,6 @@ namespace Unity.Labs.FacialRemote
                     Awake();
                 return m_StreamPlayback;
             }
-        }
-
-        public void SetStreamSource(IStreamSource source)
-        {
-            if (source == null || source.getStreamSettings() == null)
-                return;
-            activeStreamSource = source;
-            m_BlendShapesBuffer = new float[source.getStreamSettings().BlendShapeCount];
-
-            UpdateStreamSettings(source.getStreamSettings());
         }
 
         public void UnSetStreamSource()
@@ -156,14 +164,6 @@ namespace Unity.Labs.FacialRemote
         {
             if (m_ConnectedControllers.Contains(connectedController))
                 m_ConnectedControllers.Remove(connectedController);
-        }
-
-        public void UpdateStreamSettings(IStreamSettings streamSettings)
-        {
-            foreach (var controller in m_ConnectedControllers)
-            {
-                controller.SetStreamSettings(streamSettings);
-            }
         }
 
         Action m_OnStreamSettingsChange = () =>
@@ -211,9 +211,6 @@ namespace Unity.Labs.FacialRemote
         void Start()
         {
             Application.targetFrameRate = 120;
-
-            m_Server.Initialize();
-            m_StreamPlayback.Initialize();
 
             foreach (var streamSource in m_StreamSources)
             {

@@ -104,19 +104,34 @@ namespace Unity.Labs.FacialRemote
                         streamReader.streamPlayback.StartPlaybackDataUsage();
 
                         var animClip = new AnimationClip();
-                        var clipBaker = new ClipBaker(animClip, streamReader.streamPlayback, blendShapeController);
-
-                        // TODO needs to be animator transform
-                        clipBaker.BakeClip(blendShapeController.transform);
-
-                        // TODO stop saving over asset creating new guid
-                        AssetDatabase.CreateAsset(animClip, path);
-
-                        streamReader.streamPlayback.DeactivateStreamSource();
+                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamReader.streamPlayback, blendShapeController, path);
                     }
                 }
             }
+
+            if (m_ClipBaker != null)
+            {
+                if (m_ClipBaker.baking && m_ClipBaker.currentFrame < m_ClipBaker.frameCount)
+                {
+                    var progress = m_ClipBaker.currentFrame / (float)m_ClipBaker.frameCount;
+                    EditorUtility.DisplayProgressBar("Simple Progress Bar", "Shows a progress bar for the given seconds", progress);
+                    Repaint();
+                }
+                else
+                {
+                    EditorUtility.ClearProgressBar();
+                    if (m_ClipBaker.baking)
+                        m_ClipBaker.ApplyAnimationCurves();
+                    else
+                        m_ClipBaker.StopBake();
+
+                    m_ClipBaker = null;
+                    Repaint();
+                }
+            }
         }
+
+        ClipBaker m_ClipBaker;
 
         void ShowRecordStreamMenu(StreamPlayback streamPlayback, PlaybackBuffer[] buffers)
         {
