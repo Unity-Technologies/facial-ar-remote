@@ -23,8 +23,6 @@ namespace Unity.Labs.FacialRemote
         void StartStreamThread();
         void ActivateStreamSource();
         void DeactivateStreamSource();
-
-//        Action StreamSettingsChangeCallback { get; }
         void OnStreamSettingsChangeChange();
         void SetStreamSettings();
     }
@@ -45,8 +43,6 @@ namespace Unity.Labs.FacialRemote
 
         public bool streamActive { get { return isStreamSource(); } }
         public bool streamThreadActive { get; set; }
-
-//        public Action StreamSettingsChangeCallback { get; private set; }
 
         protected StreamReader streamReader { get { return getStreamReader(); } }
         protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
@@ -83,7 +79,6 @@ namespace Unity.Labs.FacialRemote
         public abstract void StartPlaybackDataUsage();
         public abstract void StopPlaybackDataUsage();
         public abstract void UpdateCurrentFrameBuffer(bool force = false);
-//        protected abstract IStreamSettings GetStreamSettings();
     }
 
     public class Server : StreamSource, IServerSettings
@@ -94,12 +89,12 @@ namespace Unity.Labs.FacialRemote
         public Func<int> getPortNumber { get; set; }
         public Func<int> getFrameCatchupSize { get; set; }
 
-//        IStreamSettings streamSettings { get { return getStreamSettings(); }  }
         int portNumber {get { return getPortNumber(); } }
         int catchupSize {get { return getFrameCatchupSize(); } }
 
         Socket m_Socket;
         int m_LastFrameNum;
+        int m_TakeNumber;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>(k_BufferPrewarm);
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>(k_BufferPrewarm);
@@ -111,28 +106,9 @@ namespace Unity.Labs.FacialRemote
 
         public bool isRecording { get; private set; }
 
-//        public override void Initialize()
-//        {
-//            base.Initialize();
-//
-//            for (var i = 0; i < k_BufferPrewarm; i++)
-//            {
-//                m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
-//            }
-//
-//            if (playbackData != null)
-//            {
-//                playbackData.CreatePlaybackBuffer(streamSettings);
-//            }
-//        }
-
-//        protected override IStreamSettings GetStreamSettings()
-//        {
-//            return streamSettings;
-//        }
-
         public override void StartStreamThread()
         {
+            m_TakeNumber = 0;
             Debug.Log("Possible IP addresses:");
             foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             {
@@ -208,10 +184,13 @@ namespace Unity.Labs.FacialRemote
 
         public override void StartPlaybackDataUsage()
         {
-            if (isStreamSource())
+            if (isStreamSource() && ! isRecording)
             {
                 SetStreamSettings();
+                playbackData.CreatePlaybackBuffer(streamSettings, m_TakeNumber);
                 isRecording = true;
+
+                m_TakeNumber++;
             }
         }
 
@@ -274,11 +253,6 @@ namespace Unity.Labs.FacialRemote
             for (var i = 0; i < k_BufferPrewarm; i++)
             {
                 m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
-            }
-
-            if (playbackData != null)
-            {
-                playbackData.CreatePlaybackBuffer(streamSettings);
             }
         }
     }

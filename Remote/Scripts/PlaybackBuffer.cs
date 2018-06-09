@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -83,20 +82,6 @@ namespace Unity.Labs.FacialRemote
 
         public byte[] recordStream { get { return m_RecordStream; } set { m_RecordStream = value; } }
 
-        Queue<byte[]> m_RecordQueue;
-
-        public Queue<byte[]> recordQueue
-        {
-            get
-            {
-                if (m_RecordQueue == null)
-                {
-                    m_RecordQueue = QueueRecordStream(recordStream, m_BufferSize);
-                }
-                return m_RecordQueue;
-            }
-        }
-
         PlaybackBuffer() {}
 
         public PlaybackBuffer(IStreamSettings streamSettings)
@@ -122,24 +107,6 @@ namespace Unity.Labs.FacialRemote
         public void Initialize()
         {
             m_Initialized = true;
-        }
-
-        static Queue<byte[]> QueueRecordStream(byte[] stream, int bufferSize = 266)
-        {
-            var queue = new Queue<byte[]>();
-            var empty = new byte();
-            for (var i = 0; i < stream.Length;)
-            {
-                var bytes = new byte[bufferSize];
-                for (var b = 0; b < bytes.Length; b++)
-                {
-                    bytes[b] = i + b < stream.Length ? stream[i + b] : empty;
-                }
-
-                queue.Enqueue(bytes);
-                i += bufferSize;
-            }
-            return queue;
         }
     }
 }
