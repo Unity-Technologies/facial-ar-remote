@@ -49,11 +49,6 @@ namespace Unity.Labs.FacialRemote
         protected PlaybackData playbackData { get { return getPlaybackData(); } }
         protected bool useDebug { get { return getUseDebug(); } }
 
-        public virtual void Initialize()
-        {
-//            StreamSettingsChangeCallback += OnStreamSettingsChangeChange;
-        }
-
         public abstract void StreamSourceUpdate();
         public abstract void OnStreamSettingsChangeChange();
         public abstract void SetStreamSettings();

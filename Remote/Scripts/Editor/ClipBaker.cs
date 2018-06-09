@@ -1,77 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Unity.Labs.FacialRemote
 {
-    [Serializable]
-    public class ClipBaker : IUseEditorCallbackTicker
+    public class ClipBaker //: IUseEditorCallbackTicker
     {
         const string k_BlendShapeProp = "blendShape.{0}";
 
-        [SerializeField]
         AnimationClip m_Clip;
 
-        [SerializeField]
         Animator m_Animator;
 
-        [SerializeField]
         StreamReader m_StreamReader;
 
-        [SerializeField]
         StreamPlayback m_StreamPlayback;
 
-        [SerializeField]
         AvatarController m_AvatarController;
 
-        [SerializeField]
         BlendShapesController m_BlendShapesController;
 
         Dictionary<Object, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
             new Dictionary<Object, Dictionary<string, AnimationClipCurveData>>();
-        Dictionary<Object, string> m_ComponentPaths = new Dictionary<Object, string>();
+//        Dictionary<Object, string> m_ComponentPaths = new Dictionary<Object, string>();
 
         List<AnimationClipCurveData> m_AnimationClipCurveData = new List<AnimationClipCurveData>();
 
-        public bool Attached { get; private set; }
+        float[] m_FrameTimes = new float[2];
 
-        public void EditorTick()
-        {
-        }
+        public int currentFrame { get { return m_CurrentFrame; } }
+        public int frameCount { get { return m_FrameCount; } }
+        public bool baking { get { return m_Baking; } }
 
-        public void Attach()
-        {
-            EditorCallbackTicker.AttachObject(this);
-            Attached = true;
-        }
 
-        public void Detach()
-        {
-            EditorCallbackTicker.DetachObject(this);
-            Attached = false;
-        }
+        string m_FilePath;
 
-        public ClipBaker(AnimationClip clip, StreamPlayback streamPlayback, BlendShapesController blendShapesController)
+        int m_CurrentFrame;
+        IStreamSettings m_StreamSettings;
+        int m_FrameCount;
+
+        bool m_Baking;
+
+        public ClipBaker(AnimationClip clip, StreamReader streamReader, StreamPlayback streamPlayback,
+            BlendShapesController blendShapesController, string filePath)
         {
             m_Clip = clip;
+            m_StreamReader = streamReader;
             m_StreamPlayback = streamPlayback;
             m_BlendShapesController = blendShapesController;
+            m_FilePath = filePath;
+
+            StartClipBaker(m_BlendShapesController.transform);
         }
 
-        public void SetupClipBaker(Transform transform)
-        {
-            m_ComponentPaths.Clear();
-            m_AnimationClipCurveData.Clear();
 
+        void StartClipBaker(Transform transform)
+        {
+//            m_ComponentPaths.Clear();
+            m_AnimationClipCurveData.Clear();
+            m_StreamPlayback.SetPlaybackBuffer(m_StreamPlayback.activePlaybackBuffer); //??
+            m_StreamReader.SetStreamSource(m_StreamPlayback);
             m_BlendShapesController.SetupBlendShapeIndices();
+
+            m_Baking = true;
 
             foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
             {
                 var path = AnimationUtility.CalculateTransformPath(skinnedMeshRenderer.transform, transform);
                 path = path.Replace(string.Format("{0}/", skinnedMeshRenderer.transform), "");
-                m_ComponentPaths.Add(skinnedMeshRenderer, path);
+//                m_ComponentPaths.Add(skinnedMeshRenderer, path);
 
                 var mesh = skinnedMeshRenderer.sharedMesh;
                 var count = mesh.blendShapeCount;
@@ -95,16 +95,96 @@ namespace Unity.Labs.FacialRemote
 
                 m_AnimationCurves.Add(skinnedMeshRenderer, animationCurves);
             }
+
+            m_StreamSettings = m_StreamPlayback.activePlaybackBuffer;
+            if (m_StreamSettings == null)
+            {
+                return;
+            }
+
+            m_CurrentFrame = 0;
+            m_FrameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / m_StreamSettings.BufferSize;
+
+            new Thread(() =>
+            {
+                Debug.Log("Start Bake Loop");
+
+                while (m_Baking)
+                {
+                    try
+                    {
+                        if (!BakeClipLoop())
+                        {
+                            StopBake();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e.Message);
+                        StopBake();
+                    }
+                }
+                Thread.Sleep(1);
+            }).Start();
         }
 
-        public void KeyBlendShapes(float time)
+        public void StopBake()
+        {
+            m_Baking = false;
+        }
+
+        public void ApplyAnimationCurves()
+        {
+            foreach (var curveData in m_AnimationClipCurveData)
+            {
+                m_Clip.SetCurve(curveData.path, curveData.type, curveData.propertyName, curveData.curve);
+                AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(curveData.path, curveData.type, curveData.propertyName), curveData.curve);
+            }
+
+            AssetDatabase.CreateAsset(m_Clip, m_FilePath);
+
+            StopBake();
+            Debug.Log("End Bake");
+        }
+
+        bool BakeClipLoop()
+        {
+            while (m_CurrentFrame <= frameCount)
+            {
+                Debug.Log("current frame : " + m_CurrentFrame);
+                if (m_CurrentFrame == 0)
+                {
+                    var startFrameBuffer = new byte[m_StreamSettings.BufferSize];
+                    Buffer.BlockCopy(m_StreamPlayback.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0, m_StreamSettings.BufferSize);
+                    Buffer.BlockCopy(startFrameBuffer, m_StreamSettings.FrameTimeOffset, m_FrameTimes, 0, sizeof(float));
+                    Thread.Sleep(1);
+                }
+
+                if (m_CurrentFrame < frameCount)
+                {
+                    m_StreamPlayback.PlayBackLoop(true);
+                    m_StreamPlayback.UpdateCurrentFrameBuffer(true);
+                    m_BlendShapesController.InterpolateBlendShapes(true);
+                    Buffer.BlockCopy(m_StreamPlayback.currentFrameBuffer, m_StreamSettings.FrameTimeOffset, m_FrameTimes, sizeof(float), sizeof(float));
+
+                    KeyBlendShapes(m_FrameTimes[1] - m_FrameTimes[0]);
+
+                    m_CurrentFrame++;
+                }
+
+                return true;
+            }
+            return false;
+        }
+
+        void KeyBlendShapes(float time)
         {
             foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
             {
-                var animationCurves = new Dictionary<string, AnimationClipCurveData>();
+                Dictionary<string, AnimationClipCurveData> animationCurves;
                 if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out animationCurves))
                 {
-                    var shapeIndices = new BlendShapeIndexData[] { };
+                    BlendShapeIndexData[] shapeIndices;
                     if (m_BlendShapesController.blendShapeIndices.TryGetValue(skinnedMeshRenderer, out shapeIndices))
                     {
                         var length = shapeIndices.Length;
@@ -119,40 +199,6 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
                 }
-
-            }
-        }
-
-        public void BakeClip(Transform transform)
-        {
-            SetupClipBaker(transform);
-
-            // bake frames
-            var streamSettings = m_StreamPlayback.activePlaybackBuffer as IStreamSettings;
-            if (streamSettings == null)
-                return;
-
-            var frameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
-            var startFrameBuffer = new byte[streamSettings.BufferSize];
-            Buffer.BlockCopy(m_StreamPlayback.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0, streamSettings.BufferSize);
-            var frameTimes = new float[2];
-            Buffer.BlockCopy(startFrameBuffer, streamSettings.FrameTimeOffset, frameTimes, 0, sizeof(float));
-
-            for (var i = 0; i < frameCount; i++)
-            {
-                m_StreamPlayback.PlayBackLoop(true);
-                m_StreamPlayback.UpdateCurrentFrameBuffer(true);
-                m_BlendShapesController.InterpolateBlendShapes(true);
-                Buffer.BlockCopy(m_StreamPlayback.currentFrameBuffer, streamSettings.FrameTimeOffset, frameTimes, sizeof(float), sizeof(float));
-
-                KeyBlendShapes(frameTimes[1] - frameTimes[0]);
-            }
-
-            // set clip data
-            foreach (var curveData in m_AnimationClipCurveData)
-            {
-                m_Clip.SetCurve(curveData.path, curveData.type, curveData.propertyName, curveData.curve);
-                AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(curveData.path, curveData.type, curveData.propertyName), curveData.curve);
             }
         }
     }
