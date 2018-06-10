@@ -98,12 +98,12 @@ namespace Unity.Labs.FacialRemote
 
             activePlaybackBuffer.Initialize();
 
-            SetStreamSettings();
+            SetReaderStreamSettings();
 
             return true;
         }
 
-        public override void SetStreamSettings()
+        public override void SetReaderStreamSettings()
         {
             streamReader.SetActiveStreamSettings(activePlaybackBuffer);
         }
@@ -118,7 +118,7 @@ namespace Unity.Labs.FacialRemote
 
 //            var streamSettings = GetStreamSettings();
             if (streamSettings != activePlaybackBuffer)
-                SetStreamSettings();
+                SetReaderStreamSettings();
 
             Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
                 streamSettings.FrameTimeSize);

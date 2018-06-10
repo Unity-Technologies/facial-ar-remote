@@ -540,9 +540,12 @@ namespace Unity.Labs.FacialRemote
                 m_ARHeadPose.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPose.localRotation, m_TrackingLossSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
             }
+
+//            DoAnimatorIK();
         }
 
         void OnAnimatorIK(int layerIndex)
+//        void DoAnimatorIK()
         {
             if (!animatorReady)
                 return;
@@ -552,12 +555,12 @@ namespace Unity.Labs.FacialRemote
             if (controller == null)
                 return;
 
-            if (layerIndex == m_HeadLookLayer)
-            {
-                controller.layers[layerIndex].defaultWeight = 1f;
-                m_Animator.SetLookAtWeight(1f, 0, m_Weight, 0f);
+//            if (layerIndex == m_HeadLookLayer)
+//            {
+//                controller.layers[layerIndex].defaultWeight = 1f;
+//                m_Animator.SetLookAtWeight(1f, 0, m_Weight, 0f);
                 var headLookPos = m_HeadPoseLookAt.position - m_HeadBone.position + m_Animator.transform.position;
-                m_Animator.SetLookAtPosition(headLookPos);
+//                m_Animator.SetLookAtPosition(headLookPos);
 
                 var mirror =  m_OtherThing.localRotation;
                 mirror.w *= -1f;
@@ -578,14 +581,14 @@ namespace Unity.Labs.FacialRemote
                         Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, m_HeadAmount);
                     m_Animator.SetBoneLocalRotation(HumanBodyBones.Head, headRot);
                 }
-            }
-            else if (layerIndex == m_EyeLookLayer)
-            {
-                controller.layers[layerIndex].defaultWeight = 1f;
-                m_Animator.SetLookAtWeight(1f,0f,0f,1f);
+//            }
+//            else if (layerIndex == m_EyeLookLayer)
+//            {
+//                controller.layers[layerIndex].defaultWeight = 1f;
+//                m_Animator.SetLookAtWeight(1f,0f,0f,1f);
                 var eyeLookPos = m_EyePoseLookAt.position - m_AREyePose.position + m_Animator.transform.position;
-                m_Animator.SetLookAtPosition(eyeLookPos);
-            }
+//                m_Animator.SetLookAtPosition(eyeLookPos);
+//            }
 #endif
         }
     }
