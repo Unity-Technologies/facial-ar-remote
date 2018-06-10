@@ -73,6 +73,8 @@ namespace Unity.Labs.FacialRemote
         {
 //            if (m_ActiveStreamSettings != null && m_ActiveStreamSettings.Equals(settings))
 //                return;
+            if (settings == null)
+                return;
 
             m_ActiveStreamSettings = settings;
             m_ActiveStreamSettings.Initialize();
