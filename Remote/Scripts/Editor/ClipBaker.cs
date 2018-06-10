@@ -103,28 +103,6 @@ namespace Unity.Labs.FacialRemote
             m_CurrentFrame = 0;
             m_FrameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / m_StreamSettings.BufferSize;
             m_AvatarController.StartAnimatorSetup();
-
-            new Thread(() =>
-            {
-                Debug.Log("Start Bake Loop");
-
-                while (m_Baking)
-                {
-                    try
-                    {
-                        if (!BakeClipLoop())
-                        {
-                            StopBake();
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e.Message);
-                        StopBake();
-                    }
-                }
-                Thread.Sleep(1);
-            }).Start();
         }
 
         public void StopBake()
@@ -151,17 +129,18 @@ namespace Unity.Labs.FacialRemote
 
         public bool avatarSettingUp;
 
-        bool BakeClipLoop()
+        public void BakeClipLoop()
         {
-//
-//            while (avatarSettingUp)
-//            {
-//                return true;
-//            }
+            m_Baking = BakeClipLoopInternal();
+            if (!m_Baking)
+                StopBake();
+        }
 
+        bool BakeClipLoopInternal()
+        {
             while (m_CurrentFrame <= frameCount)
             {
-                Debug.Log("current frame : " + m_CurrentFrame);
+//                Debug.Log("current frame : " + m_CurrentFrame);
                 if (m_CurrentFrame == 0)
                 {
                     var startFrameBuffer = new byte[m_StreamSettings.BufferSize];

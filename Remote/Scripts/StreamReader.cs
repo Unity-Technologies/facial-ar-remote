@@ -55,41 +55,42 @@ namespace Unity.Labs.FacialRemote
 
         public bool streamActive
         {
-            get { return enabled && activeStreamSource != null && activeStreamSource.streamActive; }
+            get { return enabled && m_ActiveStreamSource != null && m_ActiveStreamSource.streamActive; }
         }
 
-        public IStreamSource activeStreamSource { get; private set; }
-        public IStreamSettings ActiveStreamSettings { get; private set; }
+        IStreamSource m_ActiveStreamSource;
+        IStreamSettings m_ActiveStreamSettings;
 
         public void UseStreamReaderSettings()
         {
-            if (ActiveStreamSettings.Equals(m_StreamSettings))
+            if (m_ActiveStreamSettings.Equals(m_StreamSettings))
                 return;
 
-            ActiveStreamSettings = m_StreamSettings;
-            m_OnStreamSettingsChange.Invoke();
+            SetActiveStreamSettings(m_StreamSettings);
         }
 
         public void SetActiveStreamSettings(IStreamSettings settings)
         {
-            if (ActiveStreamSettings.Equals(settings))
-                return;
+//            if (m_ActiveStreamSettings != null && m_ActiveStreamSettings.Equals(settings))
+//                return;
 
-            ActiveStreamSettings = settings;
+            m_ActiveStreamSettings = settings;
+            m_ActiveStreamSettings.Initialize();
             m_OnStreamSettingsChange.Invoke();
         }
 
         public void SetStreamSource(IStreamSource source)
         {
-            if (source == null || source.getStreamSettings() == null)
+            if (source == null)
                 return;
-            activeStreamSource = source;
-            m_BlendShapesBuffer = new float[source.getStreamSettings().BlendShapeCount];
+            m_ActiveStreamSource = source;
+            source.SetReaderStreamSettings();
+            m_BlendShapesBuffer = new float[m_ActiveStreamSettings.BlendShapeCount];
 
-            UpdateStreamSettings(source.getStreamSettings());
+            UpdateControllerStreamSettings(m_ActiveStreamSettings);
         }
 
-        public void UpdateStreamSettings(IStreamSettings streamSettings)
+        public void UpdateControllerStreamSettings(IStreamSettings streamSettings)
         {
             foreach (var controller in m_ConnectedControllers)
             {
@@ -137,12 +138,12 @@ namespace Unity.Labs.FacialRemote
 
         public void UnSetStreamSource()
         {
-            activeStreamSource = null;
+            m_ActiveStreamSource = null;
         }
 
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
-            var streamSettings = activeStreamSource.getStreamSettings();
+            var streamSettings = m_ActiveStreamSettings;
 
             Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, streamSettings.BlendShapeSize);
             Buffer.BlockCopy(buffer, position + streamSettings.HeadPoseOffset, m_HeadPoseArray, 0, streamSettings.PoseSize);
@@ -190,8 +191,7 @@ namespace Unity.Labs.FacialRemote
             m_StreamSources.Add(m_Server);
             m_StreamSources.Add(m_StreamPlayback);
 
-            ActiveStreamSettings = m_StreamSettings;
-            m_OnStreamSettingsChange.Invoke();
+            SetActiveStreamSettings(m_StreamSettings);
         }
 
         void ConnectInterfaces(object obj)
@@ -200,11 +200,10 @@ namespace Unity.Labs.FacialRemote
             if (streamSource != null)
             {
                 streamSource.getStreamReader = () => this;
-                streamSource.isStreamSource = () => activeStreamSource == streamSource;
+                streamSource.isStreamSource = () => m_ActiveStreamSource == streamSource;
                 streamSource.getPlaybackData = () => m_PlaybackData;
                 streamSource.getUseDebug = () => m_UseDebug;
-                streamSource.getStreamSettings = () => ActiveStreamSettings;
-//                m_OnStreamSettingsChange += streamSource.StreamSettingsChangeCallback;
+                streamSource.getStreamSettings = () => m_ActiveStreamSettings;
                 m_OnStreamSettingsChange += streamSource.OnStreamSettingsChangeChange;
             }
 

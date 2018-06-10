@@ -18,7 +18,7 @@ namespace Unity.Labs.FacialRemote
 
             using (new EditorGUI.DisabledGroupScope(!Application.isPlaying))
             {
-                if (!streamReader.streamActive)
+                if (!streamReader.server.streamActive)
                 {
                     if (GUILayout.Button("Start Server"))
                         streamReader.server.ActivateStreamSource();
@@ -103,7 +103,7 @@ namespace Unity.Labs.FacialRemote
                         var animator = streamReader.animator;
 
                         streamReader.streamPlayback.ActivateStreamSource();
-                        streamReader.streamPlayback.SetStreamSettings();
+                        streamReader.streamPlayback.SetReaderStreamSettings();
                         streamReader.streamPlayback.StartPlaybackDataUsage();
 
                         var animClip = new AnimationClip();
@@ -124,6 +124,10 @@ namespace Unity.Labs.FacialRemote
                     {
                         streamReader.avatarController.StopAnimatorSetup();
                         m_ClipBaker.StopBake();
+                    }
+                    else
+                    {
+                        m_ClipBaker.BakeClipLoop();
                     }
                     Repaint();
                 }

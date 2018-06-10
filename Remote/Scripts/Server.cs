@@ -8,74 +8,6 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public interface IStreamSource
-    {
-        bool streamActive { get;}
-        bool streamThreadActive { get; set;}
-        Func<bool> isStreamSource { get; set; }
-        Func<StreamReader> getStreamReader { get; set; }
-
-        Func<PlaybackData> getPlaybackData { get; set; }
-        Func<bool> getUseDebug { get; set; }
-
-        Func<IStreamSettings> getStreamSettings { get; set; }
-
-        void StartStreamThread();
-        void ActivateStreamSource();
-        void DeactivateStreamSource();
-        void OnStreamSettingsChangeChange();
-        void SetStreamSettings();
-    }
-
-    public interface IServerSettings
-    {
-        Func<int> getPortNumber { get; set; }
-        Func<int> getFrameCatchupSize { get; set; }
-    }
-
-    public abstract class StreamSource : IStreamSource
-    {
-        public Func<bool> isStreamSource { get; set; }
-        public Func<IStreamSettings> getStreamSettings { get; set; }
-        public Func<PlaybackData> getPlaybackData { get; set; }
-        public Func<bool> getUseDebug { get; set; }
-        public Func<StreamReader> getStreamReader { get; set; }
-
-        public bool streamActive { get { return isStreamSource(); } }
-        public bool streamThreadActive { get; set; }
-
-        protected StreamReader streamReader { get { return getStreamReader(); } }
-        protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
-        protected PlaybackData playbackData { get { return getPlaybackData(); } }
-        protected bool useDebug { get { return getUseDebug(); } }
-
-        public abstract void StreamSourceUpdate();
-        public abstract void OnStreamSettingsChangeChange();
-        public abstract void SetStreamSettings();
-
-        public virtual void ActivateStreamSource()
-        {
-            if (!isStreamSource())
-            {
-                streamReader.UnSetStreamSource();
-                streamReader.SetStreamSource(this);
-            }
-        }
-
-        public virtual void DeactivateStreamSource()
-        {
-            if (isStreamSource())
-            {
-                streamReader.UnSetStreamSource();
-            }
-        }
-
-        public abstract void StartStreamThread();
-        public abstract void StartPlaybackDataUsage();
-        public abstract void StopPlaybackDataUsage();
-        public abstract void UpdateCurrentFrameBuffer(bool force = false);
-    }
-
     public class Server : StreamSource, IServerSettings
     {
         const int k_BufferPrewarm = 16;
@@ -181,7 +113,7 @@ namespace Unity.Labs.FacialRemote
         {
             if (isStreamSource() && ! isRecording)
             {
-                SetStreamSettings();
+                SetReaderStreamSettings();
                 playbackData.CreatePlaybackBuffer(streamSettings, m_TakeNumber);
                 isRecording = true;
 
@@ -189,7 +121,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public override void SetStreamSettings()
+        public override void SetReaderStreamSettings()
         {
             streamReader.UseStreamReaderSettings();
         }
