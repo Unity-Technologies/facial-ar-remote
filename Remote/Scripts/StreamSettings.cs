@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.iOS;
 
@@ -7,7 +8,6 @@ namespace Unity.Labs.FacialRemote
 {
     public interface IStreamSettings
     {
-        bool Initialized { get; }
         byte ErrorCheck { get; }
         int BlendShapeCount { get; }
         int BlendShapeSize { get; }
@@ -20,7 +20,10 @@ namespace Unity.Labs.FacialRemote
         int FrameTimeOffset { get; }
         int BufferSize { get; }
 
-        void Initialize();
+        string[] locations { get; }
+        Mapping[] mappings { get; }
+
+        int GetLocationIndex(string location);
     }
 
     [Serializable]
@@ -43,20 +46,36 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Mapping[] m_Mappings = {};
 
-        [NonSerialized]
-        bool m_Initialized;
+        [SerializeField]
+        public int m_BlendShapeSize;
+        [SerializeField]
+        public int m_PoseSize;
+        [SerializeField]
+        public int m_FrameNumberSize;
+        [SerializeField]
+        public int m_FrameTimeSize;
+        [SerializeField]
+        public int m_HeadPoseOffset;
+        [SerializeField]
+        public int m_CameraPoseOffset;
+        [SerializeField]
+        public int m_FrameNumberOffset;
+        [SerializeField]
+        public int m_FrameTimeOffset;
 
-        public bool Initialized { get { return m_Initialized; } }
+        [SerializeField]
+        string[] m_Locations = { };
+
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
-        public int BlendShapeSize { get; private set; }
-        public int PoseSize { get; private set; }
-        public int FrameNumberSize { get; private set; }
-        public int FrameTimeSize { get; private set; }
-        public int HeadPoseOffset { get; private set; }
-        public int CameraPoseOffset  { get; private set; }
-        public int FrameNumberOffset  { get; private set; }
-        public int FrameTimeOffset { get; private set; }
+        public int BlendShapeSize { get { return m_BlendShapeSize; } }
+        public int PoseSize { get { return m_PoseSize; } }
+        public int FrameNumberSize { get { return m_FrameNumberSize; } }
+        public int FrameTimeSize { get { return m_FrameTimeSize; } }
+        public int HeadPoseOffset { get { return m_HeadPoseOffset; } }
+        public int CameraPoseOffset  { get { return m_CameraPoseOffset; } }
+        public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
+        public int FrameTimeOffset { get { return m_FrameTimeOffset;  } }
 
         // 0 - Error check
         // 1-204 - Blendshapes
@@ -69,70 +88,26 @@ namespace Unity.Labs.FacialRemote
 
         public Mapping[] mappings { get { return m_Mappings; }}
 
-        public List<string> locations
+        public string[] locations
         {
             get
             {
-                if (m_Locations == null)
+                if (m_Locations.Length != m_BlendShapeCount)
                 {
-                    m_Locations = new List<string>();
-                }
-                if (m_Locations.Count != m_BlendShapeCount)
-                {
-                    m_Locations.Clear();
+                    var locs = new List<string>();
                     foreach (var location in ARBlendShapeLocation.Locations)
                     {
-                        m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                        locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
                     }
+                    m_Locations.ToArray();
                 }
                 return m_Locations;
             }
         }
 
-        List<string> m_Locations = new List<string>();
-
-         public void Initialize()
-         {
-            if (!m_Initialized)
-            {
-                BlendShapeSize = sizeof(float) * m_BlendShapeCount;
-                PoseSize = sizeof(float) * 7;
-                FrameNumberSize = sizeof(int);
-                FrameTimeSize = sizeof(float);
-                HeadPoseOffset = BlendShapeSize + 1;
-                CameraPoseOffset = HeadPoseOffset + PoseSize;
-                FrameNumberOffset = CameraPoseOffset + PoseSize;
-                FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
-                BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
-                Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
-
-                foreach (var location in ARBlendShapeLocation.Locations)
-                {
-                    m_Locations.Add(Filter(location)); // Eliminate capitalization and _ mismatch
-                }
-
-                var mappingLength = m_Mappings.Length;
-                for (var i = 0; i < mappingLength; i++)
-                {
-                    var mapping = m_Mappings[i];
-                    mapping.from = Filter(mapping.from);
-                    mapping.to = Filter(mapping.to);
-                }
-
-                m_Locations.Sort();
-
-                m_Initialized = true;
-            }
-        }
-
-        void OnDestroy()
-        {
-            m_Initialized = false;
-        }
-
         public int GetLocationIndex(string location)
         {
-            return locations.IndexOf(Filter(location));
+            return Array.IndexOf(locations, Filter(location));
         }
 
         public static string Filter(string @string)
@@ -142,7 +117,35 @@ namespace Unity.Labs.FacialRemote
 
         void OnValidate()
         {
-            m_Initialized = false;
+//            m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
+//            m_PoseSize = sizeof(float) * 7;
+//            m_FrameNumberSize = sizeof(int);
+//            m_FrameTimeSize = sizeof(float);
+//            m_HeadPoseOffset = BlendShapeSize + 1;
+//            m_CameraPoseOffset = HeadPoseOffset + PoseSize;
+//            m_FrameNumberOffset = CameraPoseOffset + PoseSize;
+//            m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
+//            BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
+//            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
+
+            if (m_Locations.Length == 0)
+            {
+                var locs = new List<string>();
+                foreach (var location in ARBlendShapeLocation.Locations)
+                {
+                    locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                }
+                locs.Sort();
+                m_Locations = locs.ToArray();
+            }
+
+//            var mappingLength = m_Mappings.Length;
+//            for (var i = 0; i < mappingLength; i++)
+//            {
+//                var mapping = m_Mappings[i];
+//                mapping.from = Filter(mapping.from);
+//                mapping.to = Filter(mapping.to);
+//            }
         }
     }
 }

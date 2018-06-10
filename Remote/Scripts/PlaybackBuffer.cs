@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -12,9 +15,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [HideInInspector]
         byte[] m_RecordStream = { };
-
-        [NonSerialized]
-        bool m_Initialized;
 
         [SerializeField]
         [HideInInspector]
@@ -60,7 +60,12 @@ namespace Unity.Labs.FacialRemote
         [HideInInspector]
         int m_BufferSize = 270;
 
-        public bool Initialized { get { return m_Initialized; } }
+        [SerializeField]
+        string[] m_Locations = {};
+
+        [SerializeField]
+        Mapping[] m_Mappings = {};
+
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get { return m_BlendShapeSize; } }
@@ -72,7 +77,26 @@ namespace Unity.Labs.FacialRemote
         public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
         public int FrameTimeOffset { get { return m_FrameTimeOffset; } }
         public int BufferSize { get { return m_BufferSize; } }
+        public Mapping[] mappings { get { return m_Mappings; } }
 
+//        public string[] locations { get { return m_Locations; } }
+
+        public string[] locations
+        {
+            get
+            {
+                if (m_Locations.Length != m_BlendShapeCount)
+                {
+                    var locs = new List<string>();
+                    foreach (var location in ARBlendShapeLocation.Locations)
+                    {
+                        locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                    }
+                    m_Locations.ToArray();
+                }
+                return m_Locations;
+            }
+        }
 
         public string name
         {
@@ -91,9 +115,6 @@ namespace Unity.Labs.FacialRemote
 
         public void SetStreamSettings(IStreamSettings streamSettings)
         {
-            if (!streamSettings.Initialized)
-                streamSettings.Initialize();
-
             m_BufferSize = streamSettings.BufferSize;
             m_ErrorCheck = streamSettings.ErrorCheck;
             m_BlendShapeCount = streamSettings.BlendShapeCount;
@@ -102,11 +123,31 @@ namespace Unity.Labs.FacialRemote
             m_HeadPoseOffset = streamSettings.HeadPoseOffset;
             m_CameraPoseOffset = streamSettings.CameraPoseOffset;
             m_FrameNumberOffset = streamSettings.FrameNumberOffset;
+
+            m_Locations = streamSettings.locations;
+            m_Mappings = streamSettings.mappings;
         }
 
-        public void Initialize()
+        public static string Filter(string @string)
         {
-            m_Initialized = true;
+            return @string.ToLower().Replace("_", "");
+        }
+
+        public int GetLocationIndex(string location)
+        {
+//            return locations.IndexOf(Filter(location));
+            return Array.IndexOf(locations, Filter(location));
+        }
+
+        public void UseDefaultLocations()
+        {
+            var locs = new List<string>();
+            foreach (var location in ARBlendShapeLocation.Locations)
+            {
+                locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+            }
+            locs.Sort();
+            m_Locations = locs.ToArray();
         }
     }
 }

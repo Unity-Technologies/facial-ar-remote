@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class ClipBaker //: IUseEditorCallbackTicker
+    public class ClipBaker
     {
         const string k_BlendShapeProp = "blendShape.{0}";
 
@@ -19,7 +19,7 @@ namespace Unity.Labs.FacialRemote
 
         StreamPlayback m_StreamPlayback;
 
-        AvatarController m_AvatarController;
+        CharacterRigController m_CharacterRigController;
 
         BlendShapesController m_BlendShapesController;
 
@@ -43,14 +43,14 @@ namespace Unity.Labs.FacialRemote
         bool m_Baking;
 
         public ClipBaker(AnimationClip clip, StreamReader streamReader, StreamPlayback streamPlayback,
-            BlendShapesController blendShapesController, AvatarController avatarController, Animator animator, string filePath)
+            BlendShapesController blendShapesController, CharacterRigController characterRigController, Animator animator, string filePath)
         {
             m_Clip = clip;
             m_StreamReader = streamReader;
             m_StreamPlayback = streamPlayback;
             m_BlendShapesController = blendShapesController;
             m_Animator = animator;
-            m_AvatarController = avatarController;
+            m_CharacterRigController = characterRigController;
             m_FilePath = filePath;
 
             StartClipBaker(m_BlendShapesController.transform);
@@ -102,7 +102,7 @@ namespace Unity.Labs.FacialRemote
 
             m_CurrentFrame = 0;
             m_FrameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / m_StreamSettings.BufferSize;
-            m_AvatarController.StartAnimatorSetup();
+            m_CharacterRigController.SetupCharacterRigController();
         }
 
         public void StopBake()

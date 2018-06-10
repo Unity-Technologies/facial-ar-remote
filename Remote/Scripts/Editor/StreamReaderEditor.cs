@@ -97,9 +97,8 @@ namespace Unity.Labs.FacialRemote
                     if (path.Length != 0)
                     {
                         var blendShapeController = streamReader.blendShapesController;
-                        blendShapeController.Init();
 
-                        var avatarController = streamReader.avatarController;
+                        var avatarController = streamReader.characterRigController;
                         var animator = streamReader.animator;
 
                         streamReader.streamPlayback.ActivateStreamSource();
@@ -122,7 +121,6 @@ namespace Unity.Labs.FacialRemote
                     if (EditorUtility.DisplayCancelableProgressBar("Animation Baking Progress",
                         "Progress in baking animation frames", progress))
                     {
-                        streamReader.avatarController.StopAnimatorSetup();
                         m_ClipBaker.StopBake();
                     }
                     else

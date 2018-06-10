@@ -88,5 +88,16 @@ namespace Unity.Labs.FacialRemote
             m_RecordTakes.Add(playbackBuffer, byteRecord);
             m_ActiveRecords.Add(byteRecord);
         }
+
+        void OnValidate()
+        {
+            foreach (var playbackBuffer in m_PlaybackBuffers)
+            {
+                if (playbackBuffer.locations.Length == 0)
+                {
+                    playbackBuffer.UseDefaultLocations();
+                }
+            }
+        }
     }
 }

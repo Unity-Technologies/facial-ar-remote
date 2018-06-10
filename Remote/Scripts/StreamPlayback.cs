@@ -96,8 +96,6 @@ namespace Unity.Labs.FacialRemote
                 return false;
             }
 
-            activePlaybackBuffer.Initialize();
-
             SetReaderStreamSettings();
 
             return true;
