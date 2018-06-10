@@ -79,11 +79,11 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [Range(0f, 1f)]
-        float m_HeadFollowAmount = 0.7f;
+        float m_HeadFollowAmount = 0.6f;
 
         [SerializeField]
         [Range(0f, 1f)]
-        float m_NeckFollowAmount = 0.3f;
+        float m_NeckFollowAmount = 0.4f;
 
         Pose m_HeadStartPose;
         Pose m_NeckStartPose;
@@ -427,15 +427,14 @@ namespace Unity.Labs.FacialRemote
             yield return null;
         }
 
+        Quaternion m_BackwardRot = Quaternion.Euler(0, 180, 0);
+
         void LocalizeFacePose()
         {
-            var mirror = m_Reader.headPose.rotation;
-            mirror.w *= -1f;
-
             m_LocalizedHeadParent.position = m_Reader.headPose.position;
             m_LocalizedHeadParent.LookAt(m_Reader.cameraPose.position);
 
-            m_LocalizedHeadRot.rotation = m_Reader.headPose.rotation;
+            m_LocalizedHeadRot.rotation = m_Reader.headPose.rotation * m_BackwardRot;
             m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
         }
 
@@ -477,8 +476,15 @@ namespace Unity.Labs.FacialRemote
 
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
 
-                var headRot = m_UseLocalizedHeadRot ? m_OtherThing.localRotation : m_Reader.headPose.rotation;
+//                var headRot = m_UseLocalizedHeadRot ? m_OtherThing.localRotation : m_Reader.headPose.rotation;
+                var headRot = m_LocalizedHeadRot.localRotation;
+//                headRot *= m_BackwardRot;
+//                headRot.w = -1f; // mirror ?
                 var neckRot = headRot;
+
+                //                var mirror =  m_OtherThing.localRotation;
+//                mirror.w *= -1f;
+
                 headRot = Quaternion.Slerp(m_HeadStartPose.rotation, headRot, m_HeadFollowAmount);
                 m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, m_HeadSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
