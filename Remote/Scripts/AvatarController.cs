@@ -125,7 +125,6 @@ namespace Unity.Labs.FacialRemote
             }
 
             SetupBlendShapeIndices(m_StreamSettings);
-//            m_AnimatorSetup = StartCoroutine(SetupAnimator());
         }
 
         public void SetupBlendShapeIndices(StreamSettings streamSettings)
@@ -143,7 +142,10 @@ namespace Unity.Labs.FacialRemote
         void OnEnable()
         {
             if (m_AnimatorSetup == null)
-                m_AnimatorSetup = StartCoroutine(SetupAnimator());
+            {
+                m_SetupRunning = true;
+                m_AnimatorSetup = StartCoroutine(SetupAnimatorInternal());
+            }
         }
 
         void OnDisable()
@@ -170,134 +172,308 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public IEnumerator SetupAnimator()
+        bool m_SetupRunning;
+        public bool setupRunning { get { return m_SetupRunning; } }
+
+
+        public void StartAnimatorSetup()
         {
-            while (m_Animator.isInitialized)
+            if (m_SetupRunning)
+                return;
+
+            Debug.Log("Start Animator Setup");
+
+            if (m_AnimatorController == null)
             {
+                Debug.Log("get animator controller");
+
+                m_AnimatorController = m_Animator.runtimeAnimatorController;
                 if (m_AnimatorController == null)
                 {
-                    m_AnimatorController = m_Animator.runtimeAnimatorController;
+                    StopAnimatorSetup();
+                }
+            }
+
+            m_SetupRunning = true;
+        }
+
+        public void StopAnimatorSetup()
+        {
+            if (!m_SetupRunning)
+                return;
+
+            Debug.Log("Force Stop Animator Setup");
+            m_SetupRunning = false;
+        }
+
+        public bool SetupAnimatorLoop(bool animatorInitialized)
+        {
+            while (m_SetupRunning)
+            {
+                while (animatorInitialized)
+                {
+    #if UNITY_EDITOR
+                    if (m_HeadLookLayer == -1 || m_EyeLookLayer == -1)
+                    {
+                        Debug.Log("Get Animation Layers");
+                        var controller = m_AnimatorController as AnimatorController;
+                        if (controller == null)
+                        {
+                            m_HeadLookLayer = 0;
+                            m_EyeLookLayer = 0;
+                            return true;
+                        }
+
+                        if (m_HeadLookLayer == -1)
+                        {
+                            var headLookLayer = new AnimatorControllerLayer
+                            {
+                                blendingMode = AnimatorLayerBlendingMode.Override,
+                                defaultWeight = 0f,
+                                iKPass = true,
+                                name = controller.MakeUniqueLayerName("HeadLookLayer"),
+                            };
+                            controller.AddLayer(headLookLayer);
+                            m_HeadLookLayer = controller.layers.Length - 1;
+                        }
+
+                        if (m_EyeLookLayer == -1)
+                        {
+                            var eyeLookLayer = new AnimatorControllerLayer
+                            {
+                                blendingMode = AnimatorLayerBlendingMode.Additive,
+                                defaultWeight = 0f,
+                                iKPass = true,
+                                name = controller.MakeUniqueLayerName("EyeLookLayer")
+                            };
+                            controller.AddLayer(eyeLookLayer);
+                            m_EyeLookLayer = controller.layers.Length - 1;
+                        }
+
+                        return true;
+                    }
+    #endif
+
+                    if (m_LeftEye == null || m_RightEye == null)
+                    {
+                        Debug.Log("Get Eye Bones");
+                        if(m_LeftEye == null)
+                            m_LeftEye = m_Animator.GetBoneTransform(HumanBodyBones.LeftEye);
+
+                        if (m_RightEye == null)
+                            m_RightEye = m_Animator.GetBoneTransform(HumanBodyBones.RightEye);
+
+                        return true;
+                    }
+
+                    if (m_ARHeadPose == null)
+                    {
+                        Debug.Log("Get Head Bone");
+                        m_HeadBone = m_Animator.GetBoneTransform(HumanBodyBones.Head);
+                        if (m_HeadBone == null)
+                        {
+                            Debug.LogError("Head Bone returning NULL!");
+                            enabled = false;
+
+                            StopCoroutine(m_AnimatorSetup);
+                            m_AnimatorSetup = null;
+                            return true;
+                        }
+
+                        var headPoseObject = new GameObject("head_pose");
+                        m_ARHeadPose = headPoseObject.transform;
+                        var headPoseLookObject = new GameObject("head_look");
+                        m_HeadPoseLookAt = headPoseLookObject.transform;
+
+                        m_ARHeadPose.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+                        var headOffset = new GameObject("head_offset").transform;
+                        headOffset.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+                        headOffset.SetParent(transform, true);
+                        m_ARHeadPose.SetParent(headOffset, true);
+                        m_HeadPoseLookAt.SetParent(m_ARHeadPose);
+                        m_HeadPoseLookAt.localPosition = Vector3.forward * -0.25f;
+
+                        var eyePoseObject = new GameObject("eye_pose");
+                        m_AREyePose = eyePoseObject.transform;
+                        var eyePoseLookObject = new GameObject("eye_look");
+                        m_EyePoseLookAt = eyePoseLookObject.transform;
+                        m_EyePoseLookAt.SetParent(m_AREyePose);
+                        m_EyePoseLookAt.localPosition = Vector3.forward * -0.25f;
+
+                        m_AREyePose.SetPositionAndRotation(Vector3.Lerp(m_RightEye.position, m_LeftEye.position, 0.5f), transform.rotation);
+                        var eyeOffset = new GameObject("eye_offset").transform;
+                        eyeOffset.position = m_AREyePose.position;
+                        eyeOffset.SetParent(m_HeadBone, true);
+                        m_AREyePose.SetParent(eyeOffset, true);
+
+                        m_LocalizedHeadParent = new GameObject("loc_head_parent").transform;
+                        var locHeadOffset = new GameObject("loc_head_offset");
+                        locHeadOffset.transform.SetParent(m_LocalizedHeadParent);
+                        m_LocalizedHeadRot = new GameObject("loc_head_rot").transform;
+                        m_LocalizedHeadRot.SetParent(locHeadOffset.transform);
+                        m_OtherLook = new GameObject("other_look").transform;
+                        m_OtherLook.SetParent(m_LocalizedHeadRot.transform);
+                        m_OtherLook.localPosition = Vector3.forward * 0.25f;
+
+                        var otherThingOffset = new GameObject("other_thing_offset");
+                        otherThingOffset.transform.SetParent(m_LocalizedHeadParent);
+                        otherThingOffset.transform.rotation = transform.rotation;
+                        m_OtherThing = new GameObject("other_thing").transform;
+                        m_OtherThing.SetParent(otherThingOffset.transform);
+
+                        return true;
+                    }
+
+                    return true;
+                }
+
+                return true;
+            }
+
+            m_SetupRunning = false;
+            return true;
+        }
+
+        IEnumerator SetupAnimatorInternal()
+        {
+            Debug.Log("Start Animator Setup");
+            while (m_SetupRunning)
+            {
+                while (m_Animator.isInitialized)
+                {
                     if (m_AnimatorController == null)
                     {
-                        enabled = false;
+                        Debug.Log("get animator controller");
 
-                        StopCoroutine(m_AnimatorSetup);
-                        m_AnimatorSetup = null;
-                        yield return null;
-                    }
-
-                    yield return null;
-                }
-
-#if UNITY_EDITOR
-                if (m_HeadLookLayer == -1 || m_EyeLookLayer == -1)
-                {
-                    var controller = m_AnimatorController as AnimatorController;
-                    if (controller == null)
-                    {
-                        m_HeadLookLayer = 0;
-                        m_EyeLookLayer = 0;
-                        yield return null;
-                    }
-
-                    if (m_HeadLookLayer == -1)
-                    {
-                        var headLookLayer = new AnimatorControllerLayer
+                        m_AnimatorController = m_Animator.runtimeAnimatorController;
+                        if (m_AnimatorController == null)
                         {
-                            blendingMode = AnimatorLayerBlendingMode.Override,
-                            defaultWeight = 0f,
-                            iKPass = true,
-                            name = controller.MakeUniqueLayerName("HeadLookLayer"),
-                        };
-                        controller.AddLayer(headLookLayer);
-                        m_HeadLookLayer = controller.layers.Length - 1;
-                    }
+                            enabled = false;
 
-                    if (m_EyeLookLayer == -1)
-                    {
-                        var eyeLookLayer = new AnimatorControllerLayer
-                        {
-                            blendingMode = AnimatorLayerBlendingMode.Additive,
-                            defaultWeight = 0f,
-                            iKPass = true,
-                            name = controller.MakeUniqueLayerName("EyeLookLayer")
-                        };
-                        controller.AddLayer(eyeLookLayer);
-                        m_EyeLookLayer = controller.layers.Length - 1;
-                    }
+                            StopCoroutine(m_AnimatorSetup);
+                            m_AnimatorSetup = null;
+                            yield return null;
+                        }
 
-                    yield return null;
-                }
-#endif
-
-                if (m_LeftEye == null || m_RightEye == null)
-                {
-                    if(m_LeftEye == null)
-                        m_LeftEye = m_Animator.GetBoneTransform(HumanBodyBones.LeftEye);
-
-                    if (m_RightEye == null)
-                        m_RightEye = m_Animator.GetBoneTransform(HumanBodyBones.RightEye);
-
-                    yield return null;
-                }
-
-                if (m_ARHeadPose == null)
-                {
-                    m_HeadBone = m_Animator.GetBoneTransform(HumanBodyBones.Head);
-                    if (m_HeadBone == null)
-                    {
-                        Debug.LogError("Head Bone returning NULL!");
-                        enabled = false;
-
-                        StopCoroutine(m_AnimatorSetup);
-                        m_AnimatorSetup = null;
                         yield return null;
                     }
 
-                    var headPoseObject = new GameObject("head_pose");
-                    m_ARHeadPose = headPoseObject.transform;
-                    var headPoseLookObject = new GameObject("head_look");
-                    m_HeadPoseLookAt = headPoseLookObject.transform;
+    #if UNITY_EDITOR
+                    if (m_HeadLookLayer == -1 || m_EyeLookLayer == -1)
+                    {
+                        Debug.Log("Get Animation Layers");
+                        var controller = m_AnimatorController as AnimatorController;
+                        if (controller == null)
+                        {
+                            m_HeadLookLayer = 0;
+                            m_EyeLookLayer = 0;
+                            yield return null;
+                        }
 
-                    m_ARHeadPose.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
-                    var headOffset = new GameObject("head_offset").transform;
-                    headOffset.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
-                    headOffset.SetParent(transform, true);
-                    m_ARHeadPose.SetParent(headOffset, true);
-                    m_HeadPoseLookAt.SetParent(m_ARHeadPose);
-                    m_HeadPoseLookAt.localPosition = Vector3.forward * -0.25f;
+                        if (m_HeadLookLayer == -1)
+                        {
+                            var headLookLayer = new AnimatorControllerLayer
+                            {
+                                blendingMode = AnimatorLayerBlendingMode.Override,
+                                defaultWeight = 0f,
+                                iKPass = true,
+                                name = controller.MakeUniqueLayerName("HeadLookLayer"),
+                            };
+                            controller.AddLayer(headLookLayer);
+                            m_HeadLookLayer = controller.layers.Length - 1;
+                        }
 
-                    var eyePoseObject = new GameObject("eye_pose");
-                    m_AREyePose = eyePoseObject.transform;
-                    var eyePoseLookObject = new GameObject("eye_look");
-                    m_EyePoseLookAt = eyePoseLookObject.transform;
-                    m_EyePoseLookAt.SetParent(m_AREyePose);
-                    m_EyePoseLookAt.localPosition = Vector3.forward * -0.25f;
+                        if (m_EyeLookLayer == -1)
+                        {
+                            var eyeLookLayer = new AnimatorControllerLayer
+                            {
+                                blendingMode = AnimatorLayerBlendingMode.Additive,
+                                defaultWeight = 0f,
+                                iKPass = true,
+                                name = controller.MakeUniqueLayerName("EyeLookLayer")
+                            };
+                            controller.AddLayer(eyeLookLayer);
+                            m_EyeLookLayer = controller.layers.Length - 1;
+                        }
 
-                    m_AREyePose.SetPositionAndRotation(Vector3.Lerp(m_RightEye.position, m_LeftEye.position, 0.5f), transform.rotation);
-                    var eyeOffset = new GameObject("eye_offset").transform;
-                    eyeOffset.position = m_AREyePose.position;
-                    eyeOffset.SetParent(m_HeadBone, true);
-                    m_AREyePose.SetParent(eyeOffset, true);
+                        yield return null;
+                    }
+    #endif
 
-                    m_LocalizedHeadParent = new GameObject("loc_head_parent").transform;
-                    var locHeadOffset = new GameObject("loc_head_offset");
-                    locHeadOffset.transform.SetParent(m_LocalizedHeadParent);
-                    m_LocalizedHeadRot = new GameObject("loc_head_rot").transform;
-                    m_LocalizedHeadRot.SetParent(locHeadOffset.transform);
-                    m_OtherLook = new GameObject("other_look").transform;
-                    m_OtherLook.SetParent(m_LocalizedHeadRot.transform);
-                    m_OtherLook.localPosition = Vector3.forward * 0.25f;
+                    if (m_LeftEye == null || m_RightEye == null)
+                    {
+                        Debug.Log("Get Eye Bones");
+                        if(m_LeftEye == null)
+                            m_LeftEye = m_Animator.GetBoneTransform(HumanBodyBones.LeftEye);
 
-                    var otherThingOffset = new GameObject("other_thing_offset");
-                    otherThingOffset.transform.SetParent(m_LocalizedHeadParent);
-                    otherThingOffset.transform.rotation = transform.rotation;
-                    m_OtherThing = new GameObject("other_thing").transform;
-                    m_OtherThing.SetParent(otherThingOffset.transform);
+                        if (m_RightEye == null)
+                            m_RightEye = m_Animator.GetBoneTransform(HumanBodyBones.RightEye);
+
+                        yield return null;
+                    }
+
+                    if (m_ARHeadPose == null)
+                    {
+                        Debug.Log("Get Head Bone");
+                        m_HeadBone = m_Animator.GetBoneTransform(HumanBodyBones.Head);
+                        if (m_HeadBone == null)
+                        {
+                            Debug.LogError("Head Bone returning NULL!");
+                            enabled = false;
+
+                            StopCoroutine(m_AnimatorSetup);
+                            m_AnimatorSetup = null;
+                            yield return null;
+                        }
+
+                        var headPoseObject = new GameObject("head_pose");
+                        m_ARHeadPose = headPoseObject.transform;
+                        var headPoseLookObject = new GameObject("head_look");
+                        m_HeadPoseLookAt = headPoseLookObject.transform;
+
+                        m_ARHeadPose.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+                        var headOffset = new GameObject("head_offset").transform;
+                        headOffset.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+                        headOffset.SetParent(transform, true);
+                        m_ARHeadPose.SetParent(headOffset, true);
+                        m_HeadPoseLookAt.SetParent(m_ARHeadPose);
+                        m_HeadPoseLookAt.localPosition = Vector3.forward * -0.25f;
+
+                        var eyePoseObject = new GameObject("eye_pose");
+                        m_AREyePose = eyePoseObject.transform;
+                        var eyePoseLookObject = new GameObject("eye_look");
+                        m_EyePoseLookAt = eyePoseLookObject.transform;
+                        m_EyePoseLookAt.SetParent(m_AREyePose);
+                        m_EyePoseLookAt.localPosition = Vector3.forward * -0.25f;
+
+                        m_AREyePose.SetPositionAndRotation(Vector3.Lerp(m_RightEye.position, m_LeftEye.position, 0.5f), transform.rotation);
+                        var eyeOffset = new GameObject("eye_offset").transform;
+                        eyeOffset.position = m_AREyePose.position;
+                        eyeOffset.SetParent(m_HeadBone, true);
+                        m_AREyePose.SetParent(eyeOffset, true);
+
+                        m_LocalizedHeadParent = new GameObject("loc_head_parent").transform;
+                        var locHeadOffset = new GameObject("loc_head_offset");
+                        locHeadOffset.transform.SetParent(m_LocalizedHeadParent);
+                        m_LocalizedHeadRot = new GameObject("loc_head_rot").transform;
+                        m_LocalizedHeadRot.SetParent(locHeadOffset.transform);
+                        m_OtherLook = new GameObject("other_look").transform;
+                        m_OtherLook.SetParent(m_LocalizedHeadRot.transform);
+                        m_OtherLook.localPosition = Vector3.forward * 0.25f;
+
+                        var otherThingOffset = new GameObject("other_thing_offset");
+                        otherThingOffset.transform.SetParent(m_LocalizedHeadParent);
+                        otherThingOffset.transform.rotation = transform.rotation;
+                        m_OtherThing = new GameObject("other_thing").transform;
+                        m_OtherThing.SetParent(otherThingOffset.transform);
+
+                        yield return null;
+                    }
 
                     yield return null;
                 }
 
+                m_SetupRunning = false;
                 yield return null;
             }
 
@@ -325,6 +501,7 @@ namespace Unity.Labs.FacialRemote
             {
                 StopCoroutine(m_AnimatorSetup);
                 m_AnimatorSetup = null;
+                m_SetupRunning = false;
             }
 
             if (m_Reader.faceActive)

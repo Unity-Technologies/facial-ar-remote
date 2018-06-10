@@ -31,6 +31,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         BlendShapesController m_BlendShapesController;
 
+        [SerializeField]
+        AvatarController m_AvatarController;
+
+        [SerializeField]
+        Animator m_Animator;
+
         Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
 
@@ -44,6 +50,8 @@ namespace Unity.Labs.FacialRemote
 
         public PlaybackData playbackData { get { return m_PlaybackData; } }
         public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
+        public AvatarController avatarController { get { return m_AvatarController; } }
+        public Animator animator { get { return m_Animator; } }
 
         public bool streamActive
         {

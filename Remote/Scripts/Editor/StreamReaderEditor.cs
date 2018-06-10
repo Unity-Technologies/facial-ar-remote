@@ -99,12 +99,16 @@ namespace Unity.Labs.FacialRemote
                         var blendShapeController = streamReader.blendShapesController;
                         blendShapeController.Init();
 
+                        var avatarController = streamReader.avatarController;
+                        var animator = streamReader.animator;
+
                         streamReader.streamPlayback.ActivateStreamSource();
                         streamReader.streamPlayback.SetStreamSettings();
                         streamReader.streamPlayback.StartPlaybackDataUsage();
 
                         var animClip = new AnimationClip();
-                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamReader.streamPlayback, blendShapeController, path);
+                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamReader.streamPlayback,
+                            blendShapeController,  avatarController, animator, path);
                     }
                 }
             }
@@ -114,7 +118,13 @@ namespace Unity.Labs.FacialRemote
                 if (m_ClipBaker.baking && m_ClipBaker.currentFrame < m_ClipBaker.frameCount)
                 {
                     var progress = m_ClipBaker.currentFrame / (float)m_ClipBaker.frameCount;
-                    EditorUtility.DisplayProgressBar("Simple Progress Bar", "Shows a progress bar for the given seconds", progress);
+                    m_ClipBaker.animatorInitialized = streamReader.animator.isInitialized;
+                    if (EditorUtility.DisplayCancelableProgressBar("Animation Baking Progress",
+                        "Progress in baking animation frames", progress))
+                    {
+                        streamReader.avatarController.StopAnimatorSetup();
+                        m_ClipBaker.StopBake();
+                    }
                     Repaint();
                 }
                 else
