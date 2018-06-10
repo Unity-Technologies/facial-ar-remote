@@ -39,15 +39,22 @@ namespace Unity.Labs.FacialRemote
             Debug.Log("Possible IP addresses:");
             foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             {
-                Debug.Log(address);
-
-                var endPoint = new IPEndPoint(address, portNumber);
-                m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                m_Socket.Bind(endPoint);
-                m_Socket.Listen(100);
-                m_LastFrameNum = -1;
-                streamThreadActive = true;
                 var connectionAddress = address;
+                Debug.Log(connectionAddress);
+                try
+                {
+                    var endPoint = new IPEndPoint(connectionAddress, portNumber);
+                    m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    m_Socket.Bind(endPoint);
+                    m_Socket.Listen(100);
+                    m_LastFrameNum = -1;
+                    streamThreadActive = true;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogErrorFormat("Error on address {0} : {1}", connectionAddress, e);
+                }
+
                 new Thread(() =>
                 {
                     m_Socket = m_Socket.Accept();

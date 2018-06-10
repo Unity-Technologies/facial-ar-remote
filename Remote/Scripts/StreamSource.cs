@@ -1,24 +1,50 @@
 using System;
+using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
     public interface IStreamSource
     {
-        bool streamActive { get;}
-        bool streamThreadActive { get; set;}
+        bool streamActive { get; }
+        bool streamThreadActive { get; set; }
         Func<bool> isStreamSource { get; set; }
         Func<StreamReader> getStreamReader { get; set; }
 
         Func<PlaybackData> getPlaybackData { get; set; }
         Func<bool> getUseDebug { get; set; }
 
-        Func<IStreamSettings> getStreamSettings { get; set; }
-
         void StartStreamThread();
         void ActivateStreamSource();
         void DeactivateStreamSource();
-        void OnStreamSettingsChangeChange();
         void SetReaderStreamSettings();
+    }
+
+    public interface IUseReaderActive
+    {
+        Func<bool> isStreamActive { get; set; }
+        Func<bool> isTrackingActive { get; set; }
+    }
+
+    public interface IUseStreamSettings
+    {
+        Func<IStreamSettings> getStreamSettings { get; set; }
+        Func<IStreamSettings> getReaderStreamSettings { get; set; } // TODO should try to always use active settings.
+        void OnStreamSettingsChangeChange();
+    }
+
+    public interface IUseReaderBlendShapes
+    {
+        Func<float[]> getBlendShapesBuffer { get; set; }
+    }
+
+    public interface IUseReaderHeadPose
+    {
+        Func<Pose> getHeadPose { get; set; }
+    }
+
+    public interface IUseReaderCameraPose
+    {
+        Func<Pose> getCameraPose { get; set; }
     }
 
     public interface IServerSettings
@@ -28,10 +54,11 @@ namespace Unity.Labs.FacialRemote
     }
 
 
-    public abstract class StreamSource : IStreamSource
+    public abstract class StreamSource : IStreamSource, IUseStreamSettings
     {
         public Func<bool> isStreamSource { get; set; }
         public Func<IStreamSettings> getStreamSettings { get; set; }
+        public Func<IStreamSettings> getReaderStreamSettings { get; set; }
         public Func<PlaybackData> getPlaybackData { get; set; }
         public Func<bool> getUseDebug { get; set; }
         public Func<StreamReader> getStreamReader { get; set; }

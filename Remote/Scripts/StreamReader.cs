@@ -32,7 +32,7 @@ namespace Unity.Labs.FacialRemote
         BlendShapesController m_BlendShapesController;
 
         [SerializeField]
-        AvatarController m_AvatarController;
+        CharacterRigController m_CharacterRigController;
 
         [SerializeField]
         Animator m_Animator;
@@ -50,7 +50,7 @@ namespace Unity.Labs.FacialRemote
 
         public PlaybackData playbackData { get { return m_PlaybackData; } }
         public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
-        public AvatarController avatarController { get { return m_AvatarController; } }
+        public CharacterRigController characterRigController { get { return m_CharacterRigController; } }
         public Animator animator { get { return m_Animator; } }
 
         public bool streamActive
@@ -77,7 +77,6 @@ namespace Unity.Labs.FacialRemote
                 return;
 
             m_ActiveStreamSettings = settings;
-            m_ActiveStreamSettings.Initialize();
             m_OnStreamSettingsChange.Invoke();
         }
 
@@ -88,16 +87,6 @@ namespace Unity.Labs.FacialRemote
             m_ActiveStreamSource = source;
             source.SetReaderStreamSettings();
             m_BlendShapesBuffer = new float[m_ActiveStreamSettings.BlendShapeCount];
-
-            UpdateControllerStreamSettings(m_ActiveStreamSettings);
-        }
-
-        public void UpdateControllerStreamSettings(IStreamSettings streamSettings)
-        {
-            foreach (var controller in m_ConnectedControllers)
-            {
-                controller.SetStreamSettings(streamSettings);
-            }
         }
 
         Vector3 m_LastPose;
@@ -111,7 +100,6 @@ namespace Unity.Labs.FacialRemote
         float[] m_HeadPoseArray = new float[7];
         float[] m_CameraPoseArray = new float[7];
 
-        List<IConnectedController> m_ConnectedControllers = new List<IConnectedController>();
         HashSet<IStreamSource> m_StreamSources = new HashSet<IStreamSource>();
 
         Server m_Server;
@@ -165,18 +153,6 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void AddConnectedController(IConnectedController connectedController)
-        {
-            if (!m_ConnectedControllers.Contains(connectedController))
-                m_ConnectedControllers.Add(connectedController);
-        }
-
-        public void RemoveConnectedController(IConnectedController connectedController)
-        {
-            if (m_ConnectedControllers.Contains(connectedController))
-                m_ConnectedControllers.Remove(connectedController);
-        }
-
         Action m_OnStreamSettingsChange = () =>
         {
             Debug.Log("OnStreamSettingsChange" );
@@ -189,6 +165,11 @@ namespace Unity.Labs.FacialRemote
 
             m_StreamPlayback = new StreamPlayback();
             ConnectInterfaces(m_StreamPlayback);
+
+            ConnectInterfaces(m_BlendShapesController);
+            m_BlendShapesController.connected = true;
+            ConnectInterfaces(m_CharacterRigController);
+            m_CharacterRigController.connected = true;
 
             m_StreamSources.Add(m_Server);
             m_StreamSources.Add(m_StreamPlayback);
@@ -205,8 +186,39 @@ namespace Unity.Labs.FacialRemote
                 streamSource.isStreamSource = () => m_ActiveStreamSource == streamSource;
                 streamSource.getPlaybackData = () => m_PlaybackData;
                 streamSource.getUseDebug = () => m_UseDebug;
-                streamSource.getStreamSettings = () => m_ActiveStreamSettings;
-                m_OnStreamSettingsChange += streamSource.OnStreamSettingsChangeChange;
+            }
+
+            var useStreamSettings = obj as IUseStreamSettings;
+            if (useStreamSettings != null)
+            {
+                useStreamSettings.getStreamSettings = () => m_ActiveStreamSettings;
+                useStreamSettings.getReaderStreamSettings = () => m_StreamSettings;
+                m_OnStreamSettingsChange += useStreamSettings.OnStreamSettingsChangeChange;
+            }
+
+            var useReaderActive = obj as IUseReaderActive;
+            if (useReaderActive != null)
+            {
+                useReaderActive.isStreamActive = () => streamActive;
+                useReaderActive.isTrackingActive = () => trackingActive;
+            }
+
+            var useReaderHeadPose = obj as IUseReaderHeadPose;
+            if (useReaderHeadPose != null)
+            {
+                useReaderHeadPose.getHeadPose = () => headPose;
+            }
+
+            var useReaderCameraPose = obj as IUseReaderCameraPose;
+            if (useReaderCameraPose != null)
+            {
+                useReaderCameraPose.getCameraPose = () => cameraPose;
+            }
+
+            var useReaderBlendShapes = obj as IUseReaderBlendShapes;
+            if (useReaderBlendShapes != null)
+            {
+                useReaderBlendShapes.getBlendShapesBuffer = () => blendShapesBuffer;
             }
 
             var serverSettings = obj as IServerSettings;

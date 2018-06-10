@@ -42,9 +42,6 @@ namespace Unity.Labs.FacialRemote
                 if (m_StreamSettings == null)
                     return null;
 
-                if (!m_StreamSettings.Initialized)
-                    m_StreamSettings.Initialize();
-
                 return m_StreamSettings;
             }
         }
@@ -175,7 +172,7 @@ namespace Unity.Labs.FacialRemote
         {
             if(m_Socket == null || m_CameraTransform == null)
                 return;
-            
+
             // TODO think may want to update information in LateUpdate
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
