@@ -25,7 +25,6 @@ namespace Unity.Labs.FacialRemote
 
         Dictionary<Object, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
             new Dictionary<Object, Dictionary<string, AnimationClipCurveData>>();
-//        Dictionary<Object, string> m_ComponentPaths = new Dictionary<Object, string>();
 
         List<AnimationClipCurveData> m_AnimationClipCurveData = new List<AnimationClipCurveData>();
 
@@ -34,7 +33,6 @@ namespace Unity.Labs.FacialRemote
         public int currentFrame { get { return m_CurrentFrame; } }
         public int frameCount { get { return m_FrameCount; } }
         public bool baking { get { return m_Baking; } }
-
 
         string m_FilePath;
 
@@ -45,12 +43,14 @@ namespace Unity.Labs.FacialRemote
         bool m_Baking;
 
         public ClipBaker(AnimationClip clip, StreamReader streamReader, StreamPlayback streamPlayback,
-            BlendShapesController blendShapesController, string filePath)
+            BlendShapesController blendShapesController, AvatarController avatarController, Animator animator, string filePath)
         {
             m_Clip = clip;
             m_StreamReader = streamReader;
             m_StreamPlayback = streamPlayback;
             m_BlendShapesController = blendShapesController;
+            m_Animator = animator;
+            m_AvatarController = avatarController;
             m_FilePath = filePath;
 
             StartClipBaker(m_BlendShapesController.transform);
@@ -59,9 +59,8 @@ namespace Unity.Labs.FacialRemote
 
         void StartClipBaker(Transform transform)
         {
-//            m_ComponentPaths.Clear();
             m_AnimationClipCurveData.Clear();
-            m_StreamPlayback.SetPlaybackBuffer(m_StreamPlayback.activePlaybackBuffer); //??
+            m_StreamPlayback.SetPlaybackBuffer(m_StreamPlayback.activePlaybackBuffer); // TODO needed?
             m_StreamReader.SetStreamSource(m_StreamPlayback);
             m_BlendShapesController.SetupBlendShapeIndices();
 
@@ -71,7 +70,6 @@ namespace Unity.Labs.FacialRemote
             {
                 var path = AnimationUtility.CalculateTransformPath(skinnedMeshRenderer.transform, transform);
                 path = path.Replace(string.Format("{0}/", skinnedMeshRenderer.transform), "");
-//                m_ComponentPaths.Add(skinnedMeshRenderer, path);
 
                 var mesh = skinnedMeshRenderer.sharedMesh;
                 var count = mesh.blendShapeCount;
@@ -104,6 +102,7 @@ namespace Unity.Labs.FacialRemote
 
             m_CurrentFrame = 0;
             m_FrameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / m_StreamSettings.BufferSize;
+            m_AvatarController.StartAnimatorSetup();
 
             new Thread(() =>
             {
@@ -147,8 +146,19 @@ namespace Unity.Labs.FacialRemote
             Debug.Log("End Bake");
         }
 
+        bool m_AnimatorInitialized;
+        public bool animatorInitialized { get { return m_AnimatorInitialized; }  set { m_AnimatorInitialized = value; } }
+
+        public bool avatarSettingUp;
+
         bool BakeClipLoop()
         {
+//
+//            while (avatarSettingUp)
+//            {
+//                return true;
+//            }
+
             while (m_CurrentFrame <= frameCount)
             {
                 Debug.Log("current frame : " + m_CurrentFrame);
@@ -170,6 +180,12 @@ namespace Unity.Labs.FacialRemote
                     KeyBlendShapes(m_FrameTimes[1] - m_FrameTimes[0]);
 
                     m_CurrentFrame++;
+                }
+
+                if (m_CurrentFrame == frameCount)
+                {
+                    m_CurrentFrame++;
+
                 }
 
                 return true;
@@ -201,5 +217,6 @@ namespace Unity.Labs.FacialRemote
                 }
             }
         }
+
     }
 }
