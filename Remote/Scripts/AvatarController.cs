@@ -78,6 +78,17 @@ namespace Unity.Labs.FacialRemote
         Transform m_EyeLeftPoseLookAt;
 
         [SerializeField]
+        [Range(0f, 1f)]
+        float m_HeadFollowAmount = 0.7f;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        float m_NeckFollowAmount = 0.3f;
+
+        Pose m_HeadStartPose;
+        Pose m_NeckStartPose;
+
+        [SerializeField]
         bool m_RightEyeNegZ;
 
         [SerializeField]
@@ -85,11 +96,12 @@ namespace Unity.Labs.FacialRemote
 
         RuntimeAnimatorController m_AnimatorController;
         int m_HeadLookLayer = -1;
-        int m_EyeLookLayer = -1;
+//        int m_EyeLookLayer = -1;
 
         Coroutine m_AnimatorSetup;
 
         Quaternion m_LastHeadRotation;
+        Quaternion m_LastNeckRotation;
 
         [SerializeField]
         bool m_RotNeck;
@@ -171,11 +183,11 @@ namespace Unity.Labs.FacialRemote
                 if (controller == null)
                     return;
 
-                if (m_EyeLookLayer != -1)
-                {
-                    controller.RemoveLayer(m_EyeLookLayer);
-                    m_EyeLookLayer = -1;
-                }
+//                if (m_EyeLookLayer != -1)
+//                {
+//                    controller.RemoveLayer(m_EyeLookLayer);
+//                    m_EyeLookLayer = -1;
+//                }
 
                 if (m_HeadLookLayer != -1)
                 {
@@ -245,14 +257,14 @@ namespace Unity.Labs.FacialRemote
                     }
 
     #if UNITY_EDITOR
-                    if (m_HeadLookLayer == -1 || m_EyeLookLayer == -1)
+                    if (m_HeadLookLayer == -1 )//|| m_EyeLookLayer == -1)
                     {
                         Debug.Log("Get Animation Layers");
                         var controller = m_AnimatorController as AnimatorController;
                         if (controller == null)
                         {
                             m_HeadLookLayer = 0;
-                            m_EyeLookLayer = 0;
+//                            m_EyeLookLayer = 0;
                             yield return null;
                         }
 
@@ -269,18 +281,18 @@ namespace Unity.Labs.FacialRemote
                             m_HeadLookLayer = controller.layers.Length - 1;
                         }
 
-                        if (m_EyeLookLayer == -1)
-                        {
-                            var eyeLookLayer = new AnimatorControllerLayer
-                            {
-                                blendingMode = AnimatorLayerBlendingMode.Additive,
-                                defaultWeight = 0f,
-                                iKPass = true,
-                                name = controller.MakeUniqueLayerName("EyeLookLayer")
-                            };
-                            controller.AddLayer(eyeLookLayer);
-                            m_EyeLookLayer = controller.layers.Length - 1;
-                        }
+//                        if (m_EyeLookLayer == -1)
+//                        {
+//                            var eyeLookLayer = new AnimatorControllerLayer
+//                            {
+//                                blendingMode = AnimatorLayerBlendingMode.Additive,
+//                                defaultWeight = 0f,
+//                                iKPass = true,
+//                                name = controller.MakeUniqueLayerName("EyeLookLayer")
+//                            };
+//                            controller.AddLayer(eyeLookLayer);
+//                            m_EyeLookLayer = controller.layers.Length - 1;
+//                        }
 
                         yield return null;
                     }
@@ -318,11 +330,15 @@ namespace Unity.Labs.FacialRemote
                         var headPoseLookObject = new GameObject("head_look");
                         m_HeadPoseLookAt = headPoseLookObject.transform;
 
+                        m_HeadStartPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
+
                         m_ARHeadPose.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
                         var headOffset = new GameObject("head_offset").transform;
-                        headOffset.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+//                        headOffset.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+                        headOffset.SetPositionAndRotation(m_HeadBone.position, m_HeadBone.rotation);
                         headOffset.SetParent(transform, true);
                         m_ARHeadPose.SetParent(headOffset, true);
+                        m_ARHeadPose.localRotation = Quaternion.identity;
                         m_HeadPoseLookAt.SetParent(m_ARHeadPose);
                         m_HeadPoseLookAt.localPosition = Vector3.forward * -0.25f;
 
@@ -333,11 +349,14 @@ namespace Unity.Labs.FacialRemote
                         var neckPoseLookObject = new GameObject("neck_look");
                         m_NeckPoseLookAt = neckPoseLookObject.transform;
 
+                        m_NeckStartPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+
                         m_ARNeckPose.SetPositionAndRotation(m_NeckBone.position, Quaternion.identity);
                         var neckOffset = new GameObject("neck_offset").transform;
-                        neckOffset.SetPositionAndRotation(m_NeckBone.position, Quaternion.identity);
+                        neckOffset.SetPositionAndRotation(m_NeckBone.position, m_NeckBone.rotation);
                         neckOffset.SetParent(transform, true);
                         m_ARNeckPose.SetParent(neckOffset, true);
+                        m_ARNeckPose.localRotation = Quaternion.identity;
                         m_NeckPoseLookAt.SetParent(m_ARNeckPose);
                         m_NeckPoseLookAt.localPosition = Vector3.forward * -0.25f;
 
@@ -459,8 +478,14 @@ namespace Unity.Labs.FacialRemote
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
 
                 var headRot = m_UseLocalizedHeadRot ? m_OtherThing.localRotation : m_Reader.headPose.rotation;
+                var neckRot = headRot;
+                headRot = Quaternion.Slerp(m_HeadStartPose.rotation, headRot, m_HeadFollowAmount);
                 m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, m_HeadSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
+
+                neckRot = Quaternion.Slerp(m_NeckStartPose.rotation, neckRot, m_NeckFollowAmount);
+                m_ARNeckPose.localRotation = Quaternion.Slerp(neckRot, m_LastNeckRotation, m_HeadSmoothing);
+                m_LastNeckRotation = m_ARNeckPose.localRotation;
             }
             else
             {
@@ -474,6 +499,9 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
+            if (!animatorReady)
+                return;
+
             if (m_RightEyeNegZ)
                 m_RightEye.LookAt(m_EyeRightPoseLookAt, Vector3.down);
             else
@@ -483,54 +511,58 @@ namespace Unity.Labs.FacialRemote
                 m_LeftEye.LookAt(m_EyeLeftPoseLookAt, Vector3.down);
             else
                 m_LeftEye.LookAt(m_EyeLeftPoseLookAt);
+
+//            m_HeadBone.LookAt(m_HeadPoseLookAt);
+            m_HeadBone.rotation = m_ARHeadPose.rotation;
+            m_NeckBone.rotation = m_ARNeckPose.rotation;
         }
 
-        void OnAnimatorIK(int layerIndex)
-//        void DoAnimatorIK()
-        {
-            if (!animatorReady)
-                return;
-
-#if UNITY_EDITOR
-            var controller = m_AnimatorController as AnimatorController;
-            if (controller == null)
-                return;
-
-            if (layerIndex == m_HeadLookLayer)
-            {
-                controller.layers[layerIndex].defaultWeight = 1f;
-                m_Animator.SetLookAtWeight(1f, 0, m_Weight, 0f);
-                var headLookPos = m_HeadPoseLookAt.position - m_HeadBone.position + m_Animator.transform.position;
-                m_Animator.SetLookAtPosition(headLookPos);
-
-                var mirror =  m_OtherThing.localRotation;
-                mirror.w *= -1f;
-
-                //TODO hacky
-                if (m_RotNeck)
-                {
-                    var neckRot = m_Reader.trackingActive ?
-                        Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, mirror, m_NeckAmount) :
-                        Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, m_TrackingLossSmoothing);
-                    m_Animator.SetBoneLocalRotation(HumanBodyBones.Neck, neckRot);
-                }
-
-                if(m_RotHead)
-                {
-                    var headRot = m_Reader.trackingActive ?
-                        Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, mirror, m_HeadAmount) :
-                        Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, m_HeadAmount);
-                    m_Animator.SetBoneLocalRotation(HumanBodyBones.Head, headRot);
-                }
-            }
-//            else if (layerIndex == m_EyeLookLayer)
+//        void OnAnimatorIK(int layerIndex)
+////        void DoAnimatorIK()
+//        {
+//            if (!animatorReady)
+//                return;
+//
+//#if UNITY_EDITOR
+//            var controller = m_AnimatorController as AnimatorController;
+//            if (controller == null)
+//                return;
+//
+//            if (layerIndex == m_HeadLookLayer)
 //            {
 //                controller.layers[layerIndex].defaultWeight = 1f;
-//                m_Animator.SetLookAtWeight(1f,0f,0f,1f);
-//                var eyeLookPos = m_EyePoseLookAt.position - m_AREyePose.position + m_Animator.transform.position;
-//                m_Animator.SetLookAtPosition(eyeLookPos);
+//                m_Animator.SetLookAtWeight(1f, 0, m_Weight, 0f);
+//                var headLookPos = m_HeadPoseLookAt.position - m_HeadBone.position + m_Animator.transform.position;
+//                m_Animator.SetLookAtPosition(headLookPos);
+//
+//                var mirror =  m_OtherThing.localRotation;
+//                mirror.w *= -1f;
+//
+//                //TODO hacky
+//                if (m_RotNeck)
+//                {
+//                    var neckRot = m_Reader.trackingActive ?
+//                        Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, mirror, m_NeckAmount) :
+//                        Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Neck).localRotation, m_TrackingLossSmoothing);
+//                    m_Animator.SetBoneLocalRotation(HumanBodyBones.Neck, neckRot);
+//                }
+//
+//                if(m_RotHead)
+//                {
+//                    var headRot = m_Reader.trackingActive ?
+//                        Quaternion.Slerp(m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, mirror, m_HeadAmount) :
+//                        Quaternion.Slerp(Quaternion.identity, m_Animator.GetBoneTransform(HumanBodyBones.Head).localRotation, m_HeadAmount);
+//                    m_Animator.SetBoneLocalRotation(HumanBodyBones.Head, headRot);
+//                }
 //            }
-#endif
-        }
+////            else if (layerIndex == m_EyeLookLayer)
+////            {
+////                controller.layers[layerIndex].defaultWeight = 1f;
+////                m_Animator.SetLookAtWeight(1f,0f,0f,1f);
+////                var eyeLookPos = m_EyePoseLookAt.position - m_AREyePose.position + m_Animator.transform.position;
+////                m_Animator.SetLookAtPosition(eyeLookPos);
+////            }
+//#endif
+//        }
     }
 }
