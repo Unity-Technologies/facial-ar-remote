@@ -34,8 +34,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         CharacterRigController m_CharacterRigController;
 
-        [SerializeField]
-        Animator m_Animator;
 
         Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
         Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
@@ -51,7 +49,6 @@ namespace Unity.Labs.FacialRemote
         public PlaybackData playbackData { get { return m_PlaybackData; } }
         public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
         public CharacterRigController characterRigController { get { return m_CharacterRigController; } }
-        public Animator animator { get { return m_Animator; } }
 
         public bool streamActive
         {

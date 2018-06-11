@@ -68,6 +68,12 @@ namespace Unity.Labs.FacialRemote
                         {
                             try
                             {
+                                if (streamSettings == null || streamSettings.BufferSize < 1)
+                                {
+                                    Debug.LogError("Abort!");
+                                    break;
+                                }
+
                                 var buffer = m_UnusedBuffers.Count == 0 ? new byte[streamSettings.BufferSize]
                                 : m_UnusedBuffers.Dequeue();
                                 for (var i = 0; i < streamSettings.BufferSize; i++)
@@ -88,13 +94,15 @@ namespace Unity.Labs.FacialRemote
                                             playbackData.activeByteRecord.Add(buffer.ToArray());
                                         }
 
-                                        Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0, streamSettings.FrameNumberSize);
+                                        Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
+                                            streamSettings.FrameNumberSize);
 
                                         var frameNum = frameNumArray[0];
                                         if (useDebug)
                                         {
                                             if (m_LastFrameNum != frameNum - 1)
-                                                Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                                Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,
+                                                    m_LastFrameNum);
                                         }
 
                                         m_LastFrameNum = frameNum;

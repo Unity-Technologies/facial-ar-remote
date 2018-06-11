@@ -68,6 +68,8 @@ namespace Unity.Labs.FacialRemote
 
         Pose m_HeadStartPose;
         Pose m_NeckStartPose;
+        Pose m_RightEyeStartPose;
+        Pose m_LeftEyeStartPose;
 
         [SerializeField]
         bool m_RightEyeNegZ;
@@ -103,6 +105,10 @@ namespace Unity.Labs.FacialRemote
         [NonSerialized]
         [HideInInspector]
         public bool connected;
+
+        [NonSerialized]
+        [HideInInspector]
+        public Transform[] animatedBones = new Transform [4];
 
         public void OnStreamSettingsChangeChange()
         {
@@ -202,6 +208,7 @@ namespace Unity.Labs.FacialRemote
             m_AREyePose.SetParent(eyeOffset, true);
 
             // Eye Right Look
+            m_RightEyeStartPose = new Pose(m_RightEye.localPosition, m_RightEye.localRotation);
             var rightEyeOffset = m_RightEye.position - m_AREyePose.position;
             var eyeRightPoseLookObject = new GameObject("eye_right_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeRightPoseLookAt = eyeRightPoseLookObject.transform;
@@ -212,6 +219,7 @@ namespace Unity.Labs.FacialRemote
                 m_EyeRightPoseLookAt.localPosition = Vector3.back * -0.25f + rightEyeOffset;
 
             // Eye Left Look
+            m_LeftEyeStartPose = new Pose(m_LeftEye.localPosition, m_LeftEye.localRotation);
             var leftEyeOffset = m_LeftEye.position - m_AREyePose.position ;
             var eyeLeftPoseLookObject = new GameObject("eye_left_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeLeftPoseLookAt = eyeLeftPoseLookObject.transform;
@@ -238,6 +246,11 @@ namespace Unity.Labs.FacialRemote
             otherThingOffset.transform.rotation = transform.rotation;
             m_OtherThing = new GameObject("other_thing"){ hideFlags = HideFlags.HideAndDontSave}.transform;
             m_OtherThing.SetParent(otherThingOffset.transform);
+
+            animatedBones[0] = m_HeadBone;
+            animatedBones[1] = m_NeckBone;
+            animatedBones[2] = m_RightEye;
+            animatedBones[3] = m_LeftEye;
         }
 
         void LocalizeFacePose()
@@ -254,7 +267,12 @@ namespace Unity.Labs.FacialRemote
             if (!connected || !isReaderStreamActive)
                 return;
 
-            if (isReaderTrackingActive)
+            InterpolateBlendShapes();
+        }
+
+        public void InterpolateBlendShapes(bool force = false)
+        {
+            if (force || isReaderTrackingActive)
             {
                 LocalizeFacePose();
 
@@ -297,9 +315,27 @@ namespace Unity.Labs.FacialRemote
                 m_ARHeadPose.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPose.localRotation, m_TrackingLossSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
             }
+
+            if (force)
+                UpdateBoneTransforms();
         }
 
-        void LateUpdate()
+        public void ResetBonePoses()
+        {
+            m_RightEye.localPosition = m_RightEyeStartPose.position;
+            m_RightEye.localRotation = m_RightEyeStartPose.rotation;
+
+            m_LeftEye.localPosition = m_LeftEyeStartPose.position;
+            m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
+
+            m_HeadBone.localPosition = m_HeadStartPose.position;
+            m_HeadBone.localRotation = m_HeadStartPose.rotation;
+
+            m_NeckBone.localPosition = m_NeckStartPose.position;
+            m_NeckBone.localRotation = m_NeckStartPose.rotation;
+        }
+
+        void UpdateBoneTransforms()
         {
             if (m_RightEyeNegZ)
                 m_RightEye.LookAt(m_EyeRightPoseLookAt, Vector3.down);
@@ -313,6 +349,11 @@ namespace Unity.Labs.FacialRemote
 
             m_HeadBone.rotation = m_ARHeadPose.rotation;
             m_NeckBone.rotation = m_ARNeckPose.rotation;
+        }
+
+        void LateUpdate()
+        {
+            UpdateBoneTransforms();
         }
     }
 }
