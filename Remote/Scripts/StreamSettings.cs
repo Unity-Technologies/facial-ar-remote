@@ -62,6 +62,8 @@ namespace Unity.Labs.FacialRemote
         public int m_FrameNumberOffset;
         [SerializeField]
         public int m_FrameTimeOffset;
+        [SerializeField]
+        public int m_BufferSize;
 
         [SerializeField]
         string[] m_Locations = { };
@@ -84,7 +86,7 @@ namespace Unity.Labs.FacialRemote
         // 261-264 - Frame Number
         // 265-268 - Frame Time
         // 269 - Active state
-        public int BufferSize { get; private set; }
+        public int BufferSize { get { return m_BufferSize; } }
 
         public Mapping[] mappings { get { return m_Mappings; }}
 
@@ -117,16 +119,16 @@ namespace Unity.Labs.FacialRemote
 
         void OnValidate()
         {
-//            m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
-//            m_PoseSize = sizeof(float) * 7;
-//            m_FrameNumberSize = sizeof(int);
-//            m_FrameTimeSize = sizeof(float);
-//            m_HeadPoseOffset = BlendShapeSize + 1;
-//            m_CameraPoseOffset = HeadPoseOffset + PoseSize;
-//            m_FrameNumberOffset = CameraPoseOffset + PoseSize;
-//            m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
-//            BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
-//            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
+            m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
+            m_PoseSize = sizeof(float) * 7;
+            m_FrameNumberSize = sizeof(int);
+            m_FrameTimeSize = sizeof(float);
+            m_HeadPoseOffset = BlendShapeSize + 1;
+            m_CameraPoseOffset = HeadPoseOffset + PoseSize;
+            m_FrameNumberOffset = CameraPoseOffset + PoseSize;
+            m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
+            m_BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
+            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
 
             if (m_Locations.Length == 0)
             {

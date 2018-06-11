@@ -19,7 +19,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 4795781088406236}
-  - component: {fileID: 114778192755589332}
+  - component: {fileID: 114641533554280668}
   m_Layer: 0
   m_Name: Server
   m_TagString: Untagged
@@ -40,7 +40,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114778192755589332
+--- !u!114 &114641533554280668
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -48,10 +48,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1301902957927422}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8172ccacadb6046a58bb68b5e91ff386, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d4971bbbce29c747ad31c2747bcbc57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_StreamSettings: {fileID: 11400000, guid: 87ff99ce494718c46adee6b73f32e6d2, type: 2}
+  m_UseDebug: 0
+  m_PlaybackData: {fileID: 11400000, guid: 71ce7544558002145b6cd7a89c927450, type: 2}
   m_Port: 9000
   m_CatchupSize: 8
-  m_Mappings: []
-  m_BufferSize: 0
+  m_TrackingLossPadding: 64
+  m_BlendShapesController: {fileID: 0}
+  m_CharacterRigController: {fileID: 0}
