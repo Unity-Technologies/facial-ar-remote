@@ -70,7 +70,7 @@ namespace Unity.Labs.FacialRemote
         [HideInInspector]
         public bool connected;
 
-        public void OnStreamSettingsChangeChange()
+        public void OnStreamSettingsChange()
         {
             m_BlendShapes = new float[streamSettings.BlendShapeCount];
             m_BlendShapesScaled = new float[streamSettings.BlendShapeCount];

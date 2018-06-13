@@ -110,7 +110,7 @@ namespace Unity.Labs.FacialRemote
         [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
 
-        public void OnStreamSettingsChangeChange()
+        public void OnStreamSettingsChange()
         {
             SetupBlendShapeIndices();
         }
@@ -272,6 +272,9 @@ namespace Unity.Labs.FacialRemote
 
         public void InterpolateBlendShapes(bool force = false)
         {
+            if (!force && !isReaderStreamActive)
+                return;
+
             if (force || isReaderTrackingActive)
             {
                 LocalizeFacePose();
@@ -297,9 +300,7 @@ namespace Unity.Labs.FacialRemote
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
 
                 var headRot = m_LocalizedHeadRot.localRotation;
-
                 var neckRot = headRot;
-
 
                 headRot = Quaternion.Slerp(m_HeadStartPose.rotation, headRot, m_HeadFollowAmount);
                 m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, m_HeadSmoothing);
@@ -353,7 +354,8 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            UpdateBoneTransforms();
+            if (isReaderStreamActive)
+                UpdateBoneTransforms();
         }
     }
 }

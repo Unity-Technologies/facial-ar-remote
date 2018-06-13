@@ -7,7 +7,7 @@ namespace Unity.Labs.FacialRemote
     {
         bool streamActive { get; }
         bool streamThreadActive { get; set; }
-        Func<bool> isStreamSource { get; set; }
+        Func<bool> IsStreamSource { get; set; }
         Func<StreamReader> getStreamReader { get; set; }
 
         Func<PlaybackData> getPlaybackData { get; set; }
@@ -29,7 +29,7 @@ namespace Unity.Labs.FacialRemote
     {
         Func<IStreamSettings> getStreamSettings { get; set; }
         Func<IStreamSettings> getReaderStreamSettings { get; set; } // TODO should try to always use active settings.
-        void OnStreamSettingsChangeChange();
+        void OnStreamSettingsChange();
     }
 
     public interface IUseReaderBlendShapes
@@ -56,14 +56,15 @@ namespace Unity.Labs.FacialRemote
 
     public abstract class StreamSource : IStreamSource, IUseStreamSettings
     {
-        public Func<bool> isStreamSource { get; set; }
+        public bool isSource { get { return IsStreamSource(); } }
+        public Func<bool> IsStreamSource { get; set; }
         public Func<IStreamSettings> getStreamSettings { get; set; }
         public Func<IStreamSettings> getReaderStreamSettings { get; set; }
         public Func<PlaybackData> getPlaybackData { get; set; }
         public Func<bool> getUseDebug { get; set; }
         public Func<StreamReader> getStreamReader { get; set; }
 
-        public bool streamActive { get { return isStreamSource(); } }
+        public bool streamActive { get { return IsStreamActive(); } }
         public bool streamThreadActive { get; set; }
 
         protected StreamReader streamReader { get { return getStreamReader(); } }
@@ -72,12 +73,12 @@ namespace Unity.Labs.FacialRemote
         protected bool useDebug { get { return getUseDebug(); } }
 
         public abstract void StreamSourceUpdate();
-        public abstract void OnStreamSettingsChangeChange();
+        public abstract void OnStreamSettingsChange();
         public abstract void SetReaderStreamSettings();
 
         public virtual void ActivateStreamSource()
         {
-            if (!isStreamSource())
+            if (!isSource)
             {
                 streamReader.UnSetStreamSource();
                 streamReader.SetStreamSource(this);
@@ -86,11 +87,13 @@ namespace Unity.Labs.FacialRemote
 
         public virtual void DeactivateStreamSource()
         {
-            if (isStreamSource())
+            if (isSource)
             {
                 streamReader.UnSetStreamSource();
             }
         }
+
+        protected abstract bool IsStreamActive();
 
         public abstract void StartStreamThread();
         public abstract void StartPlaybackDataUsage();
