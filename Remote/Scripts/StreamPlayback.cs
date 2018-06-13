@@ -31,6 +31,11 @@ namespace Unity.Labs.FacialRemote
 
         bool m_LastFrame;
 
+        protected override bool IsStreamActive()
+        {
+            return isSource && playing;
+        }
+
         public override void StartStreamThread()
         {
             streamThreadActive = true;
@@ -59,22 +64,14 @@ namespace Unity.Labs.FacialRemote
 
         public override void StreamSourceUpdate()
         {
-            if (!isStreamSource() && playing)
+            if (!isSource && playing)
                 playing = false;
 
-            if (!streamActive || !isStreamSource())
+            if (!streamActive)
                 return;
 
             UpdateCurrentFrameBuffer();
         }
-
-//        protected override IStreamSettings GetStreamSettings()
-//        {
-//            if (m_ActivePlaybackBuffer == null)
-//                Debug.LogError("Playback Buffer is Null!");
-//
-//            return m_ActivePlaybackBuffer;
-//        }
 
         public void UpdateTimes()
         {
@@ -114,7 +111,6 @@ namespace Unity.Labs.FacialRemote
                 SetPlaybackBuffer(playbackData.playbackBuffers[0]);
             }
 
-//            var streamSettings = GetStreamSettings();
             if (streamSettings != activePlaybackBuffer)
                 SetReaderStreamSettings();
 
@@ -182,11 +178,11 @@ namespace Unity.Labs.FacialRemote
 
         public override void UpdateCurrentFrameBuffer(bool force = false)
         {
-            if (force || isStreamSource() && playing)
+            if (force || isSource && playing)
                 streamReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
         }
 
-        public override void OnStreamSettingsChangeChange()
+        public override void OnStreamSettingsChange()
         {
 //            var streamSettings = GetStreamSettings();
 

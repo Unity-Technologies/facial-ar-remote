@@ -11,10 +11,10 @@ namespace Unity.Labs.FacialRemote
         StreamSettings m_StreamSettings;
 
         [SerializeField]
-        bool m_UseDebug;
+        PlaybackData m_PlaybackData;
 
         [SerializeField]
-        PlaybackData m_PlaybackData;
+        bool m_UseDebug;
 
         [Header("Server Settings")]
         [SerializeField]
@@ -27,16 +27,21 @@ namespace Unity.Labs.FacialRemote
         [Range(1, 512)]
         int m_TrackingLossPadding = 64;
 
-        [Header("Server Settings")]
+        [Header("Controller Settings")]
         [SerializeField]
         BlendShapesController m_BlendShapesController;
 
         [SerializeField]
         CharacterRigController m_CharacterRigController;
 
+        [SerializeField]
+        Camera m_Camera;
 
-        Pose m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
-        Pose m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
+        [SerializeField]
+        Transform m_HeadBone;
+
+        Pose m_HeadPose;
+        Pose m_CameraPose;
 
         int[] m_FrameNumArray = new int[1];
         float[] m_FrameTimeArray = new float[1];
@@ -68,8 +73,6 @@ namespace Unity.Labs.FacialRemote
 
         public void SetActiveStreamSettings(IStreamSettings settings)
         {
-//            if (m_ActiveStreamSettings != null && m_ActiveStreamSettings.Equals(settings))
-//                return;
             if (settings == null)
                 return;
 
@@ -180,7 +183,7 @@ namespace Unity.Labs.FacialRemote
             if (streamSource != null)
             {
                 streamSource.getStreamReader = () => this;
-                streamSource.isStreamSource = () => m_ActiveStreamSource == streamSource;
+                streamSource.IsStreamSource = () => m_ActiveStreamSource == streamSource;
                 streamSource.getPlaybackData = () => m_PlaybackData;
                 streamSource.getUseDebug = () => m_UseDebug;
             }
@@ -190,7 +193,7 @@ namespace Unity.Labs.FacialRemote
             {
                 useStreamSettings.getStreamSettings = () => m_ActiveStreamSettings;
                 useStreamSettings.getReaderStreamSettings = () => m_StreamSettings;
-                m_OnStreamSettingsChange += useStreamSettings.OnStreamSettingsChangeChange;
+                m_OnStreamSettingsChange += useStreamSettings.OnStreamSettingsChange;
             }
 
             var useReaderActive = obj as IUseReaderActive;
@@ -230,10 +233,15 @@ namespace Unity.Labs.FacialRemote
         {
             Application.targetFrameRate = 120;
 
+            m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
+            m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);
+
             foreach (var streamSource in m_StreamSources)
             {
                 streamSource.StartStreamThread();
             }
+
+            m_Server.ActivateStreamSource();
         }
 
         void Update()

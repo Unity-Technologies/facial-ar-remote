@@ -28,10 +28,15 @@ namespace Unity.Labs.FacialRemote
 
         public bool useRecorder
         {
-            get { return streamThreadActive && Application.isEditor && Application.isPlaying && playbackData != null; }
+            get { return Application.isEditor && Application.isPlaying && playbackData != null; }
         }
 
         public bool isRecording { get; private set; }
+
+        protected override bool IsStreamActive()
+        {
+            return isSource && m_Socket != null && m_Socket.Connected;
+        }
 
         public override void StartStreamThread()
         {
@@ -126,7 +131,7 @@ namespace Unity.Labs.FacialRemote
 
         public override void StartPlaybackDataUsage()
         {
-            if (isStreamSource() && ! isRecording)
+            if (isSource && ! isRecording)
             {
                 SetReaderStreamSettings();
                 playbackData.CreatePlaybackBuffer(streamSettings, m_TakeNumber);
@@ -161,7 +166,7 @@ namespace Unity.Labs.FacialRemote
 
             var buffer = m_BufferQueue.Dequeue();
 
-            if (force || isStreamSource())
+            if (force || isSource)
                 streamReader.UpdateStreamData(ref buffer, 0);
 
             m_UnusedBuffers.Enqueue(buffer);
@@ -169,23 +174,23 @@ namespace Unity.Labs.FacialRemote
 
         public override void StreamSourceUpdate()
         {
-            if (!isStreamSource() && isRecording)
+            if (!isSource && isRecording)
                 StopPlaybackDataUsage();
 
-            if (!streamActive || !isStreamSource())
+            if (!streamActive || !isSource)
                 return;
 
-//            m_BufferSize = m_BufferQueue.Count;
-//            if (useDebug)
-//            {
-//                if (m_BufferSize > catchupSize)
-//                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", m_BufferSize, catchupSize));
-//            }
+            if (useDebug)
+            {
+                if (m_BufferQueue.Count > catchupSize)
+                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
+                        m_BufferQueue.Count, catchupSize));
+            }
 
             UpdateCurrentFrameBuffer();
         }
 
-        public override void OnStreamSettingsChangeChange()
+        public override void OnStreamSettingsChange()
         {
             StopPlaybackDataUsage();
 
