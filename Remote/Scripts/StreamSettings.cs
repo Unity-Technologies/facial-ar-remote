@@ -128,7 +128,6 @@ namespace Unity.Labs.FacialRemote
             m_FrameNumberOffset = CameraPoseOffset + PoseSize;
             m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
             m_BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
-            Debug.Log(string.Format("Buffer Size: {0}", BufferSize));
 
             if (m_Locations.Length == 0)
             {
