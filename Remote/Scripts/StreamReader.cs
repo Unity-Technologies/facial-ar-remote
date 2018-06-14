@@ -153,13 +153,16 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        Action m_OnStreamSettingsChange = () =>
-        {
-            Debug.Log("OnStreamSettingsChange" );
-        };
+        Action m_OnStreamSettingsChange;
 
         void Awake()
         {
+            m_OnStreamSettingsChange =() =>
+            {
+                if (m_UseDebug)
+                    Debug.Log("OnStreamSettingsChange" );
+            };
+
             m_Server = new Server();
             ConnectInterfaces(m_Server);
 

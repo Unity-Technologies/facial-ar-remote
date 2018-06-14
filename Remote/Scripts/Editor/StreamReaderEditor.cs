@@ -22,16 +22,24 @@ namespace Unity.Labs.FacialRemote
             m_PlayIcon = EditorGUIUtility.IconContent("d_Animation.Play");
             m_RecordIcon = EditorGUIUtility.IconContent("d_Animation.Record");
             m_Connect = EditorGUIUtility.IconContent("d_BuildSettings.iPhone.Small");
+        }
 
-            m_ButtonStyle = new GUIStyle("Button");
-            m_ButtonPressStyle = new GUIStyle("Button");
+        void SetupGUIStyles()
+        {
+            if (m_ButtonStyle == null || m_ButtonPressStyle == null)
+            {
+                m_ButtonStyle = new GUIStyle("Button");
+                m_ButtonPressStyle = new GUIStyle("Button");
 
-            m_ButtonPressStyle.active = m_ButtonStyle.normal;
-            m_ButtonPressStyle.normal = m_ButtonStyle.active;
+                m_ButtonPressStyle.active = m_ButtonStyle.normal;
+                m_ButtonPressStyle.normal = m_ButtonStyle.active;
+            }
         }
 
         public override void OnInspectorGUI()
         {
+            SetupGUIStyles();
+
             base.OnInspectorGUI();
             var streamReader = target as StreamReader;
 
