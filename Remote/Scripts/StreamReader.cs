@@ -157,7 +157,7 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
-            m_OnStreamSettingsChange =() =>
+            m_OnStreamSettingsChange = () =>
             {
                 if (m_UseDebug)
                     Debug.Log("OnStreamSettingsChange" );
@@ -169,10 +169,18 @@ namespace Unity.Labs.FacialRemote
             m_StreamPlayback = new StreamPlayback();
             ConnectInterfaces(m_StreamPlayback);
 
-            ConnectInterfaces(m_BlendShapesController);
-            m_BlendShapesController.connected = true;
-            ConnectInterfaces(m_CharacterRigController);
-            m_CharacterRigController.connected = true;
+            // TODO switch this to a single character ref after Demo
+            if (m_BlendShapesController != null)
+            {
+                ConnectInterfaces(m_BlendShapesController);
+                m_BlendShapesController.connected = true;
+            }
+
+            if (m_CharacterRigController != null)
+            {
+                ConnectInterfaces(m_CharacterRigController);
+                m_CharacterRigController.connected = true;
+            }
 
             m_StreamSources.Add(m_Server);
             m_StreamSources.Add(m_StreamPlayback);

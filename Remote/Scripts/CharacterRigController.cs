@@ -50,6 +50,7 @@ namespace Unity.Labs.FacialRemote
         Transform m_HeadBone;
         [SerializeField]
         Transform m_NeckBone;
+
         Transform m_ARHeadPose;
         Transform m_ARNeckPose;
         Transform m_AREyePose;
