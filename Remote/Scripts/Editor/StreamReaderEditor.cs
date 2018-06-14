@@ -33,6 +33,8 @@ namespace Unity.Labs.FacialRemote
 
                 m_ButtonPressStyle.active = m_ButtonStyle.normal;
                 m_ButtonPressStyle.normal = m_ButtonStyle.active;
+                m_ButtonPressStyle.fixedHeight = 24;
+                m_ButtonStyle.fixedHeight = 24;
             }
         }
 
@@ -57,7 +59,7 @@ namespace Unity.Labs.FacialRemote
                     {
                         if (!streamReader.server.streamActive)
                         {
-                            if (GUILayout.Button(m_Connect))
+                            if (GUILayout.Button(m_Connect, m_ButtonStyle))
                                 streamReader.server.ActivateStreamSource();
                         }
                         else
@@ -77,7 +79,7 @@ namespace Unity.Labs.FacialRemote
                         }
                         else
                         {
-                            if (GUILayout.Button(m_RecordIcon))
+                            if (GUILayout.Button(m_RecordIcon, m_ButtonStyle))
                             streamReader.server.StartPlaybackDataUsage();
 
                         }
@@ -95,7 +97,7 @@ namespace Unity.Labs.FacialRemote
                         }
                         else
                         {
-                            if (GUILayout.Button(m_PlayIcon))
+                            if (GUILayout.Button(m_PlayIcon, m_ButtonStyle))
                             {
                                 streamReader.streamPlayback.ActivateStreamSource();
                                 streamReader.streamPlayback.StartPlaybackDataUsage();
