@@ -150,8 +150,17 @@ namespace Unity.Labs.FacialRemote
                 AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(curveData.path, curveData.type,
                     curveData.propertyName), curveData.curve);
             }
-
-            AssetDatabase.CreateAsset(m_Clip, m_FilePath);
+            var fileClip = AssetDatabase.LoadAssetAtPath(m_FilePath, typeof(AnimationClip));
+            if (fileClip == null)
+            {
+                AssetDatabase.CreateAsset(m_Clip, m_FilePath);
+            }
+            else
+            {
+                fileClip = m_Clip;
+                AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(m_FilePath);
+            }
 
             StopBake();
             Debug.Log("End Bake");
@@ -173,7 +182,6 @@ namespace Unity.Labs.FacialRemote
         {
             while (m_CurrentFrame <= frameCount)
             {
-//                Debug.Log("current frame : " + m_CurrentFrame);
                 if (m_CurrentFrame == 0)
                 {
                     var startFrameBuffer = new byte[m_StreamSettings.BufferSize];
@@ -201,7 +209,6 @@ namespace Unity.Labs.FacialRemote
                 if (m_CurrentFrame == frameCount)
                 {
                     m_CurrentFrame++;
-
                 }
 
                 return true;
