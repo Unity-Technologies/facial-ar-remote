@@ -97,7 +97,7 @@ namespace Unity.Labs.FacialRemote
                 if (m_Locations.Length != m_BlendShapeCount)
                 {
                     var locs = new List<string>();
-                    foreach (var location in ARBlendShapeLocation.Locations)
+                    foreach (var location in BlendShapeLocation.Locations)
                     {
                         locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
                     }
@@ -132,7 +132,7 @@ namespace Unity.Labs.FacialRemote
             if (m_Locations.Length == 0)
             {
                 var locs = new List<string>();
-                foreach (var location in ARBlendShapeLocation.Locations)
+                foreach (var location in BlendShapeLocation.Locations)
                 {
                     locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
                 }

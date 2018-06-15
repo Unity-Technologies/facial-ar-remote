@@ -6,6 +6,65 @@ using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
+    public static class BlendShapeLocation
+    {
+        public static readonly string[] Locations = 
+        {
+            ARBlendShapeLocation.BrowDownLeft,
+            ARBlendShapeLocation.BrowDownRight,
+            ARBlendShapeLocation.BrowInnerUp,
+            ARBlendShapeLocation.BrowOuterUpLeft,
+            ARBlendShapeLocation.BrowOuterUpRight,
+            ARBlendShapeLocation.CheekPuff,
+            ARBlendShapeLocation.CheekSquintLeft,
+            ARBlendShapeLocation.CheekSquintRight,
+            ARBlendShapeLocation.EyeBlinkLeft,
+            ARBlendShapeLocation.EyeBlinkRight,
+            ARBlendShapeLocation.EyeLookDownLeft,
+            ARBlendShapeLocation.EyeLookDownRight,
+            ARBlendShapeLocation.EyeLookInLeft,
+            ARBlendShapeLocation.EyeLookInRight,
+            ARBlendShapeLocation.EyeLookOutLeft,
+            ARBlendShapeLocation.EyeLookOutRight,
+            ARBlendShapeLocation.EyeLookUpLeft,
+            ARBlendShapeLocation.EyeLookUpRight,
+            ARBlendShapeLocation.EyeSquintLeft,
+            ARBlendShapeLocation.EyeSquintRight,
+            ARBlendShapeLocation.EyeWideLeft,
+            ARBlendShapeLocation.EyeWideRight,
+            ARBlendShapeLocation.JawForward,
+            ARBlendShapeLocation.JawLeft,
+            ARBlendShapeLocation.JawOpen,
+            ARBlendShapeLocation.JawRight,
+            ARBlendShapeLocation.MouthClose,
+            ARBlendShapeLocation.MouthDimpleLeft,
+            ARBlendShapeLocation.MouthDimpleRight,
+            ARBlendShapeLocation.MouthFrownLeft,
+            ARBlendShapeLocation.MouthFrownRight,
+            ARBlendShapeLocation.MouthFunnel,
+            ARBlendShapeLocation.MouthLeft,
+            ARBlendShapeLocation.MouthLowerDownLeft,
+            ARBlendShapeLocation.MouthLowerDownRight,
+            ARBlendShapeLocation.MouthPressLeft,
+            ARBlendShapeLocation.MouthPressRight,
+            ARBlendShapeLocation.MouthPucker,
+            ARBlendShapeLocation.MouthRight,
+            ARBlendShapeLocation.MouthRollLower,
+            ARBlendShapeLocation.MouthRollUpper,
+            ARBlendShapeLocation.MouthShrugLower,
+            ARBlendShapeLocation.MouthShrugUpper,
+            ARBlendShapeLocation.MouthSmileLeft,
+            ARBlendShapeLocation.MouthSmileRight,
+            ARBlendShapeLocation.MouthStretchLeft,
+            ARBlendShapeLocation.MouthStretchRight,
+            ARBlendShapeLocation.MouthUpperUpLeft,
+            ARBlendShapeLocation.MouthUpperUpRight,
+            ARBlendShapeLocation.NoseSneerLeft,
+            ARBlendShapeLocation.NoseSneerRight,
+//            ARBlendShapeLocation.TongueOut,
+        };
+    }
+    
     [Serializable]
     public class PlaybackBuffer: IStreamSettings
     {
@@ -88,7 +147,7 @@ namespace Unity.Labs.FacialRemote
                 if (m_Locations.Length != m_BlendShapeCount)
                 {
                     var locs = new List<string>();
-                    foreach (var location in ARBlendShapeLocation.Locations)
+                    foreach (var location in BlendShapeLocation.Locations)
                     {
                         locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
                     }
@@ -142,7 +201,7 @@ namespace Unity.Labs.FacialRemote
         public void UseDefaultLocations()
         {
             var locs = new List<string>();
-            foreach (var location in ARBlendShapeLocation.Locations)
+            foreach (var location in BlendShapeLocation.Locations)
             {
                 locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
             }

@@ -22,6 +22,7 @@ MonoBehaviour:
   m_CameraPoseOffset: 233
   m_FrameNumberOffset: 261
   m_FrameTimeOffset: 265
+  m_BufferSize: 270
   m_Locations:
   - browdownl
   - browdownr
