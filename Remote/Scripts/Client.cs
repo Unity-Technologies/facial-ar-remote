@@ -10,6 +10,9 @@ namespace Unity.Labs.FacialRemote
 {
     class Client : MonoBehaviour
     {
+        [SerializeField]
+        GameObject m_AnchorPrefab;
+        
         const float k_Timeout = 5;
 
         [SerializeField]
@@ -34,6 +37,8 @@ namespace Unity.Labs.FacialRemote
 
         Dictionary<string, float> m_CurrentBlendShapes;
         Dictionary<string, int> m_BlendShapeIndices;
+
+        Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
 
         public StreamSettings streamSettings
         {
@@ -116,7 +121,7 @@ namespace Unity.Labs.FacialRemote
                 while (m_Running)
                 {
                     try {
-                        if (m_Socket.Connected)
+                        if (m_Socket.Connected && m_AnchorPrefab != null)
                         {
                             if (m_FreshData)
                             {
@@ -124,8 +129,10 @@ namespace Unity.Labs.FacialRemote
                                 m_Buffer[0] = streamSettings.ErrorCheck;
                                 Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
 
-                                var pose = UnityARFaceAnchorManager.Pose;
-                                PoseToArray(pose, poseArray);
+                                m_FacePose.position = m_AnchorPrefab.transform.position;
+                                m_FacePose.rotation = m_AnchorPrefab.transform.rotation;
+                                
+                                PoseToArray(m_FacePose, poseArray);
                                 PoseToArray(m_CameraPose, cameraPoseArray);
 
                                 frameNum[0] = count++;
@@ -134,7 +141,7 @@ namespace Unity.Labs.FacialRemote
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
-                                m_Buffer[m_Buffer.Length - 1] = (byte)(UnityARFaceAnchorManager.active ? 1 : 0);
+                                m_Buffer[m_Buffer.Length - 1] = (byte)(m_AnchorPrefab.activeSelf ? 1 : 0);
 
                                 m_Socket.Send(m_Buffer);
                             }
