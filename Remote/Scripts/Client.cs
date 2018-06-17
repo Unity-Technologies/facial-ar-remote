@@ -71,7 +71,7 @@ namespace Unity.Labs.FacialRemote
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
             m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
             m_ARFaceActive = true;
-            
+
             m_CurrentBlendShapes = anchorData.blendShapes;
 
             if (m_BlendShapeIndices == null)
@@ -79,10 +79,13 @@ namespace Unity.Labs.FacialRemote
                 m_BlendShapeIndices = new Dictionary<string, int>();
 
                 var names = m_CurrentBlendShapes.Keys.ToList();
+                names.Remove(ARBlendShapeLocation.TongueOut);
                 names.Sort();
                 foreach (var kvp in m_CurrentBlendShapes)
                 {
-                    m_BlendShapeIndices[kvp.Key] = names.IndexOf(kvp.Key);
+                    var index = names.IndexOf(kvp.Key);
+                    if (index >= 0)
+                        m_BlendShapeIndices[kvp.Key] = index;
                 }
             }
 
@@ -93,11 +96,11 @@ namespace Unity.Labs.FacialRemote
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
             m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
-            
+
             m_CurrentBlendShapes = anchorData.blendShapes;
             UpdateBlendShapes();
         }
-        
+
         void FaceRemoved (ARFaceAnchor anchorData)
         {
             m_ARFaceActive = false;
@@ -107,7 +110,9 @@ namespace Unity.Labs.FacialRemote
         {
             foreach (var kvp in m_CurrentBlendShapes)
             {
-                m_BlendShapes[m_BlendShapeIndices[kvp.Key]] = kvp.Value;
+                int index;
+                if (m_BlendShapeIndices.TryGetValue(kvp.Key, out index))
+                    m_BlendShapes[index] = kvp.Value;
             }
         }
 
@@ -137,7 +142,7 @@ namespace Unity.Labs.FacialRemote
                                 m_FreshData = false;
                                 m_Buffer[0] = streamSettings.ErrorCheck;
                                 Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
-                                
+
                                 PoseToArray(m_FacePose, poseArray);
                                 PoseToArray(m_CameraPose, cameraPoseArray);
 
