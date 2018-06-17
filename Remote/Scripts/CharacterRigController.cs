@@ -140,30 +140,25 @@ namespace Unity.Labs.FacialRemote
 
             if (m_LeftEye == null)
             {
-                Debug.LogError("Left Eye Bone returning NULL!");
-                enabled = false;
+                Debug.LogWarning("Left Eye Bone returning NULL!");
                 return;
             }
 
             if (m_RightEye == null)
             {
-                Debug.LogError("Right Eye Bone returning NULL!");
-                enabled = false;
+                Debug.LogWarning("Right Eye Bone returning NULL!");
                 return;
             }
 
             if (m_HeadBone == null)
             {
-                Debug.LogError("Head Bone returning NULL!");
-                enabled = false;
+                Debug.LogWarning("Head Bone returning NULL!");
                 return;
             }
 
-
             if (m_NeckBone == null)
             {
-                Debug.LogError("Neck Bone returning NULL!");
-                enabled = false;
+                Debug.LogWarning("Neck Bone returning NULL!");
                 return;
             }
 
