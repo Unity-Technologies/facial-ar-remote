@@ -57,7 +57,7 @@ namespace Unity.Labs.FacialRemote {
             ARBlendShapeLocation.MouthUpperUpRight,
             ARBlendShapeLocation.NoseSneerLeft,
             ARBlendShapeLocation.NoseSneerRight,
-            ARBlendShapeLocation.TongueOut,
+//            ARBlendShapeLocation.TongueOut,
         };
     }
 }
