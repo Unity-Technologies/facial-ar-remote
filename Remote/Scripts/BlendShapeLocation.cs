@@ -1,0 +1,63 @@
+﻿using System;
+using UnityEngine.XR.iOS;
+
+namespace Unity.Labs.FacialRemote {
+    public static class BlendShapeLocation
+    {
+        public static readonly string[] Locations = 
+        {
+            ARBlendShapeLocation.BrowDownLeft,
+            ARBlendShapeLocation.BrowDownRight,
+            ARBlendShapeLocation.BrowInnerUp,
+            ARBlendShapeLocation.BrowOuterUpLeft,
+            ARBlendShapeLocation.BrowOuterUpRight,
+            ARBlendShapeLocation.CheekPuff,
+            ARBlendShapeLocation.CheekSquintLeft,
+            ARBlendShapeLocation.CheekSquintRight,
+            ARBlendShapeLocation.EyeBlinkLeft,
+            ARBlendShapeLocation.EyeBlinkRight,
+            ARBlendShapeLocation.EyeLookDownLeft,
+            ARBlendShapeLocation.EyeLookDownRight,
+            ARBlendShapeLocation.EyeLookInLeft,
+            ARBlendShapeLocation.EyeLookInRight,
+            ARBlendShapeLocation.EyeLookOutLeft,
+            ARBlendShapeLocation.EyeLookOutRight,
+            ARBlendShapeLocation.EyeLookUpLeft,
+            ARBlendShapeLocation.EyeLookUpRight,
+            ARBlendShapeLocation.EyeSquintLeft,
+            ARBlendShapeLocation.EyeSquintRight,
+            ARBlendShapeLocation.EyeWideLeft,
+            ARBlendShapeLocation.EyeWideRight,
+            ARBlendShapeLocation.JawForward,
+            ARBlendShapeLocation.JawLeft,
+            ARBlendShapeLocation.JawOpen,
+            ARBlendShapeLocation.JawRight,
+            ARBlendShapeLocation.MouthClose,
+            ARBlendShapeLocation.MouthDimpleLeft,
+            ARBlendShapeLocation.MouthDimpleRight,
+            ARBlendShapeLocation.MouthFrownLeft,
+            ARBlendShapeLocation.MouthFrownRight,
+            ARBlendShapeLocation.MouthFunnel,
+            ARBlendShapeLocation.MouthLeft,
+            ARBlendShapeLocation.MouthLowerDownLeft,
+            ARBlendShapeLocation.MouthLowerDownRight,
+            ARBlendShapeLocation.MouthPressLeft,
+            ARBlendShapeLocation.MouthPressRight,
+            ARBlendShapeLocation.MouthPucker,
+            ARBlendShapeLocation.MouthRight,
+            ARBlendShapeLocation.MouthRollLower,
+            ARBlendShapeLocation.MouthRollUpper,
+            ARBlendShapeLocation.MouthShrugLower,
+            ARBlendShapeLocation.MouthShrugUpper,
+            ARBlendShapeLocation.MouthSmileLeft,
+            ARBlendShapeLocation.MouthSmileRight,
+            ARBlendShapeLocation.MouthStretchLeft,
+            ARBlendShapeLocation.MouthStretchRight,
+            ARBlendShapeLocation.MouthUpperUpLeft,
+            ARBlendShapeLocation.MouthUpperUpRight,
+            ARBlendShapeLocation.NoseSneerLeft,
+            ARBlendShapeLocation.NoseSneerRight,
+            ARBlendShapeLocation.TongueOut,
+        };
+    }
+}

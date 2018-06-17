@@ -10,9 +10,6 @@ namespace Unity.Labs.FacialRemote
 {
     class Client : MonoBehaviour
     {
-        [SerializeField]
-        GameObject m_AnchorPrefab;
-        
         const float k_Timeout = 5;
 
         [SerializeField]
@@ -40,14 +37,13 @@ namespace Unity.Labs.FacialRemote
 
         Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
 
-        public StreamSettings streamSettings
+        bool m_ARFaceActive;
+
+        StreamSettings streamSettings
         {
             get
             {
-                if (m_StreamSettings == null)
-                    return null;
-
-                return m_StreamSettings;
+                return m_StreamSettings == null ? null : m_StreamSettings;
             }
         }
 
@@ -67,10 +63,15 @@ namespace Unity.Labs.FacialRemote
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
             UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
+            UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
         }
 
         void FaceAdded (ARFaceAnchor anchorData)
         {
+            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
+            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
+            m_ARFaceActive = true;
+            
             m_CurrentBlendShapes = anchorData.blendShapes;
 
             if (m_BlendShapeIndices == null)
@@ -90,8 +91,16 @@ namespace Unity.Labs.FacialRemote
 
         void FaceUpdated (ARFaceAnchor anchorData)
         {
+            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
+            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
+            
             m_CurrentBlendShapes = anchorData.blendShapes;
             UpdateBlendShapes();
+        }
+        
+        void FaceRemoved (ARFaceAnchor anchorData)
+        {
+            m_ARFaceActive = false;
         }
 
         void UpdateBlendShapes()
@@ -121,16 +130,13 @@ namespace Unity.Labs.FacialRemote
                 while (m_Running)
                 {
                     try {
-                        if (m_Socket.Connected && m_AnchorPrefab != null)
+                        if (m_Socket.Connected)
                         {
                             if (m_FreshData)
                             {
                                 m_FreshData = false;
                                 m_Buffer[0] = streamSettings.ErrorCheck;
                                 Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
-
-                                m_FacePose.position = m_AnchorPrefab.transform.position;
-                                m_FacePose.rotation = m_AnchorPrefab.transform.rotation;
                                 
                                 PoseToArray(m_FacePose, poseArray);
                                 PoseToArray(m_CameraPose, cameraPoseArray);
@@ -141,7 +147,7 @@ namespace Unity.Labs.FacialRemote
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
-                                m_Buffer[m_Buffer.Length - 1] = (byte)(m_AnchorPrefab.activeSelf ? 1 : 0);
+                                m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
 
                                 m_Socket.Send(m_Buffer);
                             }
@@ -180,7 +186,6 @@ namespace Unity.Labs.FacialRemote
             if(m_Socket == null || m_CameraTransform == null)
                 return;
 
-            // TODO think may want to update information in LateUpdate
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
 

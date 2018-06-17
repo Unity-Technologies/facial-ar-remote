@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -119,6 +118,9 @@ namespace Unity.Labs.FacialRemote
 
         void OnValidate()
         {
+            if (m_BlendShapeCount != BlendShapeLocation.Locations.Length)
+                Debug.LogWarningFormat("Blend Shape Count of {0} does not match Plugin's Blend Shape Location Length of {1}",
+                    m_BlendShapeCount, BlendShapeLocation.Locations.Length);
             m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             m_PoseSize = sizeof(float) * 7;
             m_FrameNumberSize = sizeof(int);
@@ -129,7 +131,7 @@ namespace Unity.Labs.FacialRemote
             m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
             m_BufferSize = 1 + BlendShapeSize + PoseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
 
-            if (m_Locations.Length == 0)
+            if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
             {
                 var locs = new List<string>();
                 foreach (var location in BlendShapeLocation.Locations)

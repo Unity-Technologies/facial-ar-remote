@@ -183,30 +183,32 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-//#if UNITY_EDITOR
-//        void OnValidate()
-//        {
-//            if (readerStreamSettings.locations ==null || readerStreamSettings.locations.Count == 0)
-//                return;
-//
-//            if (m_Overrides.Length != readerStreamSettings.BlendShapeCount)
-//            {
-//                var overridesCopy = new BlendShapeOverride[readerStreamSettings.BlendShapeCount];
-//
-//                foreach (var location in readerStreamSettings.locations)
-//                {
-//                    var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location);
-//                    if (blendShapeOverride == null)
-//                    {
-//                        blendShapeOverride = new BlendShapeOverride(location);
-//                    }
-//                    overridesCopy[readerStreamSettings.locations.IndexOf(location)] = blendShapeOverride;
-//                }
-//
-//                m_Overrides = overridesCopy;
-//            }
-//        }
-//#endif
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            if (readerStreamSettings.locations == null || readerStreamSettings.locations.Length == 0)
+                return;
+
+            if (m_Overrides.Length != readerStreamSettings.BlendShapeCount)
+            {
+                var overridesCopy = new BlendShapeOverride[readerStreamSettings.BlendShapeCount];
+
+                for (var i = 0; i < readerStreamSettings.locations.Length; i++)
+                {
+                    var location = readerStreamSettings.locations[i];
+                    var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location);
+                    if (blendShapeOverride == null)
+                    {
+                        blendShapeOverride = new BlendShapeOverride(location);
+                    }
+
+                    overridesCopy[i] = blendShapeOverride;
+                }
+
+                m_Overrides = overridesCopy;
+            }
+        }
+#endif
 
     }
 

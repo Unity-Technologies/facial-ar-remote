@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Name: Stream Settings
   m_EditorClassIdentifier: 
   m_ErrorCheck: 42
-  m_BlendShapeCount: 51
+  m_BlendShapeCount: 52
   m_Mappings: []
-  m_BlendShapeSize: 204
+  m_BlendShapeSize: 208
   m_PoseSize: 28
   m_FrameNumberSize: 4
   m_FrameTimeSize: 4
-  m_HeadPoseOffset: 205
-  m_CameraPoseOffset: 233
-  m_FrameNumberOffset: 261
-  m_FrameTimeOffset: 265
-  m_BufferSize: 270
+  m_HeadPoseOffset: 209
+  m_CameraPoseOffset: 237
+  m_FrameNumberOffset: 265
+  m_FrameTimeOffset: 269
+  m_BufferSize: 274
   m_Locations:
   - browdownl
   - browdownr
@@ -75,3 +75,4 @@ MonoBehaviour:
   - mouthupperupr
   - nosesneerl
   - nosesneerr
+  - tongueout
