@@ -119,7 +119,8 @@ namespace Unity.Labs.FacialRemote
             EditorGUILayout.Space();
 
             // Bake Clip Button
-            using (new EditorGUI.DisabledGroupScope(streamReader.streamPlayback.activePlaybackBuffer == null))
+            using (new EditorGUI.DisabledGroupScope(streamReader.streamPlayback.activePlaybackBuffer == null
+                || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
             {
                 if (GUILayout.Button("Bake Animation Clip"))
                 {
