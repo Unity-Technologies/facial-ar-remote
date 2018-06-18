@@ -78,20 +78,13 @@ namespace Unity.Labs.FacialRemote
         public int BufferSize { get { return m_BufferSize; } }
         public Mapping[] mappings { get { return m_Mappings; } }
 
-//        public string[] locations { get { return m_Locations; } }
-
         public string[] locations
         {
             get
             {
                 if (m_Locations.Length != m_BlendShapeCount)
                 {
-                    var locs = new List<string>();
-                    foreach (var location in BlendShapeLocation.Locations)
-                    {
-                        locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
-                    }
-                    m_Locations.ToArray();
+                    UseDefaultLocations();
                 }
                 return m_Locations;
             }
@@ -127,23 +120,12 @@ namespace Unity.Labs.FacialRemote
             m_Mappings = streamSettings.mappings;
         }
 
-        public static string Filter(string @string)
-        {
-            return @string.ToLower().Replace("_", "");
-        }
-
-        public int GetLocationIndex(string location)
-        {
-//            return locations.IndexOf(Filter(location));
-            return Array.IndexOf(locations, Filter(location));
-        }
-
         public void UseDefaultLocations()
         {
             var locs = new List<string>();
-            foreach (var location in BlendShapeLocation.Locations)
+            foreach (var location in BlendShapeUtils.Locations)
             {
-                locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                locs.Add(location); // Eliminate capitalization and _ mismatch
             }
             locs.Sort();
             m_Locations = locs.ToArray();

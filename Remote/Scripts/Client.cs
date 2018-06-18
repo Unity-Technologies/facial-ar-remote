@@ -78,9 +78,13 @@ namespace Unity.Labs.FacialRemote
             {
                 m_BlendShapeIndices = new Dictionary<string, int>();
 
-                var names = m_CurrentBlendShapes.Keys.ToList();
-                names.Remove(ARBlendShapeLocation.TongueOut);
+//                var names = m_CurrentBlendShapes.Keys.ToList();
+//                names.Remove(ARBlendShapeLocation.TongueOut);
+//                names.Sort();
+
+                var names = m_StreamSettings.locations.ToList();
                 names.Sort();
+                
                 foreach (var kvp in m_CurrentBlendShapes)
                 {
                     var index = names.IndexOf(kvp.Key);

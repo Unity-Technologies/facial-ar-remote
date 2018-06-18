@@ -35,7 +35,12 @@ namespace Unity.Labs.FacialRemote
 
         protected override bool IsStreamActive()
         {
-            return isSource && m_Socket != null && m_Socket.Connected;
+            return isSource && deviceConnected;
+        }
+
+        public bool deviceConnected
+        {
+            get { return m_Socket != null && m_Socket.Connected; }
         }
 
         public override void StartStreamThread()

@@ -70,64 +70,12 @@ namespace Unity.Labs.FacialRemote
         [HideInInspector]
         public bool connected;
 
-        public void OnStreamSettingsChange()
-        {
-            m_BlendShapes = new float[streamSettings.BlendShapeCount];
-            m_BlendShapesScaled = new float[streamSettings.BlendShapeCount];
-
-            SetupBlendShapeIndices();
-        }
-
         void Start()
         {
             if (m_SkinnedMeshRenderers.Length < 1 || m_SkinnedMeshRenderers.All(a => a == null))
             {
-                Debug.LogWarning("Blend Shape  Controller needs a Skinned Mesh Renderer set.");
+                Debug.LogWarning("Blend Shape Controller needs a Skinned Mesh Renderer set.");
                 enabled = false;
-                return;
-            }
-
-        }
-
-        public void SetupBlendShapeIndices()
-        {
-            m_Indices.Clear();
-            foreach (var meshRenderer in m_SkinnedMeshRenderers)
-            {
-                var mesh = meshRenderer.sharedMesh;
-                var count = mesh.blendShapeCount;
-                var indices = new BlendShapeIndexData[count];
-                for (var i = 0; i < count; i++)
-                {
-                    var shapeName = mesh.GetBlendShapeName(i);
-                    var lower = StreamSettings.Filter(shapeName);
-                    var index = -1;
-                    foreach (var mapping in readerStreamSettings.mappings)
-                    {
-                        if (lower.Contains(mapping.from))
-//                            index = readerStreamSettings.locations.IndexOf(mapping.to);
-                            index = Array.IndexOf(readerStreamSettings.locations, mapping.to);
-                    }
-
-                    if (index < 0)
-                    {
-                        for (var j = 0; j < readerStreamSettings.locations.Length; j++)
-                        {
-                            if (lower.Contains(readerStreamSettings.locations[j]))
-                            {
-                                index = j;
-                                break;
-                            }
-                        }
-                    }
-
-                    indices[i] = new BlendShapeIndexData(index, shapeName);;
-
-                    if (index < 0)
-                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
-                }
-
-                m_Indices.Add(meshRenderer, indices);
             }
         }
 
@@ -152,6 +100,54 @@ namespace Unity.Labs.FacialRemote
                 }
             }
         }
+        
+        public void OnStreamSettingsChange()
+        {
+            m_BlendShapes = new float[streamSettings.BlendShapeCount];
+            m_BlendShapesScaled = new float[streamSettings.BlendShapeCount];
+
+            SetupBlendShapeIndices();
+        }
+        
+        public void SetupBlendShapeIndices()
+        {
+            m_Indices.Clear();
+            foreach (var meshRenderer in m_SkinnedMeshRenderers)
+            {
+                var mesh = meshRenderer.sharedMesh;
+                var count = mesh.blendShapeCount;
+                var indices = new BlendShapeIndexData[count];
+                for (var i = 0; i < count; i++)
+                {
+                    var shapeName = mesh.GetBlendShapeName(i);
+                    var index = -1;
+                    foreach (var mapping in readerStreamSettings.mappings)
+                    {
+                        if (shapeName.Contains(mapping.from))
+                            index = Array.IndexOf(readerStreamSettings.locations, mapping.to);
+                    }
+
+                    if (index < 0)
+                    {
+                        for (var j = 0; j < readerStreamSettings.locations.Length; j++)
+                        {
+                            if (shapeName.Contains(readerStreamSettings.locations[j]))
+                            {
+                                index = j;
+                                break;
+                            }
+                        }
+                    }
+
+                    indices[i] = new BlendShapeIndexData(index, shapeName);;
+
+                    if (index < 0)
+                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
+                }
+
+                m_Indices.Add(meshRenderer, indices);
+            }
+        }
 
         public void InterpolateBlendShapes(bool force = false)
         {
@@ -159,8 +155,8 @@ namespace Unity.Labs.FacialRemote
             {
                 var blendShape = m_BlendShapes[i];
                 var blendShapeTarget = readerBlendShapesBuffer[i];
-                var threshold = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
-                var smoothing = m_Overrides[i].useOverride ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
+                var threshold = UseOverride(i) ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
+                var smoothing = UseOverride(i) ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
                 if (force || isReaderTrackingActive)
                 {
@@ -172,7 +168,7 @@ namespace Unity.Labs.FacialRemote
                     m_BlendShapes[i] =  Mathf.Lerp(0f, m_BlendShapes[i], m_TrackingLossSmoothing);
                 }
 
-                if (m_Overrides[i].useOverride)
+                if (UseOverride(i))
                 {
                     m_BlendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient, m_Overrides[i].blendShapeMax);
                 }
@@ -183,14 +179,14 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-#if UNITY_EDITOR
-        void OnValidate()
+        public void ValidateOverrides()
         {
-            if (readerStreamSettings.locations == null || readerStreamSettings.locations.Length == 0)
+            if (!connected || readerStreamSettings.locations == null || readerStreamSettings.locations.Length == 0)
                 return;
-
+            
             if (m_Overrides.Length != readerStreamSettings.BlendShapeCount)
             {
+#if UNITY_EDITOR
                 var overridesCopy = new BlendShapeOverride[readerStreamSettings.BlendShapeCount];
 
                 for (var i = 0; i < readerStreamSettings.locations.Length; i++)
@@ -206,10 +202,18 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 m_Overrides = overridesCopy;
+#endif
             }
         }
-#endif
 
+        bool UseOverride(int index)
+        {
+            return m_Overrides != null && index < m_Overrides.Length && m_Overrides[index] != null && m_Overrides[index].useOverride;
+        }
+
+        void OnValidate()
+        {
+            ValidateOverrides();
+        }
     }
-
 }

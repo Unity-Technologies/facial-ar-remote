@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9873bf0085043ad8a2f13636d3b7fe5, type: 3}
+  m_Name: Stream Settings ARKit1-5
+  m_EditorClassIdentifier: 
+  m_ErrorCheck: 42
+  m_BlendShapeCount: 51
+  m_Mappings: []
+  m_BlendShapeSize: 204
+  m_PoseSize: 28
+  m_FrameNumberSize: 4
+  m_FrameTimeSize: 4
+  m_HeadPoseOffset: 205
+  m_CameraPoseOffset: 233
+  m_FrameNumberOffset: 261
+  m_FrameTimeOffset: 265
+  m_BufferSize: 270
+  m_Locations:
+  - browDown_L
+  - browDown_R
+  - browInnerUp
+  - browOuterUp_L
+  - browOuterUp_R
+  - cheekPuff
+  - cheekSquint_L
+  - cheekSquint_R
+  - eyeBlink_L
+  - eyeBlink_R
+  - eyeLookDown_L
+  - eyeLookDown_R
+  - eyeLookIn_L
+  - eyeLookIn_R
+  - eyeLookOut_L
+  - eyeLookOut_R
+  - eyeLookUp_L
+  - eyeLookUp_R
+  - eyeSquint_L
+  - eyeSquint_R
+  - eyeWide_L
+  - eyeWide_R
+  - jawForward
+  - jawLeft
+  - jawOpen
+  - jawRight
+  - mouthClose
+  - mouthDimple_L
+  - mouthDimple_R
+  - mouthFrown_L
+  - mouthFrown_R
+  - mouthFunnel
+  - mouthLeft
+  - mouthLowerDown_L
+  - mouthLowerDown_R
+  - mouthPress_L
+  - mouthPress_R
+  - mouthPucker
+  - mouthRight
+  - mouthRollLower
+  - mouthRollUpper
+  - mouthShrugLower
+  - mouthShrugUpper
+  - mouthSmile_L
+  - mouthSmile_R
+  - mouthStretch_L
+  - mouthStretch_R
+  - mouthUpperUp_L
+  - mouthUpperUp_R
+  - noseSneer_L
+  - noseSneer_R
