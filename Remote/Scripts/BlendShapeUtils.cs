@@ -1,9 +1,27 @@
 ﻿using System;
 using UnityEngine.XR.iOS;
 
-namespace Unity.Labs.FacialRemote {
-    public static class BlendShapeLocation
+namespace Unity.Labs.FacialRemote 
+{
+    public static class BlendShapeUtils
     {
+        public const string EyeLookDownLeft = ARBlendShapeLocation.EyeLookDownLeft;
+        public const string EyeLookDownRight = ARBlendShapeLocation.EyeLookDownRight;
+        public const string EyeLookInLeft = ARBlendShapeLocation.EyeLookInLeft;
+        public const string EyeLookInRight = ARBlendShapeLocation.EyeLookInRight;
+        public const string EyeLookOutLeft = ARBlendShapeLocation.EyeLookOutLeft;
+        public const string EyeLookOutRight = ARBlendShapeLocation.EyeLookOutRight;
+        public const string EyeLookUpLeft = ARBlendShapeLocation.EyeLookUpLeft;
+        public const string EyeLookUpRight = ARBlendShapeLocation.EyeLookUpRight;
+        
+        
+        /// <summary>
+        /// Array of the blend shape locations supported by the unity arkit plugin.
+        /// </summary>
+        /// <remarks>
+        /// ARKIT_2_0 is a custom scrtipting define symbol and will neeed to be enabled in
+        /// 'PlayerSettings>platform>Scripting Define Symbols' for use in build
+        /// </remarks>
         public static readonly string[] Locations = 
         {
             ARBlendShapeLocation.BrowDownLeft,
@@ -57,7 +75,19 @@ namespace Unity.Labs.FacialRemote {
             ARBlendShapeLocation.MouthUpperUpRight,
             ARBlendShapeLocation.NoseSneerLeft,
             ARBlendShapeLocation.NoseSneerRight,
-//            ARBlendShapeLocation.TongueOut,
+#if ARKIT_2_0
+            ARBlendShapeLocation.TongueOut,
+#endif
         };
+        
+//        public static string Filter(string value)
+//        {
+//            return value.ToLower().Replace("_", "");
+//        }
+        
+        public static int GetLocationIndex(this IStreamSettings streamSettings, string location)
+        {
+            return Array.IndexOf(streamSettings.locations, location);
+        }
     }
 }

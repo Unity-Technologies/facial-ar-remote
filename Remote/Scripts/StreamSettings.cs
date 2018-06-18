@@ -5,26 +5,6 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public interface IStreamSettings
-    {
-        byte ErrorCheck { get; }
-        int BlendShapeCount { get; }
-        int BlendShapeSize { get; }
-        int PoseSize { get; }
-        int FrameNumberSize { get; }
-        int FrameTimeSize { get; }
-        int HeadPoseOffset { get; }
-        int CameraPoseOffset { get; }
-        int FrameNumberOffset  { get; }
-        int FrameTimeOffset { get; }
-        int BufferSize { get; }
-
-        string[] locations { get; }
-        Mapping[] mappings { get; }
-
-        int GetLocationIndex(string location);
-    }
-
     [Serializable]
     public class Mapping
     {
@@ -96,9 +76,9 @@ namespace Unity.Labs.FacialRemote
                 if (m_Locations.Length != m_BlendShapeCount)
                 {
                     var locs = new List<string>();
-                    foreach (var location in BlendShapeLocation.Locations)
+                    foreach (var location in BlendShapeUtils.Locations)
                     {
-                        locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                        locs.Add(location); // Eliminate capitalization and _ mismatch
                     }
                     m_Locations.ToArray();
                 }
@@ -106,21 +86,11 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public int GetLocationIndex(string location)
+        public void ValidateData()
         {
-            return Array.IndexOf(locations, Filter(location));
-        }
-
-        public static string Filter(string @string)
-        {
-            return @string.ToLower().Replace("_", "");
-        }
-
-        void OnValidate()
-        {
-            if (m_BlendShapeCount != BlendShapeLocation.Locations.Length)
+            if (m_BlendShapeCount != BlendShapeUtils.Locations.Length)
                 Debug.LogWarningFormat("Blend Shape Count of {0} does not match Plugin's Blend Shape Location Length of {1}",
-                    m_BlendShapeCount, BlendShapeLocation.Locations.Length);
+                    m_BlendShapeCount, BlendShapeUtils.Locations.Length);
             m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             m_PoseSize = sizeof(float) * 7;
             m_FrameNumberSize = sizeof(int);
@@ -134,9 +104,10 @@ namespace Unity.Labs.FacialRemote
             if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
             {
                 var locs = new List<string>();
-                foreach (var location in BlendShapeLocation.Locations)
+                foreach (var location in BlendShapeUtils.Locations)
                 {
-                    locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+//                    locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
+                    locs.Add(location); // Eliminate capitalization and _ mismatch
                 }
                 locs.Sort();
                 m_Locations = locs.ToArray();

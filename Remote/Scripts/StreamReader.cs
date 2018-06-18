@@ -14,6 +14,9 @@ namespace Unity.Labs.FacialRemote
         PlaybackData m_PlaybackData;
 
         [SerializeField]
+        GameObject m_Character;
+
+        [SerializeField]
         bool m_UseDebug;
 
         [Header("Server Settings")]
@@ -29,15 +32,20 @@ namespace Unity.Labs.FacialRemote
 
         [Header("Controller Settings")]
         [SerializeField]
+        BlendShapesController m_BlendShapesControllerOverride;
+
+        [SerializeField]
+        CharacterRigController m_CharacterRigControllerOverride;
+
+        [SerializeField]
+        Camera m_CameraOverride;
+
+        [SerializeField]
+        Transform m_HeadBoneOverride;
+
         BlendShapesController m_BlendShapesController;
-
-        [SerializeField]
         CharacterRigController m_CharacterRigController;
-
-        [SerializeField]
         Camera m_Camera;
-
-        [SerializeField]
         Transform m_HeadBone;
 
         Pose m_HeadPose;
@@ -157,10 +165,75 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
+            if (m_StreamSettings == null)
+            {
+                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Stream Reader!", gameObject.name);
+                enabled = false;
+            }
+
+            if (m_PlaybackData)
+            {
+                Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
+                    gameObject.name);
+            }
+            
+            if (m_Character != null)
+            {
+                if (m_BlendShapesControllerOverride == null)
+                    m_BlendShapesController = m_Character.GetComponentInChildren<BlendShapesController>();
+                else
+                    m_BlendShapesController = m_BlendShapesControllerOverride;
+
+                if (m_CharacterRigControllerOverride == null)
+                    m_CharacterRigController = m_Character.GetComponentInChildren<CharacterRigController>();
+                else
+                    m_CharacterRigController = m_CharacterRigControllerOverride;
+
+                if (m_HeadBoneOverride == null)
+                {
+                    if (m_CharacterRigController != null)
+                        m_HeadBone = m_CharacterRigController.headBone;
+                }
+                else
+                    m_HeadBone = m_HeadBoneOverride;
+            }
+            else
+            {
+                Debug.Log("Character is not set. Trying to set controllers from overrides.");
+                m_BlendShapesController = m_BlendShapesControllerOverride;
+                m_CharacterRigController = m_CharacterRigControllerOverride;
+                m_HeadBone = m_HeadBoneOverride;
+            }
+            
+            if (m_CameraOverride == null)
+                m_Camera = Camera.main;
+            else
+                m_Camera = m_CameraOverride;
+
+            if (m_BlendShapesController == null)
+            {
+                Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
+            }
+            
+            if (m_CharacterRigController == null)
+            {
+                Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
+            }
+            
+            if (m_HeadBone == null)
+            {
+                Debug.LogWarning("No Head Bone Transform has been set or found. Note this data can still be recorded in the stream.");
+            }
+            
+            if (m_Camera == null)
+            {
+                Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
+            } 
+            
             m_OnStreamSettingsChange = () =>
             {
                 if (m_UseDebug)
-                    Debug.Log("OnStreamSettingsChange" );
+                    Debug.Log("OnStreamSettingsChange");
             };
 
             m_Server = new Server();
@@ -244,8 +317,25 @@ namespace Unity.Labs.FacialRemote
         {
             Application.targetFrameRate = 120;
 
-            m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
-            m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);
+            if (m_HeadBone == null)
+            {
+                m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
+                Debug.LogWarning("No Character head bone set. Using default pose.");
+            }
+            else
+            {
+                m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
+            }
+
+            if (m_Camera == null)
+            {
+                m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
+                Debug.LogWarning("No Camera set. Using default pose.");
+            }
+            else
+            {
+                m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);
+            }
 
             foreach (var streamSource in m_StreamSources)
             {

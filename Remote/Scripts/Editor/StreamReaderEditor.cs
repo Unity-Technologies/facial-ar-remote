@@ -55,7 +55,7 @@ namespace Unity.Labs.FacialRemote
             {
                 using (new EditorGUI.DisabledGroupScope(!Application.isPlaying))
                 {
-                    using (new EditorGUI.DisabledGroupScope(!(!streamReader.server.isSource || streamReader.server.streamActive)))
+                    using (new EditorGUI.DisabledGroupScope(!(streamReader.server.deviceConnected || streamReader.server.streamActive)))
                     {
                         if (!streamReader.server.streamActive)
                         {
@@ -111,9 +111,13 @@ namespace Unity.Labs.FacialRemote
             EditorGUILayout.Space();
 
             var clipName = streamReader.streamPlayback.activePlaybackBuffer == null ? "None" : streamReader.streamPlayback.activePlaybackBuffer.name;
-            if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
+
+            using (new EditorGUI.DisabledGroupScope(streamReader.streamPlayback == null))
             {
-                ShowRecordStreamMenu(streamReader.streamPlayback, streamReader.playbackData.playbackBuffers);
+                if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
+                {
+                    ShowRecordStreamMenu(streamReader.streamPlayback, streamReader.playbackData.playbackBuffers);
+                }
             }
 
             EditorGUILayout.Space();

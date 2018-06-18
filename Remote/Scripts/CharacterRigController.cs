@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.XR.iOS;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -110,6 +109,8 @@ namespace Unity.Labs.FacialRemote
         [NonSerialized]
         [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
+        
+        public Transform headBone { get {return m_HeadBone; } }
 
         public void OnStreamSettingsChange()
         {
@@ -124,14 +125,14 @@ namespace Unity.Labs.FacialRemote
         public void SetupBlendShapeIndices()
         {
             // TODO should try to use active settings
-            m_EyeLookDownLeftIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookDownRight);
-            m_EyeLookInLeftIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInLeft);
-            m_EyeLookInRightIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookInRight);
-            m_EyeLookOutLeftIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = readerStreamSettings.GetLocationIndex(ARBlendShapeLocation.EyeLookUpRight);
+            m_EyeLookDownLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
+            m_EyeLookDownRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
+            m_EyeLookInLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);
+            m_EyeLookInRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookInRight);
+            m_EyeLookOutLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookOutLeft);
+            m_EyeLookOutRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookOutRight);
+            m_EyeLookUpLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookUpLeft);
+            m_EyeLookUpRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);
         }
 
         public void SetupCharacterRigController()
