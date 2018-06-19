@@ -49,4 +49,10 @@ Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.uni
 *Note* Our internal setup was using a dedicated wireless router attached to the editor computer or lighting port to ethernet adaptor.
 
 
+### Issues
 
+1. Character Rig Controller requires all bones to be set to work correctly.
+
+2. Character Rig Controller does not support Humanoid Avatar for bone animation.
+
+3. Animation Baking does not support Humanoid Avatar for avatar bone animation.

@@ -163,7 +163,7 @@ namespace Unity.Labs.FacialRemote
 
         Action m_OnStreamSettingsChange;
 
-        void Awake()
+        public void Awake()
         {
             if (m_StreamSettings == null)
             {
@@ -176,7 +176,7 @@ namespace Unity.Labs.FacialRemote
                 Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
                     gameObject.name);
             }
-            
+
             if (m_Character != null)
             {
                 if (m_BlendShapesControllerOverride == null)
@@ -204,7 +204,7 @@ namespace Unity.Labs.FacialRemote
                 m_CharacterRigController = m_CharacterRigControllerOverride;
                 m_HeadBone = m_HeadBoneOverride;
             }
-            
+
             if (m_CameraOverride == null)
                 m_Camera = Camera.main;
             else
@@ -214,22 +214,22 @@ namespace Unity.Labs.FacialRemote
             {
                 Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
             }
-            
+
             if (m_CharacterRigController == null)
             {
                 Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
             }
-            
+
             if (m_HeadBone == null)
             {
                 Debug.LogWarning("No Head Bone Transform has been set or found. Note this data can still be recorded in the stream.");
             }
-            
+
             if (m_Camera == null)
             {
                 Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
-            } 
-            
+            }
+
             m_OnStreamSettingsChange = () =>
             {
                 if (m_UseDebug)

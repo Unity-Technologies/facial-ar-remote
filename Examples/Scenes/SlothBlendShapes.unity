@@ -268,7 +268,12 @@ Prefab:
         type: 2}
       propertyPath: m_CharacterRigController
       value: 
-      objectReference: {fileID: 786562251}
+      objectReference: {fileID: 0}
+    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
+        type: 2}
+      propertyPath: m_Character
+      value: 
+      objectReference: {fileID: 786562247}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 2}
   m_IsPrefabParent: 0
@@ -279,428 +284,317 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.size
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+    - target: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616, type: 2}
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
-    - target: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80, type: 3}
-      propertyPath: m_AABB.m_Center.y
-      value: -0.015557218
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[0].m_Name
+      value: browDown_L
       objectReference: {fileID: 0}
-    - target: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80, type: 3}
-      propertyPath: m_AABB.m_Extent.x
-      value: 0.113363
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[1].m_Name
+      value: browDown_R
       objectReference: {fileID: 0}
-    - target: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80, type: 3}
-      propertyPath: m_AABB.m_Extent.y
-      value: 0.13194084
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[2].m_Name
+      value: browInnerUp
       objectReference: {fileID: 0}
-    - target: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80, type: 3}
-      propertyPath: m_AABB.m_Extent.z
-      value: 0.13394047
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[3].m_Name
+      value: browOuterUp_L
       objectReference: {fileID: 0}
-    - target: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80, type: 3}
-      propertyPath: m_DirtyAABB
-      value: 0
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[4].m_Name
+      value: browOuterUp_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[5].m_Name
+      value: cheekPuff
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[6].m_Name
+      value: cheekSquint_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[7].m_Name
+      value: cheekSquint_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[8].m_Name
+      value: eyeBlink_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[9].m_Name
+      value: eyeBlink_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[10].m_Name
+      value: eyeLookDown_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[11].m_Name
+      value: eyeLookDown_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[12].m_Name
+      value: eyeLookIn_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[13].m_Name
+      value: eyeLookIn_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[14].m_Name
+      value: eyeLookOut_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[15].m_Name
+      value: eyeLookOut_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[16].m_Name
+      value: eyeLookUp_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[17].m_Name
+      value: eyeLookUp_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[18].m_Name
+      value: eyeSquint_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[19].m_Name
+      value: eyeSquint_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[20].m_Name
+      value: eyeWide_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[21].m_Name
+      value: eyeWide_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[22].m_Name
+      value: jawForward
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[23].m_Name
+      value: jawLeft
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[24].m_Name
+      value: jawOpen
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[25].m_Name
+      value: jawRight
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[26].m_Name
+      value: mouthClose
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[27].m_Name
+      value: mouthDimple_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[28].m_Name
+      value: mouthDimple_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[29].m_Name
+      value: mouthFrown_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[30].m_Name
+      value: mouthFrown_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[31].m_Name
+      value: mouthFunnel
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[32].m_Name
+      value: mouthLeft
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[33].m_Name
+      value: mouthLowerDown_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[34].m_Name
+      value: mouthLowerDown_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[35].m_Name
+      value: mouthPress_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[36].m_Name
+      value: mouthPress_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[37].m_Name
+      value: mouthPucker
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[38].m_Name
+      value: mouthRight
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[39].m_Name
+      value: mouthRollLower
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[40].m_Name
+      value: mouthRollUpper
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[41].m_Name
+      value: mouthShrugLower
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[42].m_Name
+      value: mouthShrugUpper
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[43].m_Name
+      value: mouthSmile_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[44].m_Name
+      value: mouthSmile_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[45].m_Name
+      value: mouthStretch_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[46].m_Name
+      value: mouthStretch_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[47].m_Name
+      value: mouthUpperUp_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[48].m_Name
+      value: mouthUpperUp_R
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[49].m_Name
+      value: noseSneer_L
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 2}
+      propertyPath: m_Overrides.Array.data[50].m_Name
+      value: noseSneer_R
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: af968d843fbb7064799877e138be8e80, type: 3}
+  m_ParentPrefab: {fileID: 100100000, guid: f52b9039400198449907ac105acc8616, type: 2}
   m_IsPrefabParent: 0
 --- !u!1 &786562247 stripped
 GameObject:
-  m_PrefabParentObject: {fileID: 100004, guid: af968d843fbb7064799877e138be8e80, type: 3}
-  m_PrefabInternal: {fileID: 786562246}
---- !u!137 &786562248 stripped
-SkinnedMeshRenderer:
-  m_PrefabParentObject: {fileID: 13700000, guid: af968d843fbb7064799877e138be8e80,
-    type: 3}
+  m_PrefabParentObject: {fileID: 1958418460500596, guid: f52b9039400198449907ac105acc8616,
+    type: 2}
   m_PrefabInternal: {fileID: 786562246}
 --- !u!4 &786562249 stripped
 Transform:
-  m_PrefabParentObject: {fileID: 400004, guid: af968d843fbb7064799877e138be8e80, type: 3}
+  m_PrefabParentObject: {fileID: 4963656300094854, guid: f52b9039400198449907ac105acc8616,
+    type: 2}
   m_PrefabInternal: {fileID: 786562246}
---- !u!114 &786562250
+--- !u!114 &786562250 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 786562247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
+  m_PrefabParentObject: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+    type: 2}
+  m_PrefabInternal: {fileID: 786562246}
   m_Script: {fileID: 11500000, guid: db8052edd37c5da4ba56c08244eb648a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SkinnedMeshRenderers:
-  - {fileID: 786562248}
-  m_BlendShapeSmoothing: 0.1
-  m_BlendShapeThreshold: 0.01
-  m_BlendShapeCoefficient: 120
-  m_BlendShapeMax: 100
-  m_Overrides:
-  - m_UseOverride: 0
-    m_Name: browdownl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: browdownr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: browinnerup
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: browouterupl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: browouterupr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: cheekpuff
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: cheeksquintl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: cheeksquintr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyeblinkl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyeblinkr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookdownl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookdownr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookinl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookinr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookoutl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookoutr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookupl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyelookupr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyesquintl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyesquintr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyewidel
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: eyewider
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: jawforward
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: jawleft
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: jawopen
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: jawright
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthclose
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthdimplel
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthdimpler
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthfrownl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthfrownr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthfunnel
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthleft
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthlowerdownl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthlowerdownr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthpressl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthpressr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthpucker
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthright
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthrolllower
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthrollupper
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthshruglower
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthshrugupper
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthsmilel
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthsmiler
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthstretchl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthstretchr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthupperupl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: mouthupperupr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: nosesneerl
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: nosesneerr
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: tongueout
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  m_TrackingLossSmoothing: 0.1
---- !u!114 &786562251
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 786562247}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 601c475b43c9a4e46b969b376a0d7d1a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_EyeSmoothing: 0.2
-  m_HeadSmoothing: 0.1
-  m_LeftEye: {fileID: 0}
-  m_RightEye: {fileID: 0}
-  m_EyeAngleRange: {x: 30, y: 45}
-  m_TrackingLossSmoothing: 0.1
-  m_HeadBone: {fileID: 786562249}
-  m_NeckBone: {fileID: 0}
-  m_HeadFollowAmount: 0.6
-  m_NeckFollowAmount: 0.4
-  m_RightEyeNegZ: 0
-  m_LeftEyeNegZ: 0
 --- !u!1 &1845804764
 GameObject:
   m_ObjectHideFlags: 0
@@ -759,10 +653,10 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1845804764}
-  m_LocalRotation: {x: 0.4594426, y: 0.020470567, z: 0.42118073, w: 0.7817289}
-  m_LocalPosition: {x: 0, y: 0.28, z: 0}
+  m_LocalRotation: {x: 0.5788421, y: 0.7131584, z: -0.23113407, w: 0.32081762}
+  m_LocalPosition: {x: -0.055, y: 0.28, z: 0.2217}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 44.513, y: 35.988003, z: 71.773}
+  m_LocalEulerAnglesHint: {x: 44.513, y: 164.546, z: 71.773}
