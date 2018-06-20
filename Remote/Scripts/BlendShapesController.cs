@@ -5,19 +5,6 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    [Serializable]
-    public class BlendShapeIndexData
-    {
-        public int index;
-        public string name;
-
-        public BlendShapeIndexData(int index, string name)
-        {
-            this.index = index;
-            this.name = name;
-        }
-    }
-
     public class BlendShapesController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes
     {
         [SerializeField]
@@ -86,9 +73,9 @@ namespace Unity.Labs.FacialRemote
 
             InterpolateBlendShapes();
 
-            foreach (var renderer in m_SkinnedMeshRenderers)
+            foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
-                var indices = m_Indices[renderer];
+                var indices = m_Indices[meshRenderer];
                 var length = indices.Length;
                 for (var i = 0; i < length; i++)
                 {
@@ -96,11 +83,11 @@ namespace Unity.Labs.FacialRemote
                     if (datum.index < 0)
                         continue;
 
-                    renderer.SetBlendShapeWeight(i, m_BlendShapesScaled[datum.index]);
+                    meshRenderer.SetBlendShapeWeight(i, m_BlendShapesScaled[datum.index]);
                 }
             }
         }
-        
+
         public void OnStreamSettingsChange()
         {
             m_BlendShapes = new float[streamSettings.BlendShapeCount];
@@ -108,7 +95,7 @@ namespace Unity.Labs.FacialRemote
 
             SetupBlendShapeIndices();
         }
-        
+
         public void SetupBlendShapeIndices()
         {
             m_Indices.Clear();
@@ -139,7 +126,7 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
 
-                    indices[i] = new BlendShapeIndexData(index, shapeName);;
+                    indices[i] = new BlendShapeIndexData(index, shapeName);
 
                     if (index < 0)
                         Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
@@ -183,7 +170,7 @@ namespace Unity.Labs.FacialRemote
         {
             if (!connected || readerStreamSettings.locations == null || readerStreamSettings.locations.Length == 0)
                 return;
-            
+
             if (m_Overrides.Length != readerStreamSettings.BlendShapeCount)
             {
 #if UNITY_EDITOR
