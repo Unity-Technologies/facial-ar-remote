@@ -50,6 +50,8 @@ namespace Unity.Labs.FacialRemote
         bool useCharacterRigController { get { return m_CharacterRigController != null; } }
         bool useBlendShapeController { get { return m_BlendShapesController != null; } }
 
+        internal ClipBaker(){}
+
         public ClipBaker(AnimationClip clip, StreamReader streamReader, StreamPlayback streamPlayback,
             BlendShapesController blendShapesController, CharacterRigController characterRigController, string filePath)
         {

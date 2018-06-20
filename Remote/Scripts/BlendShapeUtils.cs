@@ -1,5 +1,5 @@
 ﻿using System;
-using UnityEngine.XR;
+using UnityEngine;
 #if UNITY_IOS
 using UnityEngine.XR.iOS;
 #endif
@@ -188,6 +188,25 @@ namespace Unity.Labs.FacialRemote
         public static int GetLocationIndex(this IStreamSettings streamSettings, string location)
         {
             return Array.IndexOf(streamSettings.locations, location);
+        }
+
+        public static void ArrayToPose(float[] poseArray, ref Pose pose)
+        {
+            pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
+            pose.rotation = new Quaternion(poseArray[3], poseArray[4], poseArray[5], poseArray[6]);
+        }
+
+        public static void PoseToArray(Pose pose, float[] poseArray)
+        {
+            var position = pose.position;
+            var rotation = pose.rotation;
+            poseArray[0] = position.x;
+            poseArray[1] = position.y;
+            poseArray[2] = position.z;
+            poseArray[3] = rotation.x;
+            poseArray[4] = rotation.y;
+            poseArray[5] = rotation.z;
+            poseArray[6] = rotation.w;
         }
     }
 }

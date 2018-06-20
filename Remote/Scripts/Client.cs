@@ -47,6 +47,63 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        public void SetupSocket(Socket socket)
+        {
+            m_CameraTransform = Camera.main.transform;
+            m_StartTime = Time.time;
+            m_Socket = socket;
+            enabled = true;
+            var poseArray = new float[7];
+            var cameraPoseArray = new float[7];
+            var frameNum = new int[1];
+            var frameTime = new float[1];
+            m_Once = true;
+            Application.targetFrameRate = 60;
+            m_Running = true;
+            new Thread(() =>
+            {
+                var count = 0;
+                while (m_Running)
+                {
+                    try {
+                        if (m_Socket.Connected)
+                        {
+                            if (m_FreshData)
+                            {
+                                m_FreshData = false;
+                                m_Buffer[0] = streamSettings.ErrorCheck;
+                                Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
+
+                                BlendShapeUtils.PoseToArray(m_FacePose, poseArray);
+                                BlendShapeUtils.PoseToArray(m_CameraPose, cameraPoseArray);
+
+                                frameNum[0] = count++;
+                                frameTime[0] = m_TimeStamp;
+                                Buffer.BlockCopy(poseArray, 0, m_Buffer, streamSettings.HeadPoseOffset, streamSettings.PoseSize);
+                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
+                                Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
+                                Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
+                                m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
+
+                                m_Socket.Send(m_Buffer);
+                            }
+                        }
+                        else
+                        {
+                            TryTimeout();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e.Message);
+                        TryTimeout();
+                    }
+
+                    Thread.Sleep(4);
+                }
+            }).Start();
+        }
+
         void Awake()
         {
             if (streamSettings == null)
@@ -66,6 +123,28 @@ namespace Unity.Labs.FacialRemote
             UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
         }
 
+        void Update()
+        {
+            if(m_Socket == null || m_CameraTransform == null)
+                return;
+
+            m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
+            m_FreshData = true;
+
+            if (m_Socket.Connected && m_Once)
+            {
+                m_TimeStamp = 0f;
+                m_Once = false;
+            }
+            else
+                m_TimeStamp += Time.deltaTime;
+        }
+
+        void OnDestroy()
+        {
+            m_Running = false;
+        }
+
         void FaceAdded (ARFaceAnchor anchorData)
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
@@ -78,13 +157,9 @@ namespace Unity.Labs.FacialRemote
             {
                 m_BlendShapeIndices = new Dictionary<string, int>();
 
-//                var names = m_CurrentBlendShapes.Keys.ToList();
-//                names.Remove(ARBlendShapeLocation.TongueOut);
-//                names.Sort();
-
                 var names = m_StreamSettings.locations.ToList();
                 names.Sort();
-                
+
                 foreach (var kvp in m_CurrentBlendShapes)
                 {
                     var index = names.IndexOf(kvp.Key);
@@ -120,93 +195,6 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void Setup(Socket socket)
-        {
-            m_CameraTransform = Camera.main.transform;
-            m_StartTime = Time.time;
-            m_Socket = socket;
-            enabled = true;
-            var poseArray = new float[7];
-            var cameraPoseArray = new float[7];
-            var frameNum = new int[1];
-            var frameTime = new float[1];
-            m_Once = true;
-            Application.targetFrameRate = 60;
-            m_Running = true;
-            new Thread(() =>
-            {
-                var count = 0;
-                while (m_Running)
-                {
-                    try {
-                        if (m_Socket.Connected)
-                        {
-                            if (m_FreshData)
-                            {
-                                m_FreshData = false;
-                                m_Buffer[0] = streamSettings.ErrorCheck;
-                                Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, streamSettings.BlendShapeSize);
-
-                                PoseToArray(m_FacePose, poseArray);
-                                PoseToArray(m_CameraPose, cameraPoseArray);
-
-                                frameNum[0] = count++;
-                                frameTime[0] = m_TimeStamp;
-                                Buffer.BlockCopy(poseArray, 0, m_Buffer, streamSettings.HeadPoseOffset, streamSettings.PoseSize);
-                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, streamSettings.CameraPoseOffset, streamSettings.PoseSize);
-                                Buffer.BlockCopy(frameNum, 0, m_Buffer, streamSettings.FrameNumberOffset, streamSettings.FrameTimeSize);
-                                Buffer.BlockCopy(frameTime, 0, m_Buffer, streamSettings.FrameTimeOffset, streamSettings.FrameTimeSize);
-                                m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
-
-                                m_Socket.Send(m_Buffer);
-                            }
-                        }
-                        else
-                        {
-                            TryTimeout();
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e.Message);
-                        TryTimeout();
-                    }
-
-                    Thread.Sleep(4);
-                }
-            }).Start();
-        }
-
-        static void PoseToArray(Pose pose, float[] poseArray)
-        {
-            var position = pose.position;
-            var rotation = pose.rotation;
-            poseArray[0] = position.x;
-            poseArray[1] = position.y;
-            poseArray[2] = position.z;
-            poseArray[3] = rotation.x;
-            poseArray[4] = rotation.y;
-            poseArray[5] = rotation.z;
-            poseArray[6] = rotation.w;
-        }
-
-        void Update()
-        {
-            if(m_Socket == null || m_CameraTransform == null)
-                return;
-
-            m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
-            m_FreshData = true;
-
-            if (m_Socket.Connected && m_Once)
-            {
-                m_TimeStamp = 0f;
-                m_Once = false;
-            }
-            else
-                m_TimeStamp += Time.deltaTime;
-        }
-
         void TryTimeout()
         {
             if (Time.time - m_StartTime > k_Timeout)
@@ -215,11 +203,6 @@ namespace Unity.Labs.FacialRemote
                 m_ClientGUI.enabled = true;
                 m_Once = true;
             }
-        }
-
-        void OnDestroy()
-        {
-            m_Running = false;
         }
     }
 }

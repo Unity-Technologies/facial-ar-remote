@@ -130,8 +130,8 @@ namespace Unity.Labs.FacialRemote
                 {
                     streamReader.streamPlayback.DeactivateStreamSource();
 
-                    // Used to reinit values if they were changed
-                    streamReader.Awake();
+                    // Used to initialize values if they were changed before baking.
+                    streamReader.InitializeStreamReader();
 
                     var assetPath = Application.dataPath;
                     var path = EditorUtility.SaveFilePanel("Save stream as animation clip", assetPath, clipName + ".anim", "anim");

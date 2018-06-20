@@ -20,7 +20,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Range(0, 1)]
         float m_HeightPercent = 0.5f;
-        
+
         [SerializeField]
         int m_Port = 9000;
 
@@ -81,7 +81,7 @@ namespace Unity.Labs.FacialRemote
         {
             m_PortTextField.onValueChanged.AddListener(OnPortValueChanged);
             m_IPTextField.onValueChanged.AddListener(OnIPValueChanged);
-            
+
             m_ConnectButton.onClick.AddListener(OnConnectClick);
             m_CancelButton.onClick.AddListener(OnCancelClick);
             m_DisconnectButton.onClick.AddListener(OnDisconnectClick);
@@ -125,14 +125,14 @@ namespace Unity.Labs.FacialRemote
                 m_MainGUI.enabled = false;
                 m_DisconnectGUI.enabled = true;
             }
-            
+
             if (!m_Once && m_Socket != null && m_Socket.Connected)
             {
-                m_Client.Setup(m_Socket);
+                m_Client.SetupSocket(m_Socket);
                 m_Once = true;
             }
         }
-        
+
         void OnPortValueChanged(string value)
         {
             int tmpPort;
@@ -145,7 +145,7 @@ namespace Unity.Labs.FacialRemote
                 m_PortTextField.text = m_Port.ToString();
             }
         }
-        
+
         void OnIPValueChanged(string value)
         {
             IPAddress tmpIP;
@@ -164,7 +164,7 @@ namespace Unity.Labs.FacialRemote
             {
                 return;
             }
-            
+
             new Thread(() =>
             {
                 try
@@ -188,7 +188,7 @@ namespace Unity.Labs.FacialRemote
         {
             m_ConnectButton.gameObject.SetActive(false);
             m_CancelButton.gameObject.SetActive(true);
-                    
+
             try
             {
                 m_Socket.Disconnect(false);
@@ -197,7 +197,7 @@ namespace Unity.Labs.FacialRemote
             {
                 Debug.Log(e.Message);
             }
-                    
+
             m_Socket = null;
             m_Once = false;
         }
@@ -220,8 +220,8 @@ namespace Unity.Labs.FacialRemote
         bool FaceInView()
         {
             var anchorScreenPos = Camera.main.WorldToScreenPoint(m_FaceAnchor.position);
-            
-            return (!(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent)) 
+
+            return (!(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent))
                 && (!(Mathf.Abs(anchorScreenPos.y - m_CenterY) / m_CenterY > m_HeightPercent));
         }
     }
