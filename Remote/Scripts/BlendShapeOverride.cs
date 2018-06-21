@@ -20,6 +20,10 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         float m_BlendShapeThreshold = 0.01f;
 
+        [Range(-100, 100)]
+        [SerializeField]
+        float m_BlendShapeOffset;
+
         [Range(0, 200f)]
         [SerializeField]
         float m_BlendShapeCoefficient = 120f;
@@ -32,6 +36,7 @@ namespace Unity.Labs.FacialRemote
         public string name { get { return m_Name; } }
         public float blendShapeSmoothing { get { return m_BlendShapeSmoothing; } }
         public float blendShapeThreshold { get { return m_BlendShapeThreshold; } }
+        public float blendShapeOffset { get { return m_BlendShapeOffset; } }
         public float blendShapeCoefficient { get { return m_BlendShapeCoefficient; } }
         public float blendShapeMax { get { return m_BlendShapeMax; } }
 

@@ -27,11 +27,11 @@ namespace Unity.Labs.FacialRemote
         float m_BlendShapeMax = 100f;
 
         [SerializeField]
-        BlendShapeOverride[] m_Overrides;
-
-        [SerializeField]
         [Range(0f, 1f)]
         float m_TrackingLossSmoothing = 0.1f;
+
+        [SerializeField]
+        BlendShapeOverride[] m_Overrides;
 
         readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         float[] m_BlendShapes;
@@ -143,6 +143,7 @@ namespace Unity.Labs.FacialRemote
                 var blendShape = m_BlendShapes[i];
                 var blendShapeTarget = readerBlendShapesBuffer[i];
                 var threshold = UseOverride(i) ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
+                var offset = UseOverride(i) ? m_Overrides[i].blendShapeOffset : 0f;
                 var smoothing = UseOverride(i) ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
                 if (force || isReaderTrackingActive)
@@ -157,7 +158,8 @@ namespace Unity.Labs.FacialRemote
 
                 if (UseOverride(i))
                 {
-                    m_BlendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient, m_Overrides[i].blendShapeMax);
+                    m_BlendShapesScaled[i] = Mathf.Min((m_BlendShapes[i] + offset) * m_Overrides[i].blendShapeCoefficient,
+                        m_Overrides[i].blendShapeMax);
                 }
                 else
                 {
