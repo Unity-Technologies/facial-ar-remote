@@ -186,7 +186,7 @@ namespace Unity.Labs.FacialRemote
                 enabled = false;
             }
 
-            if (m_PlaybackData)
+            if (m_PlaybackData == null)
             {
                 Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
                     gameObject.name);

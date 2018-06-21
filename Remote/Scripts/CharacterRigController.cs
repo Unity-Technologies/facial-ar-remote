@@ -6,13 +6,12 @@ namespace Unity.Labs.FacialRemote
     public class CharacterRigController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes,
         IUseReaderHeadPose, IUseReaderCameraPose
     {
-        [Range(0f, 1f)]
         [SerializeField]
-        float m_EyeSmoothing = 0.2f;
+        [Range(0f, 1f)]
+        float m_TrackingLossSmoothing = 0.1f;
 
-        [Range(0f, 1f)]
         [SerializeField]
-        float m_HeadSmoothing = 0.1f;
+        bool m_DriveEyes = true;
 
         [SerializeField]
         Transform m_LeftEye;
@@ -20,12 +19,46 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Transform m_RightEye;
 
+        [Range(0f, 1f)]
+        [SerializeField]
+        float m_EyeSmoothing = 0.2f;
+
+        [SerializeField]
+        bool m_RightEyeNegZ;
+
+        [SerializeField]
+        bool m_LeftEyeNegZ;
+
         [SerializeField]
         Vector2 m_EyeAngleRange = new Vector2(30, 45);
 
         [SerializeField]
+        bool m_DriveHead = true;
+
+        [SerializeField]
+        Transform m_HeadBone;
+
         [Range(0f, 1f)]
-        float m_TrackingLossSmoothing = 0.1f;
+        [SerializeField]
+        float m_HeadSmoothing = 0.1f;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        float m_HeadFollowAmount = 0.6f;
+
+        [SerializeField]
+        bool m_DriveNeck = true;
+
+        [SerializeField]
+        Transform m_NeckBone;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        float m_NeckFollowAmount = 0.4f;
+
+        bool m_HasEyes;
+        bool m_HasHead;
+        bool m_HasNeck;
 
         int m_EyeLookDownLeftIndex;
         int m_EyeLookDownRightIndex;
@@ -45,11 +78,6 @@ namespace Unity.Labs.FacialRemote
         float m_EyeLookUpLeft;
         float m_EyeLookUpRight;
 
-        [SerializeField]
-        Transform m_HeadBone;
-        [SerializeField]
-        Transform m_NeckBone;
-
         Transform m_ARHeadPose;
         Transform m_ARNeckPose;
         Transform m_AREyePose;
@@ -58,32 +86,18 @@ namespace Unity.Labs.FacialRemote
         Transform m_EyeRightPoseLookAt;
         Transform m_EyeLeftPoseLookAt;
 
-        [SerializeField]
-        [Range(0f, 1f)]
-        float m_HeadFollowAmount = 0.6f;
-
-        [SerializeField]
-        [Range(0f, 1f)]
-        float m_NeckFollowAmount = 0.4f;
+        Transform m_LocalizedHeadParent;
+        Transform m_LocalizedHeadRot;
+        Transform m_OtherThing;
+        Transform m_OtherLook;
 
         Pose m_HeadStartPose;
         Pose m_NeckStartPose;
         Pose m_RightEyeStartPose;
         Pose m_LeftEyeStartPose;
 
-        [SerializeField]
-        bool m_RightEyeNegZ;
-
-        [SerializeField]
-        bool m_LeftEyeNegZ;
-
         Quaternion m_LastHeadRotation;
         Quaternion m_LastNeckRotation;
-
-        Transform m_LocalizedHeadParent;
-        Transform m_LocalizedHeadRot;
-        Transform m_OtherThing;
-        Transform m_OtherLook;
 
         Quaternion m_BackwardRot = Quaternion.Euler(0, 180, 0);
 
@@ -102,6 +116,12 @@ namespace Unity.Labs.FacialRemote
         Pose readerCameraPose { get { return getCameraPose(); } }
         public Func<Pose> getCameraPose { get; set; }
 
+        public Transform headBone { get { return m_HeadBone ?? transform; } }
+
+        public bool driveEyes { get { return m_DriveEyes; } }
+        public bool driveHead { get { return m_DriveHead; } }
+        public bool driveNeck { get { return m_DriveNeck; } }
+
         [NonSerialized]
         [HideInInspector]
         public bool connected;
@@ -109,8 +129,6 @@ namespace Unity.Labs.FacialRemote
         [NonSerialized]
         [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
-        
-        public Transform headBone { get {return m_HeadBone; } }
 
         public void OnStreamSettingsChange()
         {
@@ -139,39 +157,112 @@ namespace Unity.Labs.FacialRemote
         {
             Debug.Log("Start avatar Setup");
 
-            if (m_LeftEye == null)
+            if (m_DriveEyes)
             {
-                Debug.LogWarning("Left Eye Bone returning NULL!");
+                if (m_LeftEye == null)
+                {
+                    Debug.LogWarning("Drive Eyes is set but Left Eye Bone returning NULL!");
+                    return;
+                }
+
+                if (m_RightEye == null)
+                {
+                    Debug.LogWarning("Drive Eyes is set but Right Eye Bone returning NULL!");
+                    return;
+                }
+            }
+
+            if (m_LeftEye != null && m_RightEye != null)
+                m_HasEyes = true;
+
+            if (m_DriveHead && m_HeadBone == null)
+            {
+                Debug.LogWarning("Drive Head is set but Head Bone returning NULL!");
                 return;
             }
 
-            if (m_RightEye == null)
+            if (m_HeadBone != null)
+                m_HasHead = true;
+
+            if (m_DriveNeck && m_NeckBone == null)
             {
-                Debug.LogWarning("Right Eye Bone returning NULL!");
+                Debug.LogWarning("Drive Neck is set but Neck Bone returning NULL!");
                 return;
             }
 
-            if (m_HeadBone == null)
+            if (m_NeckBone != null)
+                m_HasNeck = true;
+
+            Pose headWorldPose;
+            Pose headLocalPose;
+            if (m_HasHead)
             {
-                Debug.LogWarning("Head Bone returning NULL!");
-                return;
+                // ReSharper disable once PossibleNullReferenceException
+                headWorldPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
+                headLocalPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
+            }
+            else if (m_HasNeck)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                headWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
+                headLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+            }
+            else
+            {
+                headWorldPose = new Pose(transform.position, transform.rotation);
+                headLocalPose = new Pose(transform.localPosition, transform.localRotation);
             }
 
-            if (m_NeckBone == null)
+            Pose neckWorldPose;
+            Pose neckLocalPose;
+            if (m_HasNeck)
             {
-                Debug.LogWarning("Neck Bone returning NULL!");
-                return;
+                // ReSharper disable once PossibleNullReferenceException
+                neckWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
+                neckLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+            }
+            else if (m_HeadBone)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                neckWorldPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
+                neckLocalPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
+            }
+            else
+            {
+                neckWorldPose = new Pose(transform.position, transform.rotation);
+                neckLocalPose = new Pose(transform.localPosition, transform.localRotation);
+            }
+
+            Pose eyeLeftWorldPose;
+            Pose eyeLeftLocalPose;
+            Pose eyeRightWorldPose;
+            Pose eyeRightLocalPose;
+            if (m_HasEyes)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                eyeLeftWorldPose = new Pose(m_LeftEye.position, m_LeftEye.rotation);
+                eyeLeftLocalPose = new Pose(m_LeftEye.localPosition, m_LeftEye.localRotation);
+                // ReSharper disable once PossibleNullReferenceException
+                eyeRightWorldPose = new Pose(m_RightEye.position, m_RightEye.rotation);
+                eyeRightLocalPose = new Pose(m_RightEye.localPosition, m_RightEye.localRotation);
+            }
+            else
+            {
+                eyeLeftWorldPose = new Pose(headWorldPose.position, headWorldPose.rotation);
+                eyeLeftLocalPose = new Pose(headLocalPose.position, headLocalPose.rotation);
+                eyeRightWorldPose = new Pose(headWorldPose.position, headWorldPose.rotation);
+                eyeRightLocalPose = new Pose(headLocalPose.position, headLocalPose.rotation);
             }
 
             // Set Head Look Rig
             var headPoseObject = new GameObject("head_pose"){ hideFlags = HideFlags.HideAndDontSave};
             m_ARHeadPose = headPoseObject.transform;
 
-            m_HeadStartPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
+            m_HeadStartPose = new Pose(headLocalPose.position, headLocalPose.rotation);
 
-            m_ARHeadPose.SetPositionAndRotation(m_HeadBone.position, Quaternion.identity);
+            m_ARHeadPose.SetPositionAndRotation(headWorldPose.position, Quaternion.identity);
             var headOffset = new GameObject("head_offset"){ hideFlags = HideFlags.HideAndDontSave}.transform;
-            headOffset.SetPositionAndRotation(m_HeadBone.position, m_HeadBone.rotation);
+            headOffset.SetPositionAndRotation(headWorldPose.position, headWorldPose.rotation);
             headOffset.SetParent(transform, true);
             m_ARHeadPose.SetParent(headOffset, true);
             m_ARHeadPose.localRotation = Quaternion.identity;
@@ -180,11 +271,11 @@ namespace Unity.Labs.FacialRemote
             var neckPoseObject = new GameObject("neck_pose"){ hideFlags = HideFlags.HideAndDontSave};
             m_ARNeckPose = neckPoseObject.transform;
 
-            m_NeckStartPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+            m_NeckStartPose = new Pose(neckLocalPose.position, neckLocalPose.rotation);
 
-            m_ARNeckPose.SetPositionAndRotation(m_NeckBone.position, Quaternion.identity);
+            m_ARNeckPose.SetPositionAndRotation(neckWorldPose.position, Quaternion.identity);
             var neckOffset = new GameObject("neck_offset"){ hideFlags = HideFlags.HideAndDontSave}.transform;
-            neckOffset.SetPositionAndRotation(m_NeckBone.position, m_NeckBone.rotation);
+            neckOffset.SetPositionAndRotation(neckWorldPose.position, neckWorldPose.rotation);
             neckOffset.SetParent(transform, true);
             m_ARNeckPose.SetParent(neckOffset, true);
             m_ARNeckPose.localRotation = Quaternion.identity;
@@ -198,15 +289,19 @@ namespace Unity.Labs.FacialRemote
             m_EyePoseLookAt.localPosition = Vector3.forward * -0.25f;
 
             // Eye Center Look
-            m_AREyePose.SetPositionAndRotation(Vector3.Lerp(m_RightEye.position, m_LeftEye.position, 0.5f), transform.rotation);
+            m_AREyePose.SetPositionAndRotation(Vector3.Lerp(eyeRightWorldPose.position, eyeLeftWorldPose.position, 0.5f), transform.rotation);
             var eyeOffset = new GameObject("eye_offset"){ hideFlags = HideFlags.HideAndDontSave}.transform;
             eyeOffset.position = m_AREyePose.position;
-            eyeOffset.SetParent(m_HeadBone, true);
+            if (m_HeadBone != null)
+                eyeOffset.SetParent(m_HeadBone, true);
+            else
+                eyeOffset.SetParent(transform, true);
+
             m_AREyePose.SetParent(eyeOffset, true);
 
             // Eye Right Look
-            m_RightEyeStartPose = new Pose(m_RightEye.localPosition, m_RightEye.localRotation);
-            var rightEyeOffset = m_RightEye.position - m_AREyePose.position;
+            m_RightEyeStartPose = new Pose(eyeRightLocalPose.position, eyeRightLocalPose.rotation);
+            var rightEyeOffset = eyeRightWorldPose.position - m_AREyePose.position;
             var eyeRightPoseLookObject = new GameObject("eye_right_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeRightPoseLookAt = eyeRightPoseLookObject.transform;
             m_EyeRightPoseLookAt.SetParent(m_AREyePose);
@@ -216,8 +311,8 @@ namespace Unity.Labs.FacialRemote
                 m_EyeRightPoseLookAt.localPosition = Vector3.back * -0.25f + rightEyeOffset;
 
             // Eye Left Look
-            m_LeftEyeStartPose = new Pose(m_LeftEye.localPosition, m_LeftEye.localRotation);
-            var leftEyeOffset = m_LeftEye.position - m_AREyePose.position ;
+            m_LeftEyeStartPose = new Pose(eyeLeftLocalPose.position, eyeLeftLocalPose.rotation);
+            var leftEyeOffset = eyeRightWorldPose.position - m_AREyePose.position ;
             var eyeLeftPoseLookObject = new GameObject("eye_left_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeLeftPoseLookAt = eyeLeftPoseLookObject.transform;
             m_EyeLeftPoseLookAt.SetParent(m_AREyePose);
@@ -244,10 +339,25 @@ namespace Unity.Labs.FacialRemote
             m_OtherThing = new GameObject("other_thing"){ hideFlags = HideFlags.HideAndDontSave}.transform;
             m_OtherThing.SetParent(otherThingOffset.transform);
 
-            animatedBones[0] = m_HeadBone;
-            animatedBones[1] = m_NeckBone;
-            animatedBones[2] = m_RightEye;
-            animatedBones[3] = m_LeftEye;
+            if (m_HeadBone != null)
+                animatedBones[0] = m_HeadBone;
+            else
+                animatedBones[0] = transform;
+
+            if (m_NeckBone != null)
+                animatedBones[1] = m_NeckBone;
+            else
+                animatedBones[1] = transform;
+
+            if (m_LeftEye != null)
+                animatedBones[2] = m_LeftEye;
+            else
+                animatedBones[2] = transform;
+
+            if (m_RightEye != null)
+                animatedBones[3] = m_RightEye;
+            else
+                animatedBones[3] = transform;
         }
 
         void LocalizeFacePose()
@@ -320,33 +430,48 @@ namespace Unity.Labs.FacialRemote
 
         public void ResetBonePoses()
         {
-            m_RightEye.localPosition = m_RightEyeStartPose.position;
-            m_RightEye.localRotation = m_RightEyeStartPose.rotation;
+            if (m_DriveEyes && m_HasEyes)
+            {
+                m_RightEye.localPosition = m_RightEyeStartPose.position;
+                m_RightEye.localRotation = m_RightEyeStartPose.rotation;
 
-            m_LeftEye.localPosition = m_LeftEyeStartPose.position;
-            m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
+                m_LeftEye.localPosition = m_LeftEyeStartPose.position;
+                m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
+            }
 
-            m_HeadBone.localPosition = m_HeadStartPose.position;
-            m_HeadBone.localRotation = m_HeadStartPose.rotation;
+            if (m_DriveHead && m_HasHead)
+            {
+                m_HeadBone.localPosition = m_HeadStartPose.position;
+                m_HeadBone.localRotation = m_HeadStartPose.rotation;
+            }
 
-            m_NeckBone.localPosition = m_NeckStartPose.position;
-            m_NeckBone.localRotation = m_NeckStartPose.rotation;
+            if (m_DriveNeck && m_HasNeck)
+            {
+                m_NeckBone.localPosition = m_NeckStartPose.position;
+                m_NeckBone.localRotation = m_NeckStartPose.rotation;
+            }
         }
 
         void UpdateBoneTransforms()
         {
-            if (m_RightEyeNegZ)
-                m_RightEye.LookAt(m_EyeRightPoseLookAt, Vector3.down);
-            else
-                m_RightEye.LookAt(m_EyeRightPoseLookAt);
+            if (m_DriveEyes && m_HasEyes)
+            {
+                if (m_RightEyeNegZ)
+                    m_RightEye.LookAt(m_EyeRightPoseLookAt, Vector3.down);
+                else
+                    m_RightEye.LookAt(m_EyeRightPoseLookAt);
 
-            if (m_LeftEyeNegZ)
-                m_LeftEye.LookAt(m_EyeLeftPoseLookAt, Vector3.down);
-            else
-                m_LeftEye.LookAt(m_EyeLeftPoseLookAt);
+                if (m_LeftEyeNegZ)
+                    m_LeftEye.LookAt(m_EyeLeftPoseLookAt, Vector3.down);
+                else
+                    m_LeftEye.LookAt(m_EyeLeftPoseLookAt);
+            }
 
-            m_HeadBone.rotation = m_ARHeadPose.rotation;
-            m_NeckBone.rotation = m_ARNeckPose.rotation;
+            if (m_DriveHead && m_HasHead)
+                m_HeadBone.rotation = m_ARHeadPose.rotation;
+
+            if (m_DriveNeck && m_HasNeck)
+                m_NeckBone.rotation = m_ARNeckPose.rotation;
         }
 
         void LateUpdate()

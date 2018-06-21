@@ -11,13 +11,10 @@ namespace Unity.Labs.FacialRemote
         GUIContent m_RecordIcon;
         GUIContent m_Connect;
 
-        bool m_Playing;
-        bool m_Recording;
-
         GUIStyle m_ButtonStyle;
         GUIStyle m_ButtonPressStyle;
 
-        void OnEnable()
+        void Awake()
         {
             m_PlayIcon = EditorGUIUtility.IconContent("d_Animation.Play");
             m_RecordIcon = EditorGUIUtility.IconContent("d_Animation.Record");

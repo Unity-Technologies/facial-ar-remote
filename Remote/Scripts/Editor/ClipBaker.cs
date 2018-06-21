@@ -271,8 +271,24 @@ namespace Unity.Labs.FacialRemote
             // Key bone rotation
             if (useCharacterRigController)
             {
-                foreach (var bone in m_CharacterRigController.animatedBones)
+                for (var i = 0; i < m_CharacterRigController.animatedBones.Length; i++)
                 {
+                    // Use head
+                    if (i == 0 && !m_CharacterRigController.driveHead)
+                        continue;
+
+                    // Use neck
+                    if (i == 1 && !m_CharacterRigController.driveNeck)
+                        continue;
+
+                    // Use Eyes
+                    if (i == 2 && !m_CharacterRigController.driveEyes)
+                        continue;
+
+                    if (i == 3 && !m_CharacterRigController.driveEyes)
+                        continue;
+
+                    var bone = m_CharacterRigController.animatedBones[i];
                     Dictionary<string, AnimationClipCurveData> animationCurves;
                     if (m_AnimationCurves.TryGetValue(bone, out animationCurves))
                     {
@@ -298,7 +314,7 @@ namespace Unity.Labs.FacialRemote
                             }
                             else
                             {
-                                Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop );
+                                Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
                             }
                         }
                     }
