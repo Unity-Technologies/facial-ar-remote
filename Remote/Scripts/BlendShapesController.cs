@@ -5,32 +5,42 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <summary>
+    /// Applies blend shape values from the stream reader to the skinned mesh renders referenced in this script.
+    /// </summary>
     public class BlendShapesController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes
     {
         [SerializeField]
+        [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
         SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
 
         [Range(0f, 1)]
         [SerializeField]
+        [Tooltip("Smoothing to apply to blend shape values coming from the stream reader.")]
         float m_BlendShapeSmoothing = 0.1f;
 
         [Range(0, 0.1f)]
         [SerializeField]
+        [Tooltip("Min threshold of change to register as a new blend shape value.")]
         float m_BlendShapeThreshold = 0.01f;
 
         [Range(0, 200f)]
         [SerializeField]
+        [Tooltip("Scaling coefficient applied to the blend shape values from the stream reader.")]
         float m_BlendShapeCoefficient = 120f;
 
         [Range(0, 100)]
         [SerializeField]
+        [Tooltip("Max value a scaled blend shape can reach.")]
         float m_BlendShapeMax = 100f;
 
         [SerializeField]
         [Range(0f, 1f)]
+        [Tooltip("Smoothing to return to zero pose of character's blend shapes when tracking is lost.")]
         float m_TrackingLossSmoothing = 0.1f;
 
         [SerializeField]
+        [Tooltip("Overrides settings for individual blend shapes.")]
         BlendShapeOverride[] m_Overrides;
 
         readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
@@ -158,7 +168,7 @@ namespace Unity.Labs.FacialRemote
 
                 if (UseOverride(i))
                 {
-                    m_BlendShapesScaled[i] = Mathf.Min((m_BlendShapes[i] + offset) * m_Overrides[i].blendShapeCoefficient,
+                    m_BlendShapesScaled[i] = Mathf.Min((m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient) + offset,
                         m_Overrides[i].blendShapeMax);
                 }
                 else

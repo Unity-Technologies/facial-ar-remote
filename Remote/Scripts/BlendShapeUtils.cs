@@ -185,17 +185,33 @@ namespace Unity.Labs.FacialRemote
 #endif
         };
 
+        /// <summary>
+        /// Used for mapping the the blendshape locations this returns the index of the string in the Locations array.
+        /// </summary>
+        /// <param name="streamSettings">Stream Setting that contains the Locations array.</param>
+        /// <param name="location">Name of blendshape location you want to find.</param>
+        /// <returns>Index of string in Locations array.</returns>
         public static int GetLocationIndex(this IStreamSettings streamSettings, string location)
         {
             return Array.IndexOf(streamSettings.locations, location);
         }
 
+        /// <summary>
+        /// Takes a correctly formatted array and returns a pose from that array.
+        /// </summary>
+        /// <param name="poseArray">Array of floats that encodes a pose.</param>
+        /// <param name="pose">Pose encoded in the float array.</param>
         public static void ArrayToPose(float[] poseArray, ref Pose pose)
         {
             pose.position = new Vector3(poseArray[0], poseArray[1], poseArray[2]);
             pose.rotation = new Quaternion(poseArray[3], poseArray[4], poseArray[5], poseArray[6]);
         }
 
+        /// <summary>
+        /// Takes a pose and encodes the values to the given correctly formatted pose array.
+        /// </summary>
+        /// <param name="pose">Pose to encode in the float array.</param>
+        /// <param name="poseArray">Float array to that the pose is encoded to.</param>
         public static void PoseToArray(Pose pose, float[] poseArray)
         {
             var position = pose.position;
