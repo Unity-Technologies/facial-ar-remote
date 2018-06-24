@@ -22,6 +22,7 @@ namespace Unity.Labs.FacialRemote
         Socket m_Socket;
         int m_LastFrameNum;
         int m_TakeNumber;
+        int m_CurrentBufferSize = -1;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>(k_BufferPrewarm);
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>(k_BufferPrewarm);
@@ -100,8 +101,7 @@ namespace Unity.Labs.FacialRemote
 
                                         if (isRecording)
                                         {
-                                            // TODO better data copy
-                                            playbackData.activeByteRecord.Add(buffer.ToArray());
+                                            playbackData.AddToActiveBuffer(buffer);
                                         }
 
                                         Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
@@ -154,6 +154,8 @@ namespace Unity.Labs.FacialRemote
         public override void StopPlaybackDataUsage()
         {
             isRecording = false;
+            if (playbackData != null)
+                playbackData.StopActivePlaybackBuffer();
         }
 
         public override void UpdateCurrentFrameBuffer(bool force = false)
@@ -198,11 +200,27 @@ namespace Unity.Labs.FacialRemote
         public override void OnStreamSettingsChange()
         {
             StopPlaybackDataUsage();
+            if (m_CurrentBufferSize != streamSettings.BufferSize)
+            {
+                m_UnusedBuffers.Clear();
+                m_BufferQueue.Clear();
+            }
+            else
+            {
+                while (m_BufferQueue.Count > 0)
+                {
+                    m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
+                }
+            }
 
-            m_UnusedBuffers.Clear();
-            m_BufferQueue.Clear();
+            if(playbackData != null)
+                playbackData.WarmUpPlaybackBuffer(streamSettings);
 
-            for (var i = 0; i < k_BufferPrewarm; i++)
+            var current = m_UnusedBuffers.Count;
+            if (current >= k_BufferPrewarm)
+                return;
+
+            for (var i = current; i < k_BufferPrewarm; i++)
             {
                 m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
             }
