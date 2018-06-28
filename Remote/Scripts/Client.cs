@@ -118,9 +118,11 @@ namespace Unity.Labs.FacialRemote
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
+#if UNITY_IOS
             UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
             UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
             UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
+#endif
         }
 
         void Update()
@@ -145,6 +147,7 @@ namespace Unity.Labs.FacialRemote
             m_Running = false;
         }
 
+#if UNITY_IOS
         void FaceAdded (ARFaceAnchor anchorData)
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
@@ -184,6 +187,7 @@ namespace Unity.Labs.FacialRemote
         {
             m_ARFaceActive = false;
         }
+#endif
 
         void UpdateBlendShapes()
         {
