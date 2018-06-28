@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+#if UNITY_IOS
 using UnityEngine.XR.iOS;
+#endif
 
 namespace Unity.Labs.FacialRemote
 {
