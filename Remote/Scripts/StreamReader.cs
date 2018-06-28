@@ -21,6 +21,9 @@ namespace Unity.Labs.FacialRemote
         int m_Port = 9000;
 
         [SerializeField]
+        int m_CatchupThreshold = 16;
+
+        [SerializeField]
         int m_CatchupSize = 2;
 
         [SerializeField]
@@ -237,12 +240,13 @@ namespace Unity.Labs.FacialRemote
             {
                 serverSettings.getPortNumber = () => m_Port;
                 serverSettings.getFrameCatchupSize = () => m_CatchupSize;
+                serverSettings.getFrameCatchupThreshold = () => m_CatchupThreshold;
             }
         }
 
         void Start()
         {
-            Application.targetFrameRate = 120;
+            Application.targetFrameRate = 60;
 
             m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
             m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);

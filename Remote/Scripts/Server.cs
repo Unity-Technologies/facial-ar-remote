@@ -15,9 +15,11 @@ namespace Unity.Labs.FacialRemote
 
         public Func<int> getPortNumber { get; set; }
         public Func<int> getFrameCatchupSize { get; set; }
+        public Func<int> getFrameCatchupThreshold { get; set; }
 
         int portNumber {get { return getPortNumber(); } }
         int catchupSize {get { return getFrameCatchupSize(); } }
+        int catchupThreshold { get { return getFrameCatchupThreshold(); } }
 
         Socket m_Socket;
         int m_LastFrameNum;
@@ -156,7 +158,7 @@ namespace Unity.Labs.FacialRemote
             if (m_BufferQueue.Count == 0)
                 return;
 
-            if (m_BufferQueue.Count > catchupSize)
+            if (m_BufferQueue.Count > catchupThreshold)
             {
                 for (var i = 0; i < catchupSize; i++)
                 {
