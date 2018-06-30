@@ -29,6 +29,7 @@ namespace Unity.Labs.FacialRemote
         Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         int m_CurrentBufferSize = -1;
         Thread m_BufferCreateThread;
+        bool m_BufferThreadActive;
 
         const int k_PreWarmAmount = 240;
         const int k_MinBufferAmount = 20;
@@ -62,6 +63,7 @@ namespace Unity.Labs.FacialRemote
                 m_BufferQueue.Clear();
                 if (m_BufferCreateThread != null)
                 {
+                    m_BufferThreadActive = false;
                     m_BufferCreateThread.Abort();
                     m_BufferCreateThread = null;
                 }
@@ -79,16 +81,20 @@ namespace Unity.Labs.FacialRemote
 
             if (m_BufferCreateThread == null)
             {
+                m_BufferThreadActive = true;
                 m_BufferCreateThread = new Thread(() =>
                 {
-                    while (m_BufferQueue.Count < k_MinBufferAmount)
+                    while (m_BufferThreadActive)
                     {
-                        for (var i = 0; i < k_BufferCreateAmount; i++)
+                        if (m_BufferQueue.Count < k_MinBufferAmount)
                         {
-                            m_BufferQueue.Enqueue(new byte[m_CurrentBufferSize]);
+                            for (var i = 0; i < k_BufferCreateAmount; i++)
+                            {
+                                m_BufferQueue.Enqueue(new byte[m_CurrentBufferSize]);
+                            }
                         }
+                        Thread.Sleep(1);
                     }
-                    Thread.Sleep(1);
                 });
                 m_BufferCreateThread.Start();
             }
@@ -97,14 +103,23 @@ namespace Unity.Labs.FacialRemote
         public void CreatePlaybackBuffer(IStreamSettings streamSettings, int take)
         {
             var playbackBuffer = new PlaybackBuffer(streamSettings);
-            playbackBuffer.name = String.Format("{0:yyyy_MM_dd_HH_mm}-Take{1:00}", DateTime.Now, take);
+            playbackBuffer.name = string.Format("{0:yyyy_MM_dd_HH_mm}-Take{1:00}", DateTime.Now, take);
             Debug.Log(string.Format("Starting take: {0}", playbackBuffer.name));
             m_ActivePlaybackBuffer = playbackBuffer;
         }
 
         public void AddToActiveBuffer(byte[] buffer)
         {
-            var copyBuffer = m_BufferQueue.Dequeue();
+            byte[] copyBuffer;
+            if (m_BufferQueue.Count < 1)
+            {
+                Debug.LogWarning("Buffer Queue Empty");
+                copyBuffer = new byte[m_CurrentBufferSize];
+            }
+            else
+            {
+                copyBuffer = m_BufferQueue.Dequeue();
+            }
             Buffer.BlockCopy(buffer, 0, copyBuffer, 0, m_CurrentBufferSize);
 
             activeByteRecord.Add(copyBuffer);
@@ -118,7 +133,22 @@ namespace Unity.Labs.FacialRemote
         public void SaveActivePlaybackBuffer()
         {
             if (m_ActivePlaybackBuffer == null)
+            {
+                if (m_ActiveByteRecord.Count > 0)
+                {
+                    foreach (var bytes in m_ActiveByteRecord)
+                    {
+                        m_BufferQueue.Enqueue(bytes);
+                    }
+                }
                 return;
+            }
+
+            if (string.IsNullOrEmpty(m_ActivePlaybackBuffer.name) || m_ActiveByteRecord.Count == 0)
+            {
+                m_ActivePlaybackBuffer = null;
+                return;
+            }
 
             var bufferCount = m_ActiveByteRecord.Count;
             m_ActivePlaybackBuffer.recordStream = new byte[bufferCount * m_CurrentBufferSize];
