@@ -51,6 +51,7 @@ namespace Unity.Labs.FacialRemote
     {
         Func<int> getPortNumber { get; set; }
         Func<int> getFrameCatchupSize { get; set; }
+        Func<int> getFrameCatchupThreshold { get; set; }
     }
 
 
