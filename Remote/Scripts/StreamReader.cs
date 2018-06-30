@@ -34,6 +34,9 @@ namespace Unity.Labs.FacialRemote
         int m_Port = 9000;
 
         [SerializeField]
+        int m_CatchupThreshold = 16;
+
+        [SerializeField]
         [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
         int m_CatchupSize = 2;
 
@@ -283,7 +286,7 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
-            Application.targetFrameRate = 120;
+            Application.targetFrameRate = 60;
 
             if (m_HeadBone == null)
             {
@@ -411,6 +414,7 @@ namespace Unity.Labs.FacialRemote
             {
                 serverSettings.getPortNumber = () => m_Port;
                 serverSettings.getFrameCatchupSize = () => m_CatchupSize;
+                serverSettings.getFrameCatchupThreshold = () => m_CatchupThreshold;
             }
         }
     }
