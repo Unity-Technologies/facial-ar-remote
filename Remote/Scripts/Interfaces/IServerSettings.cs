@@ -15,5 +15,7 @@ namespace Unity.Labs.FacialRemote
         /// Used to get the Frame Catchup Size set in the Stream Reader.
         /// </summary>
         Func<int> getFrameCatchupSize { get; set; }
+
+        Func<int> getFrameCatchupThreshold { get; set; }
     }
 }
