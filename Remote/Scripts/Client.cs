@@ -1,10 +1,13 @@
 ﻿using System;
+#if UNITY_IOS
 using System.Collections.Generic;
-using System.Linq;
+#endif
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+#if UNITY_IOS
 using UnityEngine.XR.iOS;
+#endif
 
 namespace Unity.Labs.FacialRemote
 {
@@ -32,12 +35,14 @@ namespace Unity.Labs.FacialRemote
         byte[] m_Buffer;
         float[] m_BlendShapes;
 
+#if UNITY_IOS
         Dictionary<string, float> m_CurrentBlendShapes;
         Dictionary<string, int> m_BlendShapeIndices;
+#endif
 
         Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
 
-        bool m_ARFaceActive;
+        bool m_ARFaceActive = false;
 
         StreamSettings streamSettings
         {
@@ -118,9 +123,11 @@ namespace Unity.Labs.FacialRemote
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
+#if UNITY_IOS
             UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
             UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
             UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
+#endif
         }
 
         void Update()
@@ -145,6 +152,7 @@ namespace Unity.Labs.FacialRemote
             m_Running = false;
         }
 
+#if UNITY_IOS
         void FaceAdded (ARFaceAnchor anchorData)
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
@@ -185,6 +193,7 @@ namespace Unity.Labs.FacialRemote
             m_ARFaceActive = false;
         }
 
+
         void UpdateBlendShapes()
         {
             foreach (var kvp in m_CurrentBlendShapes)
@@ -194,6 +203,7 @@ namespace Unity.Labs.FacialRemote
                     m_BlendShapes[index] = kvp.Value;
             }
         }
+#endif
 
         void TryTimeout()
         {
