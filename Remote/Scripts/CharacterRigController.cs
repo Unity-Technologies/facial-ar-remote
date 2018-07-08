@@ -315,7 +315,7 @@ namespace Unity.Labs.FacialRemote
 
             // Eye Left Look
             m_LeftEyeStartPose = new Pose(eyeLeftLocalPose.position, eyeLeftLocalPose.rotation);
-            var leftEyeOffset = eyeRightWorldPose.position - m_AREyePose.position ;
+            var leftEyeOffset = eyeLeftWorldPose.position - m_AREyePose.position ;
             var eyeLeftPoseLookObject = new GameObject("eye_left_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeLeftPoseLookAt = eyeLeftPoseLookObject.transform;
             m_EyeLeftPoseLookAt.SetParent(m_AREyePose);
