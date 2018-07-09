@@ -479,7 +479,7 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            if (isReaderStreamActive)
+            if (connected && isReaderStreamActive)
                 UpdateBoneTransforms();
         }
     }
