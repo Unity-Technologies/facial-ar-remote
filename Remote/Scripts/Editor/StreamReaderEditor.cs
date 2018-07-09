@@ -39,11 +39,18 @@ namespace Unity.Labs.FacialRemote
         {
             SetupGUIStyles();
 
-            base.OnInspectorGUI();
             var streamReader = target as StreamReader;
-
             if (streamReader == null)
                 return;
+
+            using (var check = new EditorGUI.ChangeCheckScope())
+            {
+                base.OnInspectorGUI();
+                if (check.changed)
+                {
+                    streamReader.InitializeStreamReader();
+                }
+            }
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Remote", EditorStyles.boldLabel);
@@ -189,7 +196,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void ShowRecordStreamMenu(StreamPlayback streamPlayback, PlaybackBuffer[] buffers)
+        static void ShowRecordStreamMenu(StreamPlayback streamPlayback, PlaybackBuffer[] buffers)
         {
             var menu = new GenericMenu();
             foreach (var buffer in buffers)

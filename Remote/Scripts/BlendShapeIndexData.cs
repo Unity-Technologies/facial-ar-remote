@@ -3,7 +3,7 @@
 namespace Unity.Labs.FacialRemote
 {
     [Serializable]
-    public class BlendShapeIndexData
+    public struct BlendShapeIndexData
     {
         public int index;
         public string name;
