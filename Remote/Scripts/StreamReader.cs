@@ -197,15 +197,11 @@ namespace Unity.Labs.FacialRemote
 
             if (m_Character != null)
             {
-                if (m_BlendShapesControllerOverride == null)
-                    m_BlendShapesController = m_Character.GetComponentInChildren<BlendShapesController>();
-                else
-                    m_BlendShapesController = m_BlendShapesControllerOverride;
+                m_BlendShapesController = m_BlendShapesControllerOverride ??
+                    m_Character.GetComponentInChildren<BlendShapesController>();
 
-                if (m_CharacterRigControllerOverride == null)
-                    m_CharacterRigController = m_Character.GetComponentInChildren<CharacterRigController>();
-                else
-                    m_CharacterRigController = m_CharacterRigControllerOverride;
+                m_CharacterRigController = m_CharacterRigControllerOverride ??
+                    m_Character.GetComponentInChildren<CharacterRigController>();
 
                 if (m_HeadBoneOverride == null)
                 {
@@ -223,10 +219,7 @@ namespace Unity.Labs.FacialRemote
                 m_HeadBone = m_HeadBoneOverride;
             }
 
-            if (m_CameraOverride == null)
-                m_Camera = Camera.main;
-            else
-                m_Camera = m_CameraOverride;
+            m_Camera = m_CameraOverride == null ? Camera.main : m_CameraOverride;
 
             if (m_BlendShapesController == null)
             {
@@ -260,7 +253,6 @@ namespace Unity.Labs.FacialRemote
             m_StreamPlayback = new StreamPlayback();
             ConnectInterfaces(m_StreamPlayback);
 
-            // TODO switch this to a single character ref after Demo
             if (m_BlendShapesController != null)
             {
                 ConnectInterfaces(m_BlendShapesController);
@@ -279,7 +271,7 @@ namespace Unity.Labs.FacialRemote
             SetActiveStreamSettings(m_StreamSettings);
         }
 
-        void Awake()
+        void OnEnable()
         {
             InitializeStreamReader();
         }
