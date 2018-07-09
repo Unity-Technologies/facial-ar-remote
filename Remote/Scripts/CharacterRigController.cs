@@ -19,6 +19,9 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Transform m_RightEye;
 
+        [SerializeField]
+        float m_EyeLookDistance = -0.5f;
+
         [Range(0f, 1f)]
         [SerializeField]
         float m_EyeSmoothing = 0.2f;
@@ -286,7 +289,7 @@ namespace Unity.Labs.FacialRemote
             var eyePoseLookObject = new GameObject("eye_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyePoseLookAt = eyePoseLookObject.transform;
             m_EyePoseLookAt.SetParent(m_AREyePose);
-            m_EyePoseLookAt.localPosition = Vector3.forward * -0.25f;
+            m_EyePoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance;
 
             // Eye Center Look
             m_AREyePose.SetPositionAndRotation(Vector3.Lerp(eyeRightWorldPose.position, eyeLeftWorldPose.position, 0.5f), transform.rotation);
@@ -306,20 +309,20 @@ namespace Unity.Labs.FacialRemote
             m_EyeRightPoseLookAt = eyeRightPoseLookObject.transform;
             m_EyeRightPoseLookAt.SetParent(m_AREyePose);
             if (!m_RightEyeNegZ)
-                m_EyeRightPoseLookAt.localPosition = Vector3.forward * -0.25f + rightEyeOffset;
+                m_EyeRightPoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance + rightEyeOffset;
             else
-                m_EyeRightPoseLookAt.localPosition = Vector3.back * -0.25f + rightEyeOffset;
+                m_EyeRightPoseLookAt.localPosition = Vector3.back * m_EyeLookDistance + rightEyeOffset;
 
             // Eye Left Look
             m_LeftEyeStartPose = new Pose(eyeLeftLocalPose.position, eyeLeftLocalPose.rotation);
-            var leftEyeOffset = eyeRightWorldPose.position - m_AREyePose.position ;
+            var leftEyeOffset = eyeLeftWorldPose.position - m_AREyePose.position ;
             var eyeLeftPoseLookObject = new GameObject("eye_left_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyeLeftPoseLookAt = eyeLeftPoseLookObject.transform;
             m_EyeLeftPoseLookAt.SetParent(m_AREyePose);
             if(!m_LeftEyeNegZ)
-                m_EyeLeftPoseLookAt.localPosition = Vector3.forward * -0.25f + leftEyeOffset;
+                m_EyeLeftPoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance + leftEyeOffset;
             else
-                m_EyeLeftPoseLookAt.localPosition = Vector3.back * -0.25f + leftEyeOffset;
+                m_EyeLeftPoseLookAt.localPosition = Vector3.back * m_EyeLookDistance + leftEyeOffset;
 
             m_AREyePose.rotation = Quaternion.identity;
 
@@ -476,7 +479,7 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            if (isReaderStreamActive)
+            if (connected && isReaderStreamActive)
                 UpdateBoneTransforms();
         }
     }
