@@ -1,5 +1,6 @@
 ﻿using System;
 #if UNITY_IOS
+using System.Linq;
 using System.Collections.Generic;
 #endif
 using System.Net.Sockets;
@@ -52,6 +53,49 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        void Awake()
+        {
+            if (streamSettings == null)
+            {
+                Debug.LogError("Stream settings needs to be assigned!");
+                enabled = false;
+                return;
+            }
+
+            m_Buffer = new byte[streamSettings.BufferSize];
+            m_BlendShapes = new float[streamSettings.BlendShapeCount];
+            m_CameraTransform = Camera.main.transform;
+
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+#if UNITY_IOS
+            UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
+            UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
+            UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
+#endif
+        }
+
+        void Update()
+        {
+            if(m_Socket == null || m_CameraTransform == null)
+                return;
+
+            m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
+            m_FreshData = true;
+
+            if (m_Socket.Connected && m_Once)
+            {
+                m_TimeStamp = 0f;
+                m_Once = false;
+            }
+            else
+                m_TimeStamp += Time.deltaTime;
+        }
+
+        void OnDestroy()
+        {
+            m_Running = false;
+        }
+        
         public void SetupSocket(Socket socket)
         {
             m_CameraTransform = Camera.main.transform;
@@ -107,49 +151,6 @@ namespace Unity.Labs.FacialRemote
                     Thread.Sleep(4);
                 }
             }).Start();
-        }
-
-        void Awake()
-        {
-            if (streamSettings == null)
-            {
-                Debug.LogError("Stream settings needs to be assigned!");
-                enabled = false;
-                return;
-            }
-
-            m_Buffer = new byte[streamSettings.BufferSize];
-            m_BlendShapes = new float[streamSettings.BlendShapeCount];
-            m_CameraTransform = Camera.main.transform;
-
-            Screen.sleepTimeout = SleepTimeout.NeverSleep;
-#if UNITY_IOS
-            UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
-            UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
-            UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
-#endif
-        }
-
-        void Update()
-        {
-            if(m_Socket == null || m_CameraTransform == null)
-                return;
-
-            m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
-            m_FreshData = true;
-
-            if (m_Socket.Connected && m_Once)
-            {
-                m_TimeStamp = 0f;
-                m_Once = false;
-            }
-            else
-                m_TimeStamp += Time.deltaTime;
-        }
-
-        void OnDestroy()
-        {
-            m_Running = false;
         }
 
 #if UNITY_IOS

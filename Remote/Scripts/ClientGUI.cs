@@ -13,12 +13,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Transform m_FaceAnchor;
 
-        [SerializeField]
         [Range(0,1)]
+        [SerializeField]
         float m_WidthPercent = 0.5f;
 
-        [SerializeField]
         [Range(0, 1)]
+        [SerializeField]
         float m_HeightPercent = 0.5f;
 
         [SerializeField]
@@ -40,16 +40,7 @@ namespace Unity.Labs.FacialRemote
         Canvas m_NotSupprotedGUI;
 
         [SerializeField]
-        Canvas m_DisconnectGUI;
-
-        [SerializeField]
         Button m_ConnectButton;
-
-        [SerializeField]
-        Button m_DisconnectButton;
-
-        [SerializeField]
-        Button m_CancelButton;
 
         [SerializeField]
         TMP_InputField m_PortTextField;
@@ -72,9 +63,6 @@ namespace Unity.Labs.FacialRemote
             m_MainGUI.enabled = false;
             m_FaceLostGUI.enabled = false;
             m_NotSupprotedGUI.enabled = false;
-            m_DisconnectGUI.enabled = false;
-
-            m_CancelButton.gameObject.SetActive(false);
         }
 
         void Start()
@@ -83,11 +71,11 @@ namespace Unity.Labs.FacialRemote
             m_IPTextField.onValueChanged.AddListener(OnIPValueChanged);
 
             m_ConnectButton.onClick.AddListener(OnConnectClick);
-            m_CancelButton.onClick.AddListener(OnCancelClick);
-            m_DisconnectButton.onClick.AddListener(OnDisconnectClick);
 
             m_CenterX = Screen.width / 2f;
             m_CenterY = Screen.height / 2f;
+            
+            OnIPValueChanged(m_IP);
         }
 
         void Update()
@@ -96,7 +84,6 @@ namespace Unity.Labs.FacialRemote
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
-                m_DisconnectGUI.enabled = false;
                 m_NotSupprotedGUI.enabled = true;
                 return;
             }
@@ -104,26 +91,14 @@ namespace Unity.Labs.FacialRemote
             m_NotSupprotedGUI.enabled = false;
             m_FaceLostGUI.enabled = !FaceInView();
 
-            if (m_Socket == null)
+            if (m_Socket == null || !m_Socket.Connected)
             {
                 m_MainGUI.enabled = true;
-                m_DisconnectGUI.enabled = false;
-
                 m_ConnectButton.gameObject.SetActive(m_IPValid);
-
-                m_CancelButton.gameObject.SetActive(false);
-            }
-            else if (!m_Socket.Connected)
-            {
-                m_MainGUI.enabled = true;
-                m_DisconnectGUI.enabled = false;
-                m_ConnectButton.gameObject.SetActive(false);
-                m_CancelButton.gameObject.SetActive(true);
             }
             else
             {
                 m_MainGUI.enabled = false;
-                m_DisconnectGUI.enabled = true;
             }
 
             if (!m_Once && m_Socket != null && m_Socket.Connected)
@@ -159,6 +134,12 @@ namespace Unity.Labs.FacialRemote
 
         void OnConnectClick()
         {
+            if (m_Socket != null)
+            {
+                m_Socket = null;
+                m_Once = false;
+            }
+            
             IPAddress tmpIP;
             if (!IPAddress.TryParse(m_IP, out tmpIP))
             {
@@ -182,39 +163,6 @@ namespace Unity.Labs.FacialRemote
             }).Start();
 
             m_ConnectButton.gameObject.SetActive(false);
-        }
-
-        void OnCancelClick()
-        {
-            m_ConnectButton.gameObject.SetActive(false);
-            m_CancelButton.gameObject.SetActive(true);
-
-            try
-            {
-                m_Socket.Disconnect(false);
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e.Message);
-            }
-
-            m_Socket = null;
-            m_Once = false;
-        }
-
-        void OnDisconnectClick()
-        {
-            try
-            {
-                m_Socket.Disconnect(false);
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e.Message);
-            }
-
-            m_Socket = null;
-            m_Once = false;
         }
 
         bool FaceInView()
