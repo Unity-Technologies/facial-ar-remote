@@ -6,6 +6,19 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(StreamReader))]
     public class StreamReaderEditor : Editor
     {
+        SerializedProperty m_StreamSettings;
+        SerializedProperty m_PlaybackData;
+        SerializedProperty m_Character;
+        SerializedProperty m_UseDebug;
+        SerializedProperty m_Port;
+        SerializedProperty m_CatchupThreshold;
+        SerializedProperty m_CatchupSize;
+        SerializedProperty m_TrackingLossPadding;
+        SerializedProperty m_BlendShapesControllerOverride;
+        SerializedProperty m_CharacterRigControllerOverride;
+        SerializedProperty m_HeadBoneOverride;
+        SerializedProperty m_CameraOverride;
+
         ClipBaker m_ClipBaker;
         GUIContent m_PlayIcon;
         GUIContent m_RecordIcon;
@@ -21,18 +34,20 @@ namespace Unity.Labs.FacialRemote
             m_Connect = EditorGUIUtility.IconContent("d_BuildSettings.iPhone.Small");
         }
 
-        void SetupGUIStyles()
+        void OnEnable()
         {
-            if (m_ButtonStyle == null || m_ButtonPressStyle == null)
-            {
-                m_ButtonStyle = new GUIStyle("Button");
-                m_ButtonPressStyle = new GUIStyle("Button");
-
-                m_ButtonPressStyle.active = m_ButtonStyle.normal;
-                m_ButtonPressStyle.normal = m_ButtonStyle.active;
-                m_ButtonPressStyle.fixedHeight = 24;
-                m_ButtonStyle.fixedHeight = 24;
-            }
+            m_StreamSettings = serializedObject.FindProperty("m_StreamSettings");
+            m_PlaybackData = serializedObject.FindProperty("m_PlaybackData");
+            m_Character = serializedObject.FindProperty("m_Character");
+            m_UseDebug = serializedObject.FindProperty("m_UseDebug");
+            m_Port = serializedObject.FindProperty("m_Port");
+            m_CatchupThreshold = serializedObject.FindProperty("m_CatchupThreshold");
+            m_CatchupSize = serializedObject.FindProperty("m_CatchupSize");
+            m_TrackingLossPadding = serializedObject.FindProperty("m_TrackingLossPadding");
+            m_BlendShapesControllerOverride = serializedObject.FindProperty("m_BlendShapesControllerOverride");
+            m_CharacterRigControllerOverride = serializedObject.FindProperty("m_CharacterRigControllerOverride");
+            m_HeadBoneOverride = serializedObject.FindProperty("m_HeadBoneOverride");
+            m_CameraOverride = serializedObject.FindProperty("m_CameraOverride");
         }
 
         public override void OnInspectorGUI()
@@ -45,14 +60,33 @@ namespace Unity.Labs.FacialRemote
 
             using (var check = new EditorGUI.ChangeCheckScope())
             {
-                base.OnInspectorGUI();
+                EditorGUILayout.LabelField("General Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_StreamSettings);
+                EditorGUILayout.PropertyField(m_PlaybackData);
+                EditorGUILayout.PropertyField(m_Character);
+                EditorGUILayout.PropertyField(m_UseDebug);
+                EditorGUILayout.Space();
+
+                EditorGUILayout.LabelField("Server Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_Port);
+                EditorGUILayout.PropertyField(m_CatchupThreshold);
+                EditorGUILayout.PropertyField(m_CatchupSize);
+                EditorGUILayout.PropertyField(m_TrackingLossPadding);
+                EditorGUILayout.Space();
+
+                EditorGUILayout.LabelField("Controller Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_BlendShapesControllerOverride);
+                EditorGUILayout.PropertyField(m_CharacterRigControllerOverride);
+                EditorGUILayout.PropertyField(m_HeadBoneOverride);
+                EditorGUILayout.PropertyField(m_CameraOverride);
+                EditorGUILayout.Space();
+
                 if (check.changed)
                 {
                     streamReader.InitializeStreamReader();
                 }
             }
 
-            EditorGUILayout.Space();
             EditorGUILayout.LabelField("Remote", EditorStyles.boldLabel);
 
             using (new GUILayout.HorizontalScope())
@@ -165,6 +199,20 @@ namespace Unity.Labs.FacialRemote
 
             // Want editor to update every frame
             EditorUtility.SetDirty(target);
+        }
+
+        void SetupGUIStyles()
+        {
+            if (m_ButtonStyle == null || m_ButtonPressStyle == null)
+            {
+                m_ButtonStyle = new GUIStyle("Button");
+                m_ButtonPressStyle = new GUIStyle("Button");
+
+                m_ButtonPressStyle.active = m_ButtonStyle.normal;
+                m_ButtonPressStyle.normal = m_ButtonStyle.active;
+                m_ButtonPressStyle.fixedHeight = 24;
+                m_ButtonStyle.fixedHeight = 24;
+            }
         }
 
         void BakeClipLoop()

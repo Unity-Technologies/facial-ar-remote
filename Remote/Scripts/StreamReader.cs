@@ -11,7 +11,6 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class StreamReader : MonoBehaviour
     {
-        [Header("General Settings")]
         [SerializeField]
         [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
         StreamSettings m_StreamSettings;
@@ -28,12 +27,12 @@ namespace Unity.Labs.FacialRemote
         [Tooltip(" Shows extra debug logging in the console.")]
         bool m_UseDebug;
 
-        [Header("Server Settings")]
         [SerializeField]
         [Tooltip("Port number that the device will connect to, be sure to have this match the port set on the device.")]
         int m_Port = 9000;
 
         [SerializeField]
+        [Tooltip("Threshold for number of missed frames before trying to skip frames with catchup size.")]
         int m_CatchupThreshold = 16;
 
         [SerializeField]
@@ -45,7 +44,6 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Number of frames of same head tracking data before tracking is considered lost.")]
         int m_TrackingLossPadding = 64;
 
-        [Header("Controller Settings")]
         [SerializeField]
         [Tooltip("Manually override the blend shape controller found in the Character.")]
         BlendShapesController m_BlendShapesControllerOverride;

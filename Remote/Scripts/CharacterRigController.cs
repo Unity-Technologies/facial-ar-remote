@@ -6,57 +6,73 @@ namespace Unity.Labs.FacialRemote
     public class CharacterRigController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes,
         IUseReaderHeadPose, IUseReaderCameraPose
     {
-        [SerializeField]
         [Range(0f, 1f)]
+        [SerializeField]
+        [Tooltip("Amount to smoothing when returning to the start pose for the character when AR tracking is lost.")]
         float m_TrackingLossSmoothing = 0.1f;
 
         [SerializeField]
+        [Tooltip("Enable controller driving eye bones pose.")]
         bool m_DriveEyes = true;
 
         [SerializeField]
+        [Tooltip("Left eye bone transform")]
         Transform m_LeftEye;
 
         [SerializeField]
+        [Tooltip("Right eye bone transform")]
         Transform m_RightEye;
 
         [SerializeField]
+        [Tooltip("Local offset distance for the eye look target")]
         float m_EyeLookDistance = -0.5f;
 
         [Range(0f, 1f)]
         [SerializeField]
+        [Tooltip("Amount of smoothing to apply to eye movement")]
         float m_EyeSmoothing = 0.2f;
 
         [SerializeField]
+        [Tooltip("Corrects the right eye look direction if z is negative.")]
         bool m_RightEyeNegZ;
 
         [SerializeField]
+        [Tooltip("Corrects the left eye look direction if z is negative.")]
         bool m_LeftEyeNegZ;
 
         [SerializeField]
+        [Tooltip("Max amount of x and y movement for the eyes.")]
         Vector2 m_EyeAngleRange = new Vector2(30, 45);
 
         [SerializeField]
+        [Tooltip("Enable controller driving head bone pose.")]
         bool m_DriveHead = true;
 
         [SerializeField]
+        [Tooltip("Head bone transform")]
         Transform m_HeadBone;
 
         [Range(0f, 1f)]
         [SerializeField]
+        [Tooltip("Amount of smoothing to apply to head movement")]
         float m_HeadSmoothing = 0.1f;
 
-        [SerializeField]
         [Range(0f, 1f)]
+        [SerializeField]
+        [Tooltip("Amount of influence the AR head anchor pose has on the head bone.")]
         float m_HeadFollowAmount = 0.6f;
 
         [SerializeField]
+        [Tooltip("Enable controller driving neck bone pose.")]
         bool m_DriveNeck = true;
 
         [SerializeField]
+        [Tooltip("Amount of smoothing to apply to head movement")]
         Transform m_NeckBone;
 
-        [SerializeField]
         [Range(0f, 1f)]
+        [SerializeField]
+        [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
         float m_NeckFollowAmount = 0.4f;
 
         bool m_HasEyes;
@@ -132,15 +148,28 @@ namespace Unity.Labs.FacialRemote
         [NonSerialized]
         [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
+        void Start()
+        {
+            SetupCharacterRigController();
+        }
+
+        void Update()
+        {
+            if (!connected || !isReaderStreamActive)
+                return;
+
+            InterpolateBlendShapes();
+        }
+
+        void LateUpdate()
+        {
+            if (connected && isReaderStreamActive)
+                UpdateBoneTransforms();
+        }
 
         public void OnStreamSettingsChange()
         {
             SetupBlendShapeIndices();
-        }
-
-        void Start()
-        {
-            SetupCharacterRigController();
         }
 
         public void SetupBlendShapeIndices()
@@ -363,21 +392,28 @@ namespace Unity.Labs.FacialRemote
                 animatedBones[3] = transform;
         }
 
-        void LocalizeFacePose()
+        public void ResetBonePoses()
         {
-            m_LocalizedHeadParent.position = readerHeadPose.position;
-            m_LocalizedHeadParent.LookAt(readerCameraPose.position);
+            if (m_DriveEyes && m_HasEyes)
+            {
+                m_RightEye.localPosition = m_RightEyeStartPose.position;
+                m_RightEye.localRotation = m_RightEyeStartPose.rotation;
 
-            m_LocalizedHeadRot.rotation = readerHeadPose.rotation * m_BackwardRot;
-            m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
-        }
+                m_LeftEye.localPosition = m_LeftEyeStartPose.position;
+                m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
+            }
 
-        void Update()
-        {
-            if (!connected || !isReaderStreamActive)
-                return;
+            if (m_DriveHead && m_HasHead)
+            {
+                m_HeadBone.localPosition = m_HeadStartPose.position;
+                m_HeadBone.localRotation = m_HeadStartPose.rotation;
+            }
 
-            InterpolateBlendShapes();
+            if (m_DriveNeck && m_HasNeck)
+            {
+                m_NeckBone.localPosition = m_NeckStartPose.position;
+                m_NeckBone.localRotation = m_NeckStartPose.rotation;
+            }
         }
 
         public void InterpolateBlendShapes(bool force = false)
@@ -431,28 +467,13 @@ namespace Unity.Labs.FacialRemote
                 UpdateBoneTransforms();
         }
 
-        public void ResetBonePoses()
+        void LocalizeFacePose()
         {
-            if (m_DriveEyes && m_HasEyes)
-            {
-                m_RightEye.localPosition = m_RightEyeStartPose.position;
-                m_RightEye.localRotation = m_RightEyeStartPose.rotation;
+            m_LocalizedHeadParent.position = readerHeadPose.position;
+            m_LocalizedHeadParent.LookAt(readerCameraPose.position);
 
-                m_LeftEye.localPosition = m_LeftEyeStartPose.position;
-                m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
-            }
-
-            if (m_DriveHead && m_HasHead)
-            {
-                m_HeadBone.localPosition = m_HeadStartPose.position;
-                m_HeadBone.localRotation = m_HeadStartPose.rotation;
-            }
-
-            if (m_DriveNeck && m_HasNeck)
-            {
-                m_NeckBone.localPosition = m_NeckStartPose.position;
-                m_NeckBone.localRotation = m_NeckStartPose.rotation;
-            }
+            m_LocalizedHeadRot.rotation = readerHeadPose.rotation * m_BackwardRot;
+            m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
         }
 
         void UpdateBoneTransforms()
@@ -475,12 +496,6 @@ namespace Unity.Labs.FacialRemote
 
             if (m_DriveNeck && m_HasNeck)
                 m_NeckBone.rotation = m_ARNeckPose.rotation;
-        }
-
-        void LateUpdate()
-        {
-            if (connected && isReaderStreamActive)
-                UpdateBoneTransforms();
         }
     }
 }
