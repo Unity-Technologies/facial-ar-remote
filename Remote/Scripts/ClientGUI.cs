@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,10 +13,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Transform m_FaceAnchor;
 
+        [Tooltip("Percentage of screen width outside which the Face Lost GUI will appear")]
         [Range(0,1)]
         [SerializeField]
         float m_WidthPercent = 0.5f;
 
+        [Tooltip("Percentage of screen height outside which the Face Lost GUI will appear")]
         [Range(0, 1)]
         [SerializeField]
         float m_HeightPercent = 0.5f;
@@ -25,7 +27,7 @@ namespace Unity.Labs.FacialRemote
         int m_Port = 9000;
 
         [SerializeField]
-        string m_IP = "10.0.1.3";
+        string m_IP = "192.168.1.2";
 
         [SerializeField]
         Client m_Client;
@@ -74,7 +76,7 @@ namespace Unity.Labs.FacialRemote
 
             m_CenterX = Screen.width / 2f;
             m_CenterY = Screen.height / 2f;
-            
+
             OnIPValueChanged(m_IP);
         }
 
@@ -139,7 +141,7 @@ namespace Unity.Labs.FacialRemote
                 m_Socket = null;
                 m_Once = false;
             }
-            
+
             IPAddress tmpIP;
             if (!IPAddress.TryParse(m_IP, out tmpIP))
             {
