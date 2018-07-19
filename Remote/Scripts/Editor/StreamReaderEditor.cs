@@ -84,6 +84,7 @@ namespace Unity.Labs.FacialRemote
                 if (check.changed)
                 {
                     streamReader.InitializeStreamReader();
+                    serializedObject.ApplyModifiedProperties();
                 }
             }
 

@@ -53,11 +53,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StreamSettings: {fileID: 11400000, guid: 87ff99ce494718c46adee6b73f32e6d2, type: 2}
   m_PlaybackData: {fileID: 0}
+  m_Character: {fileID: 0}
   m_UseDebug: 0
-  m_Port: 9001
-  m_CatchupSize: 8
+  m_Port: 9000
+  m_CatchupThreshold: 16
+  m_CatchupSize: 3
   m_TrackingLossPadding: 64
-  m_BlendShapesController: {fileID: 0}
-  m_CharacterRigController: {fileID: 0}
-  m_Camera: {fileID: 0}
-  m_HeadBone: {fileID: 0}
+  m_BlendShapesControllerOverride: {fileID: 0}
+  m_CharacterRigControllerOverride: {fileID: 0}
+  m_HeadBoneOverride: {fileID: 0}
+  m_CameraOverride: {fileID: 0}
