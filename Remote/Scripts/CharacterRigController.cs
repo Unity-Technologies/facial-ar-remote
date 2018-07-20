@@ -75,10 +75,6 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
         float m_NeckFollowAmount = 0.4f;
 
-        bool m_HasEyes;
-        bool m_HasHead;
-        bool m_HasNeck;
-
         int m_EyeLookDownLeftIndex;
         int m_EyeLookDownRightIndex;
         int m_EyeLookInLeftIndex;
@@ -194,46 +190,37 @@ namespace Unity.Labs.FacialRemote
                 if (m_LeftEye == null)
                 {
                     Debug.LogWarning("Drive Eyes is set but Left Eye Bone returning NULL!");
-                    return;
+                    m_DriveEyes = false;
                 }
 
                 if (m_RightEye == null)
                 {
                     Debug.LogWarning("Drive Eyes is set but Right Eye Bone returning NULL!");
-                    return;
+                    m_DriveEyes = false;
                 }
             }
-
-            if (m_LeftEye != null && m_RightEye != null)
-                m_HasEyes = true;
 
             if (m_DriveHead && m_HeadBone == null)
             {
                 Debug.LogWarning("Drive Head is set but Head Bone returning NULL!");
-                return;
+                m_DriveHead = false;
             }
-
-            if (m_HeadBone != null)
-                m_HasHead = true;
 
             if (m_DriveNeck && m_NeckBone == null)
             {
                 Debug.LogWarning("Drive Neck is set but Neck Bone returning NULL!");
-                return;
+                m_DriveNeck = false;
             }
-
-            if (m_NeckBone != null)
-                m_HasNeck = true;
 
             Pose headWorldPose;
             Pose headLocalPose;
-            if (m_HasHead)
+            if (m_DriveHead)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 headWorldPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
                 headLocalPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
             }
-            else if (m_HasNeck)
+            else if (m_DriveNeck)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 headWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
@@ -247,7 +234,7 @@ namespace Unity.Labs.FacialRemote
 
             Pose neckWorldPose;
             Pose neckLocalPose;
-            if (m_HasNeck)
+            if (m_DriveNeck)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 neckWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
@@ -269,7 +256,7 @@ namespace Unity.Labs.FacialRemote
             Pose eyeLeftLocalPose;
             Pose eyeRightWorldPose;
             Pose eyeRightLocalPose;
-            if (m_HasEyes)
+            if (m_DriveEyes)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 eyeLeftWorldPose = new Pose(m_LeftEye.position, m_LeftEye.rotation);
@@ -315,6 +302,7 @@ namespace Unity.Labs.FacialRemote
             // Set Eye Look Rig
             var eyePoseObject = new GameObject("eye_pose"){ hideFlags = HideFlags.HideAndDontSave};
             m_AREyePose = eyePoseObject.transform;
+            Debug.Log(m_AREyePose);
             var eyePoseLookObject = new GameObject("eye_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyePoseLookAt = eyePoseLookObject.transform;
             m_EyePoseLookAt.SetParent(m_AREyePose);
@@ -394,7 +382,7 @@ namespace Unity.Labs.FacialRemote
 
         public void ResetBonePoses()
         {
-            if (m_DriveEyes && m_HasEyes)
+            if (m_DriveEyes)
             {
                 m_RightEye.localPosition = m_RightEyeStartPose.position;
                 m_RightEye.localRotation = m_RightEyeStartPose.rotation;
@@ -403,13 +391,13 @@ namespace Unity.Labs.FacialRemote
                 m_LeftEye.localRotation = m_LeftEyeStartPose.rotation;
             }
 
-            if (m_DriveHead && m_HasHead)
+            if (m_DriveHead)
             {
                 m_HeadBone.localPosition = m_HeadStartPose.position;
                 m_HeadBone.localRotation = m_HeadStartPose.rotation;
             }
 
-            if (m_DriveNeck && m_HasNeck)
+            if (m_DriveNeck)
             {
                 m_NeckBone.localPosition = m_NeckStartPose.position;
                 m_NeckBone.localRotation = m_NeckStartPose.rotation;
@@ -458,8 +446,12 @@ namespace Unity.Labs.FacialRemote
             }
             else
             {
-                m_AREyePose.localRotation = Quaternion.Slerp(Quaternion.identity, m_AREyePose.localRotation, m_TrackingLossSmoothing);
-                m_ARHeadPose.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPose.localRotation, m_TrackingLossSmoothing);
+                if (m_DriveEyes)
+                {
+                    m_AREyePose.localRotation = Quaternion.Slerp(Quaternion.identity, m_AREyePose.localRotation, m_TrackingLossSmoothing);
+                    m_ARHeadPose.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPose.localRotation, m_TrackingLossSmoothing);
+                }
+
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
             }
 
@@ -478,7 +470,7 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateBoneTransforms()
         {
-            if (m_DriveEyes && m_HasEyes)
+            if (m_DriveEyes)
             {
                 if (m_RightEyeNegZ)
                     m_RightEye.LookAt(m_EyeRightPoseLookAt, Vector3.down);
@@ -491,10 +483,10 @@ namespace Unity.Labs.FacialRemote
                     m_LeftEye.LookAt(m_EyeLeftPoseLookAt);
             }
 
-            if (m_DriveHead && m_HasHead)
+            if (m_DriveHead)
                 m_HeadBone.rotation = m_ARHeadPose.rotation;
 
-            if (m_DriveNeck && m_HasNeck)
+            if (m_DriveNeck )
                 m_NeckBone.rotation = m_ARNeckPose.rotation;
         }
     }
