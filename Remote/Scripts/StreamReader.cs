@@ -9,16 +9,8 @@ namespace Unity.Labs.FacialRemote
     /// stream data from the stream source(s) to be used by connected controllers. It allows you to control the device
     /// connection, and record & playback captured streams to a character.
     /// </summary>
-    public class StreamReader : MonoBehaviour
+    public class StreamReader : MonoBehaviour, IStreamReader
     {
-        [SerializeField]
-        [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
-        StreamSettings m_StreamSettings;
-
-        [SerializeField]
-        [Tooltip("Contains the individual streams recorded from a capture session.")]
-        PlaybackData m_PlaybackData;
-
         [SerializeField]
         [Tooltip("Root of character to be be driven.")]
         GameObject m_Character;
@@ -26,18 +18,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip(" Shows extra debug logging in the console.")]
         bool m_UseDebug;
-
-        [SerializeField]
-        [Tooltip("Port number that the device will connect to, be sure to have this match the port set on the device.")]
-        int m_Port = 9000;
-
-        [SerializeField]
-        [Tooltip("Threshold for number of missed frames before trying to skip frames with catchup size.")]
-        int m_CatchupThreshold = 16;
-
-        [SerializeField]
-        [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
-        int m_CatchupSize = 2;
 
         [SerializeField]
         [Range(1, 512)]
@@ -60,16 +40,14 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Manually override the main camera found by the stream reader. Used for determining the starting pose of the camera.")]
         Camera m_CameraOverride;
 
-        BlendShapesController m_BlendShapesController;
-        CharacterRigController m_CharacterRigController;
+        [SerializeField]
+        MonoBehaviour[] m_StreamSources = {};
+
         Camera m_Camera;
         Transform m_HeadBone;
 
         Pose m_HeadPose;
         Pose m_CameraPose;
-
-        int[] m_FrameNumArray = new int[1];
-        float[] m_FrameTimeArray = new float[1];
 
         IStreamSource m_ActiveStreamSource;
         IStreamSettings m_ActiveStreamSettings;
@@ -77,117 +55,128 @@ namespace Unity.Labs.FacialRemote
         Vector3 m_LastPose;
         int m_TrackingLossCount;
 
-        HashSet<IStreamSource> m_StreamSources = new HashSet<IStreamSource>();
+        HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
 
-        Server m_Server;
-        StreamPlayback m_StreamPlayback;
-        Action m_OnStreamSettingsChange;
+        event Action<IStreamSettings> streamSettingsChanged;
 
-        public bool faceActive { get; private set; }
+        bool m_FaceActive;
+
+        float[] m_HeadPoseArray = new float[7];
+        float[] m_CameraPoseArray = new float[7];
+        int[] m_FrameNumArray = new int[1];
+        float[] m_FrameTimeArray = new float[1];
+
         public bool trackingActive { get; private set; }
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
+        public Server server { get; private set; }
+        public StreamPlayback streamPlayback { get; private set; }
 
-        public PlaybackData playbackData { get { return m_PlaybackData; } }
-        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
-        public CharacterRigController characterRigController { get { return m_CharacterRigController; } }
+        public PlaybackData playbackData { get { return streamPlayback.playbackData; } }
+        public BlendShapesController blendShapesController { get; private set; }
+        public CharacterRigController characterRigController { get; private set; }
 
-        public bool streamActive
+        public float[] blendShapesBuffer { get; private set; }
+
+        public IStreamSource streamSource
         {
-            get { return enabled && m_ActiveStreamSource != null && m_ActiveStreamSource.streamActive; }
-        }
-
-        public float[] blendShapesBuffer { get { return m_BlendShapesBuffer; } }
-        public float[] headPoseArray { get { return m_HeadPoseArray; } }
-        public float[] cameraPoseArray { get { return m_CameraPoseArray; } }
-
-        float[] m_BlendShapesBuffer;
-        float[] m_HeadPoseArray = new float[7];
-        float[] m_CameraPoseArray = new float[7];
-
-        public void UseStreamReaderSettings()
-        {
-            if (m_ActiveStreamSettings.Equals(m_StreamSettings))
-                return;
-
-            SetActiveStreamSettings(m_StreamSettings);
-        }
-
-        public void SetActiveStreamSettings(IStreamSettings settings)
-        {
-            if (settings == null)
-                return;
-
-            m_ActiveStreamSettings = settings;
-            m_OnStreamSettingsChange.Invoke();
-        }
-
-        public void SetStreamSource(IStreamSource source)
-        {
-            if (source == null)
-                return;
-            m_ActiveStreamSource = source;
-            source.SetReaderStreamSettings();
-            m_BlendShapesBuffer = new float[m_ActiveStreamSettings.BlendShapeCount];
-        }
-
-        public Server server
-        {
-            get
+            get { return m_ActiveStreamSource; }
+            set
             {
-                if (m_Server == null)
-                    InitializeStreamReader();
+                if (m_ActiveStreamSource == value)
+                    return;
 
-                return m_Server;
+                m_ActiveStreamSource = value;
+
+                if (value == null)
+                    return;
+
+                streamSettings = value.streamSettings;
+
+                var blendShapeCount = m_ActiveStreamSettings.BlendShapeCount;
+                if (blendShapesBuffer == null || blendShapesBuffer.Length != blendShapeCount)
+                    blendShapesBuffer = new float[blendShapeCount];
             }
         }
 
-        public StreamPlayback streamPlayback
+        public IStreamSettings streamSettings
         {
-            get
+            get { return m_ActiveStreamSettings; }
+            set
             {
-                if (m_StreamPlayback == null)
-                    InitializeStreamReader();
-                return m_StreamPlayback;
+                if (value == null)
+                    return;
+
+                m_ActiveStreamSettings = value;
+
+                if (m_UseDebug)
+                    Debug.Log("StreamSettings Changed");
+
+                if (streamSettingsChanged != null)
+                    streamSettingsChanged(value);
             }
         }
 
-        public void UnSetStreamSource()
+        public bool useDebug
         {
-            m_ActiveStreamSource = null;
+            get { return m_UseDebug; }
+        }
+
+        public bool active
+        {
+            get { return streamSource != null && streamSource.active; }
+        }
+
+        void OnValidate()
+        {
+            m_Sources.UnionWith(GetComponentsInChildren<IStreamSource>());
+            foreach (var behavior in m_StreamSources)
+            {
+                var source = behavior as IStreamSource;
+                if (source != null)
+                    m_Sources.Add(source);
+                else
+                    Debug.LogWarningFormat("{0} is not a stream source", behavior);
+            }
+
+            foreach (var source in m_Sources)
+            {
+                ConnectInterfaces(source);
+                var svr = source as Server;
+                if (svr != null)
+                    server = svr;
+
+                var playback = source as StreamPlayback;
+                if (playback != null)
+                    streamPlayback = playback;
+            }
         }
 
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
-            var streamSettings = m_ActiveStreamSettings;
+            var settings = m_ActiveStreamSettings;
 
-            Buffer.BlockCopy(buffer, position + 1, m_BlendShapesBuffer, 0, streamSettings.BlendShapeSize);
-            Buffer.BlockCopy(buffer, position + streamSettings.HeadPoseOffset, m_HeadPoseArray, 0, streamSettings.PoseSize);
-            Buffer.BlockCopy(buffer, position + streamSettings.CameraPoseOffset, m_CameraPoseArray, 0, streamSettings.PoseSize);
-            faceActive = buffer[position + streamSettings.BufferSize - 1] == 1;
+            Buffer.BlockCopy(buffer, position + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
+            Buffer.BlockCopy(buffer, position + settings.HeadPoseOffset, m_HeadPoseArray, 0, settings.PoseSize);
+            Buffer.BlockCopy(buffer, position + settings.CameraPoseOffset, m_CameraPoseArray, 0, settings.PoseSize);
+            m_FaceActive = buffer[position + settings.BufferSize - 1] == 1;
 
-            Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, m_FrameNumArray, 0, streamSettings.FrameNumberSize);
-            Buffer.BlockCopy(buffer, streamSettings.FrameTimeOffset, m_FrameTimeArray, 0, streamSettings.FrameTimeSize);
+            Buffer.BlockCopy(buffer, settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
+            Buffer.BlockCopy(buffer, settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
 
             if (m_UseDebug)
                 Debug.Log(string.Format("{0} : {1}", m_FrameNumArray[0], m_FrameTimeArray[0]));
 
-            if (faceActive)
+            if (m_FaceActive)
             {
-                BlendShapeUtils.ArrayToPose(headPoseArray, ref m_HeadPose);
-                BlendShapeUtils.ArrayToPose(cameraPoseArray, ref m_CameraPose);
+                BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
+                BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
         }
 
         public void InitializeStreamReader()
         {
-            if (m_StreamSettings == null)
-            {
-                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Stream Reader!", gameObject.name);
-                enabled = false;
-            }
-
-            if (m_PlaybackData == null)
+            if (streamPlayback.playbackData == null)
             {
                 Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
                     gameObject.name);
@@ -195,36 +184,38 @@ namespace Unity.Labs.FacialRemote
 
             if (m_Character != null)
             {
-                m_BlendShapesController = m_BlendShapesControllerOverride ??
-                    m_Character.GetComponentInChildren<BlendShapesController>();
+                blendShapesController = m_BlendShapesControllerOverride != null ? m_BlendShapesControllerOverride
+                    : m_Character.GetComponentInChildren<BlendShapesController>();
 
-                m_CharacterRigController = m_CharacterRigControllerOverride ??
-                    m_Character.GetComponentInChildren<CharacterRigController>();
+                characterRigController = m_CharacterRigControllerOverride != null ? m_CharacterRigControllerOverride
+                    : m_Character.GetComponentInChildren<CharacterRigController>();
 
                 if (m_HeadBoneOverride == null)
                 {
-                    if (m_CharacterRigController != null)
-                        m_HeadBone = m_CharacterRigController.headBone;
+                    if (characterRigController != null)
+                        m_HeadBone = characterRigController.headBone;
                 }
                 else
+                {
                     m_HeadBone = m_HeadBoneOverride;
+                }
             }
             else
             {
                 Debug.Log("Character is not set. Trying to set controllers from overrides.");
-                m_BlendShapesController = m_BlendShapesControllerOverride;
-                m_CharacterRigController = m_CharacterRigControllerOverride;
+                blendShapesController = m_BlendShapesControllerOverride;
+                characterRigController = m_CharacterRigControllerOverride;
                 m_HeadBone = m_HeadBoneOverride;
             }
 
             m_Camera = m_CameraOverride == null ? Camera.main : m_CameraOverride;
 
-            if (m_BlendShapesController == null)
+            if (blendShapesController == null)
             {
                 Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
             }
 
-            if (m_CharacterRigController == null)
+            if (characterRigController == null)
             {
                 Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
             }
@@ -239,34 +230,11 @@ namespace Unity.Labs.FacialRemote
                 Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
             }
 
-            m_OnStreamSettingsChange = () =>
-            {
-                if (m_UseDebug)
-                    Debug.Log("OnStreamSettingsChange");
-            };
+            if (blendShapesController != null)
+                ConnectInterfaces(blendShapesController);
 
-            m_Server = new Server();
-            ConnectInterfaces(m_Server);
-
-            m_StreamPlayback = new StreamPlayback();
-            ConnectInterfaces(m_StreamPlayback);
-
-            if (m_BlendShapesController != null)
-            {
-                ConnectInterfaces(m_BlendShapesController);
-                m_BlendShapesController.connected = true;
-            }
-
-            if (m_CharacterRigController != null)
-            {
-                ConnectInterfaces(m_CharacterRigController);
-                m_CharacterRigController.connected = true;
-            }
-
-            m_StreamSources.Add(m_Server);
-            m_StreamSources.Add(m_StreamPlayback);
-
-            SetActiveStreamSettings(m_StreamSettings);
+            if (characterRigController != null)
+                ConnectInterfaces(characterRigController);
         }
 
         void OnEnable()
@@ -298,12 +266,7 @@ namespace Unity.Labs.FacialRemote
                 m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);
             }
 
-            foreach (var streamSource in m_StreamSources)
-            {
-                streamSource.StartStreamThread();
-            }
-
-            m_Server.ActivateStreamSource();
+            streamSource = server;
         }
 
         void Update()
@@ -311,7 +274,7 @@ namespace Unity.Labs.FacialRemote
             if (m_HeadPose.position == m_LastPose)
             {
                 m_TrackingLossCount++;
-                if (!faceActive && m_TrackingLossCount > m_TrackingLossPadding)
+                if (!m_FaceActive && m_TrackingLossCount > m_TrackingLossPadding)
                     trackingActive = false;
                 else
                     trackingActive = true;
@@ -322,89 +285,33 @@ namespace Unity.Labs.FacialRemote
             }
             m_LastPose = m_HeadPose.position;
 
-            m_StreamPlayback.UpdateTimes();
+            streamPlayback.UpdateTimes();
 
-            m_Server.StreamSourceUpdate();
-            m_StreamPlayback.StreamSourceUpdate();
+            foreach (var source in m_Sources)
+            {
+                source.StreamSourceUpdate();
+            }
         }
 
         void FixedUpdate()
         {
-            m_StreamPlayback.UpdateTimes();
+            streamPlayback.UpdateTimes();
         }
 
         void LateUpdate()
         {
-            m_StreamPlayback.UpdateTimes();
-        }
-
-        void OnDisable()
-        {
-            foreach (var streamSource in m_StreamSources)
-            {
-                streamSource.DeactivateStreamSource();
-            }
-        }
-
-        void OnDestroy()
-        {
-            foreach (var streamSource in m_StreamSources)
-            {
-                streamSource.streamThreadActive = false;
-            }
-            m_StreamSources.Clear();
+            streamPlayback.UpdateTimes();
         }
 
         void ConnectInterfaces(object obj)
         {
-            var streamSource = obj as IStreamSource;
-            if (streamSource != null)
+            var usesStreamReader = obj as IUsesStreamReader;
+            if (usesStreamReader != null)
             {
-                streamSource.getStreamReader = () => this;
-                streamSource.IsStreamSource = () => m_ActiveStreamSource == streamSource;
-                streamSource.getPlaybackData = () => m_PlaybackData;
-                streamSource.getUseDebug = () => m_UseDebug;
-            }
-
-            var useStreamSettings = obj as IUseStreamSettings;
-            if (useStreamSettings != null)
-            {
-                useStreamSettings.getStreamSettings = () => m_ActiveStreamSettings;
-                useStreamSettings.getReaderStreamSettings = () => m_StreamSettings;
-                m_OnStreamSettingsChange += useStreamSettings.OnStreamSettingsChange;
-            }
-
-            var useReaderActive = obj as IUseReaderActive;
-            if (useReaderActive != null)
-            {
-                useReaderActive.isStreamActive = () => streamActive;
-                useReaderActive.isTrackingActive = () => trackingActive;
-            }
-
-            var useReaderHeadPose = obj as IUseReaderHeadPose;
-            if (useReaderHeadPose != null)
-            {
-                useReaderHeadPose.getHeadPose = () => headPose;
-            }
-
-            var useReaderCameraPose = obj as IUseReaderCameraPose;
-            if (useReaderCameraPose != null)
-            {
-                useReaderCameraPose.getCameraPose = () => cameraPose;
-            }
-
-            var useReaderBlendShapes = obj as IUseReaderBlendShapes;
-            if (useReaderBlendShapes != null)
-            {
-                useReaderBlendShapes.getBlendShapesBuffer = () => blendShapesBuffer;
-            }
-
-            var serverSettings = obj as IServerSettings;
-            if (serverSettings != null)
-            {
-                serverSettings.getPortNumber = () => m_Port;
-                serverSettings.getFrameCatchupSize = () => m_CatchupSize;
-                serverSettings.getFrameCatchupThreshold = () => m_CatchupThreshold;
+                usesStreamReader.streamReader = this;
+                var useStreamSettings = obj as IUsesStreamSettings;
+                if (useStreamSettings != null)
+                    streamSettingsChanged += useStreamSettings.OnStreamSettingsChanged;
             }
         }
     }

@@ -48,7 +48,7 @@ namespace Unity.Labs.FacialRemote
 
         Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
 
-        bool m_ARFaceActive = false;
+        bool m_ARFaceActive;
 
         void Awake()
         {

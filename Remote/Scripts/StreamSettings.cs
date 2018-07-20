@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -8,8 +7,21 @@ namespace Unity.Labs.FacialRemote
     [Serializable]
     public class Mapping
     {
-        public string from;
-        public string to;
+        [SerializeField]
+        string m_From;
+
+        [SerializeField]
+        string m_To;
+
+        public string from
+        {
+            get { return m_From; }
+        }
+
+        public string to
+        {
+            get { return m_To; }
+        }
     }
 
     [Serializable]
@@ -26,23 +38,31 @@ namespace Unity.Labs.FacialRemote
         Mapping[] m_Mappings = {};
 
         [SerializeField]
-        public int m_BlendShapeSize;
+        int m_BlendShapeSize;
+
         [SerializeField]
-        public int m_PoseSize;
+        int m_PoseSize;
+
         [SerializeField]
-        public int m_FrameNumberSize;
+        int m_FrameNumberSize;
+
         [SerializeField]
-        public int m_FrameTimeSize;
+        int m_FrameTimeSize;
+
         [SerializeField]
-        public int m_HeadPoseOffset;
+        int m_HeadPoseOffset;
+
         [SerializeField]
-        public int m_CameraPoseOffset;
+        int m_CameraPoseOffset;
+
         [SerializeField]
-        public int m_FrameNumberOffset;
+        int m_FrameNumberOffset;
+
         [SerializeField]
-        public int m_FrameTimeOffset;
+        int m_FrameTimeOffset;
+
         [SerializeField]
-        public int m_BufferSize;
+        int m_BufferSize;
 
         [SerializeField]
         string[] m_Locations = { };
@@ -80,17 +100,14 @@ namespace Unity.Labs.FacialRemote
                     {
                         locs.Add(location); // Eliminate capitalization and _ mismatch
                     }
-                    m_Locations.ToArray();
+                    m_Locations = locs.ToArray();
                 }
                 return m_Locations;
             }
         }
 
-        public void ValidateData()
+        void OnValidate()
         {
-            if (m_BlendShapeCount != BlendShapeUtils.Locations.Length)
-                Debug.LogWarningFormat("Blend Shape Count of {0} does not match Plugin's Blend Shape Location Length of {1}",
-                    m_BlendShapeCount, BlendShapeUtils.Locations.Length);
             m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             m_PoseSize = sizeof(float) * 7;
             m_FrameNumberSize = sizeof(int);
@@ -106,20 +123,12 @@ namespace Unity.Labs.FacialRemote
                 var locs = new List<string>();
                 foreach (var location in BlendShapeUtils.Locations)
                 {
-//                    locs.Add(Filter(location)); // Eliminate capitalization and _ mismatch
-                    locs.Add(location); // Eliminate capitalization and _ mismatch
+                    locs.Add(location);
                 }
+
                 locs.Sort();
                 m_Locations = locs.ToArray();
             }
-
-//            var mappingLength = m_Mappings.Length;
-//            for (var i = 0; i < mappingLength; i++)
-//            {
-//                var mapping = m_Mappings[i];
-//                mapping.from = Filter(mapping.from);
-//                mapping.to = Filter(mapping.to);
-//            }
         }
     }
 }

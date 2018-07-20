@@ -42,7 +42,7 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Max value a scaled blend shape can reach.")]
         float m_BlendShapeMax = 100f;
 
-        public bool useOverride { get { return m_UseOverride; } set { m_UseOverride = value; } }
+        public bool useOverride { get { return m_UseOverride; } }
         public string name { get { return m_Name; } }
         public float blendShapeSmoothing { get { return m_BlendShapeSmoothing; } }
         public float blendShapeThreshold { get { return m_BlendShapeThreshold; } }

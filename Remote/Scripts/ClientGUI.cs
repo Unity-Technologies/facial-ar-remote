@@ -171,8 +171,8 @@ namespace Unity.Labs.FacialRemote
         {
             var anchorScreenPos = Camera.main.WorldToScreenPoint(m_FaceAnchor.position);
 
-            return (!(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent))
-                && (!(Mathf.Abs(anchorScreenPos.y - m_CenterY) / m_CenterY > m_HeightPercent));
+            return !(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent)
+                && !(Mathf.Abs(anchorScreenPos.y - m_CenterY) / m_CenterY > m_HeightPercent);
         }
     }
 }

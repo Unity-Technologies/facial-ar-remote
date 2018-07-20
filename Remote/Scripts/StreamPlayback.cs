@@ -4,13 +4,15 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class StreamPlayback : StreamSource
+    public class StreamPlayback : MonoBehaviour, IStreamSource
     {
-        public bool playing { get; private set; }
+        const float k_TimeStep = 0.016f;
+
+        [SerializeField]
+        [Tooltip("Contains the individual streams recorded from a capture session.")]
+        PlaybackData m_PlaybackData;
 
         float m_PlaybackStartTime;
-
-        const float k_TimeStep = 0.016f;
 
         int m_BufferPosition;
         byte[] m_CurrentFrameBuffer;
@@ -19,41 +21,47 @@ namespace Unity.Labs.FacialRemote
         float m_NextFrameTime;
         float m_CurrentTime;
 
-        PlaybackBuffer m_ActivePlaybackBuffer;
-
-        float[] m_FrameTimes = new float[2];
+        readonly float[] m_FrameTimes = new float[2];
         float m_LocalDeltaTime;
         float m_FirstFrameTime;
         float m_PlayBackCurrentTime;
 
-        public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
-        public byte[] currentFrameBuffer { get { return m_CurrentFrameBuffer; } }
-
+        bool m_Running;
         bool m_LastFrame;
 
-        protected override bool IsStreamActive()
+        public IStreamReader streamReader { private get; set; }
+        public bool active { get; private set; }
+        public PlaybackBuffer activePlaybackBuffer { get; private set; }
+        public byte[] currentFrameBuffer { get { return m_CurrentFrameBuffer; } }
+
+        public IStreamSettings streamSettings
         {
-            return isSource && playing;
+            get { return activePlaybackBuffer; }
         }
 
-        public override void StartStreamThread()
+        public PlaybackData playbackData
         {
-            streamThreadActive = true;
+            get { return m_PlaybackData; }
+        }
+
+        void Start()
+        {
+            m_Running = true;
             new Thread(() =>
             {
-                while (streamThreadActive)
+                while (m_Running)
                 {
-                    if (playing)
+                    if (active)
                     {
                         try
                         {
                             if(!PlayBackLoop())
-                                StopPlaybackDataUsage();
+                                StopPlayback();
                         }
                         catch (Exception e)
                         {
                             Debug.LogError(e.Message);
-                            playing = false;
+                            active = false;
                         }
                     }
 
@@ -62,12 +70,18 @@ namespace Unity.Labs.FacialRemote
             }).Start();
         }
 
-        public override void StreamSourceUpdate()
+        void OnDestroy()
         {
-            if (!isSource && playing)
-                playing = false;
+            m_Running = false;
+        }
 
-            if (!streamActive)
+        public void StreamSourceUpdate()
+        {
+            var source = streamReader.streamSource;
+            if (source != null && !source.Equals(this) && active)
+                active = false;
+
+            if (!active)
                 return;
 
             UpdateCurrentFrameBuffer();
@@ -81,38 +95,28 @@ namespace Unity.Labs.FacialRemote
             m_PlayBackCurrentTime = m_FirstFrameTime + m_LocalDeltaTime;
         }
 
-        public bool SetPlaybackBuffer(PlaybackBuffer buffer)
+        public void SetPlaybackBuffer(PlaybackBuffer buffer)
         {
-            if (playing)
-                StopPlaybackDataUsage();
+            if (active)
+                StopPlayback();
 
-            m_ActivePlaybackBuffer = buffer;
+            activePlaybackBuffer = buffer;
             if (activePlaybackBuffer == null || activePlaybackBuffer.recordStream.Length < activePlaybackBuffer.BufferSize)
-            {
-//                enabled = false;
-                return false;
-            }
+                return;
 
-            SetReaderStreamSettings();
-
-            return true;
+            streamReader.streamSettings = activePlaybackBuffer;
         }
 
-        public override void SetReaderStreamSettings()
-        {
-            streamReader.SetActiveStreamSettings(activePlaybackBuffer);
-        }
-
-        public override void StartPlaybackDataUsage()
+        public void StartPlayback()
         {
             if (activePlaybackBuffer == null)
             {
                 Debug.Log("No Playback Buffer Set.");
-                SetPlaybackBuffer(playbackData.playbackBuffers[0]);
+                SetPlaybackBuffer(streamReader.playbackData.playbackBuffers[0]);
             }
 
-            if (streamSettings != activePlaybackBuffer)
-                SetReaderStreamSettings();
+            if (streamReader.streamSettings != activePlaybackBuffer)
+                streamReader.streamSettings = activePlaybackBuffer;
 
             Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
                 streamSettings.FrameTimeSize);
@@ -131,21 +135,19 @@ namespace Unity.Labs.FacialRemote
             m_BufferPosition = 0;
 
             m_LastFrame = false;
-            playing = true;
+            active = true;
         }
 
-        public override void StopPlaybackDataUsage()
+        public void StopPlayback()
         {
             m_NextFrameTime = float.PositiveInfinity;
-            playing = false;
+            active = false;
         }
 
         public bool PlayBackLoop(bool forceNext = false)
         {
             if (forceNext || m_PlayBackCurrentTime >= m_NextFrameTime)
             {
-//                var streamSettings = GetStreamSettings();
-
                 Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
                 Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
 
@@ -176,20 +178,18 @@ namespace Unity.Labs.FacialRemote
             return true;
         }
 
-        public override void UpdateCurrentFrameBuffer(bool force = false)
+        public void UpdateCurrentFrameBuffer(bool force = false)
         {
-            if (force || isSource && playing)
+            if (force || streamReader.streamSource.Equals(this) && active)
                 streamReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
         }
 
-        public override void OnStreamSettingsChange()
+        public void OnStreamSettingsChanged(IStreamSettings settings)
         {
-//            var streamSettings = GetStreamSettings();
-
             m_BufferPosition = 0;
-            m_CurrentFrameBuffer = new byte[streamSettings.BufferSize];
-            m_NextFrameBuffer = new byte[streamSettings.BufferSize];
-            for (var i = 0; i < streamSettings.BufferSize; i++)
+            m_CurrentFrameBuffer = new byte[settings.BufferSize];
+            m_NextFrameBuffer = new byte[settings.BufferSize];
+            for (var i = 0; i < settings.BufferSize; i++)
             {
                 m_CurrentFrameBuffer[i] = 0;
                 m_NextFrameBuffer[i] = 0;
