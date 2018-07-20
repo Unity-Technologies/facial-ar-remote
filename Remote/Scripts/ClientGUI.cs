@@ -83,6 +83,10 @@ namespace Unity.Labs.FacialRemote
 
             m_CenterX = Screen.width / 2f;
             m_CenterY = Screen.height / 2f;
+
+            // Make sure text fields match serialized values
+            m_PortTextField.text = m_Port.ToString();
+            m_IPTextField.text = m_IP;
         }
 
         void Update()
@@ -91,7 +95,7 @@ namespace Unity.Labs.FacialRemote
 
             var connected = m_Socket != null && m_Socket.Connected;
             if (m_MainGUI.enabled && connected)
-                m_Client.SetupSocket(m_Socket);
+                m_Client.StartCapture(m_Socket);
 
             m_MainGUI.enabled = !connected;
         }

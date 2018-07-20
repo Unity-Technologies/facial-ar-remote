@@ -20,17 +20,11 @@ namespace Unity.Labs.FacialRemote
         const float k_Timeout = 5;
 
         [SerializeField]
-        [Tooltip("GUI used to interact with the client.")]
-        ClientGUI m_ClientGUI;
-
-        [SerializeField]
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
 
         Transform m_CameraTransform;
         Pose m_CameraPose;
-
-        Socket m_Socket;
 
         float m_StartTime;
         float m_CurrentTime = -1;
@@ -50,7 +44,9 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
-            InitializeClient();
+            m_Buffer = new byte[m_StreamSettings.BufferSize];
+            m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
+            m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 #if UNITY_IOS
@@ -62,23 +58,17 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
+            // Wait to be enabled on StartCapture
+            enabled = false;
             if (m_StreamSettings == null)
             {
-                Debug.LogError("Stream settings is not assigned! Disabling Client.");
-                enabled = false;
-            }
-
-            if (m_ClientGUI == null)
-            {
-                Debug.LogWarning("Stream Settings is not assigned. Disabling Client.");
+                Debug.LogError("Stream settings is not assigned! Deactivating Client.");
+                gameObject.SetActive(false);
             }
         }
 
         void Update()
         {
-            if(m_Socket == null || m_CameraTransform == null)
-                return;
-
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_CurrentTime = Time.time;
         }
@@ -89,27 +79,19 @@ namespace Unity.Labs.FacialRemote
         }
 
         /// <summary>
-        /// Initializes client's starting values.
-        /// </summary>
-        public void InitializeClient()
-        {
-            if (m_StreamSettings != null)
-            {
-                m_Buffer = new byte[m_StreamSettings.BufferSize];
-                m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
-                m_CameraTransform = Camera.main.transform;
-            }
-        }
-
-        /// <summary>
         /// Starts stream thread using the provided socket.
         /// </summary>
         /// <param name="socket">The socket to use when streaming blend shape data.</param>
-        public void SetupSocket(Socket socket)
+        public void StartCapture(Socket socket)
         {
             m_CameraTransform = Camera.main.transform;
+            if (!m_CameraTransform)
+            {
+                Debug.LogWarning("Could not find main camera. Camera pose will not be captured");
+                m_CameraTransform = transform; // Use this transform to avoid null references
+            }
+
             m_StartTime = Time.time;
-            m_Socket = socket;
             enabled = true;
             var poseArray = new float[BlendShapeUtils.PoseFloatCount];
             var cameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
@@ -223,9 +205,8 @@ namespace Unity.Labs.FacialRemote
         {
             if (m_CurrentTime - m_StartTime > k_Timeout)
             {
+                m_Running = false;
                 enabled = false;
-                if (m_ClientGUI != null)
-                    m_ClientGUI.enabled = true;
             }
         }
     }

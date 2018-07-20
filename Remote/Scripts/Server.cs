@@ -10,6 +10,7 @@ namespace Unity.Labs.FacialRemote
     public class Server : MonoBehaviour, IStreamSource
     {
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
+        const int k_MaxConnections = 64;
 
         [SerializeField]
         [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
@@ -70,7 +71,7 @@ namespace Unity.Labs.FacialRemote
                     var endPoint = new IPEndPoint(connectionAddress, m_Port);
                     m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     m_Socket.Bind(endPoint);
-                    m_Socket.Listen(100);
+                    m_Socket.Listen(k_MaxConnections);
                     m_LastFrameNum = -1;
                     m_Running = true;
                 }
@@ -141,6 +142,9 @@ namespace Unity.Labs.FacialRemote
 
                         Thread.Sleep(1);
                     }
+
+                    if (m_Socket != null)
+                        m_Socket.Disconnect(false);
                 }).Start();
             }
         }
