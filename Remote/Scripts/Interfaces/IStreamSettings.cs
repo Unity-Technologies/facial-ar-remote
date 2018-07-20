@@ -18,10 +18,6 @@
         /// </summary>
         int BlendShapeSize { get; }
         /// <summary>
-        /// Size of pose data in byte array.
-        /// </summary>
-        int PoseSize { get; }
-        /// <summary>
         /// Size of frame number value in byte array.
         /// </summary>
         int FrameNumberSize { get; }
