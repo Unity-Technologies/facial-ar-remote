@@ -121,8 +121,6 @@ namespace Unity.Labs.FacialRemote
                                 BlendShapeUtils.PoseToArray(m_FacePose, poseArray);
                                 BlendShapeUtils.PoseToArray(m_CameraPose, cameraPoseArray);
 
-                                frameNum[0] = count++;
-                                frameTime[0] = m_CurrentTime - m_StartTime;
                                 Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.HeadPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
