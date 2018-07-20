@@ -52,6 +52,7 @@ GameObject:
   - component: {fileID: 4963656300094854}
   - component: {fileID: 95074671155647686}
   - component: {fileID: 114823813081300294}
+  - component: {fileID: 114591291899225592}
   m_Layer: 0
   m_Name: sloth_head_blendshapes
   m_TagString: Untagged
@@ -118,6 +119,33 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!114 &114591291899225592
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1958418460500596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 601c475b43c9a4e46b969b376a0d7d1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_TrackingLossSmoothing: 0.1
+  m_DriveEyes: 0
+  m_LeftEye: {fileID: 0}
+  m_RightEye: {fileID: 0}
+  m_EyeLookDistance: -0.5
+  m_EyeSmoothing: 0.2
+  m_RightEyeNegZ: 0
+  m_LeftEyeNegZ: 0
+  m_EyeAngleRange: {x: 30, y: 45}
+  m_DriveHead: 1
+  m_HeadBone: {fileID: 4967094478328516}
+  m_HeadSmoothing: 0.1
+  m_HeadFollowAmount: 1
+  m_DriveNeck: 0
+  m_NeckBone: {fileID: 0}
+  m_NeckFollowAmount: 0.4
 --- !u!114 &114823813081300294
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -135,320 +163,365 @@ MonoBehaviour:
   m_BlendShapeThreshold: 0.01
   m_BlendShapeCoefficient: 120
   m_BlendShapeMax: 100
+  m_TrackingLossSmoothing: 0.1
   m_Overrides:
   - m_UseOverride: 0
-    m_Name: browdownl
+    m_Name: browDown_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: browdownr
+    m_Name: browDown_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: browinnerup
+    m_Name: browInnerUp
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: browouterupl
+    m_Name: browOuterUp_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: browouterupr
+    m_Name: browOuterUp_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: cheekpuff
+    m_Name: cheekPuff
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: cheeksquintl
+    m_Name: cheekSquint_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: cheeksquintr
+    m_Name: cheekSquint_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyeblinkl
+    m_Name: eyeBlink_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyeblinkr
+    m_Name: eyeBlink_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookdownl
+    m_Name: eyeLookDown_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookdownr
+    m_Name: eyeLookDown_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookinl
+    m_Name: eyeLookIn_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookinr
+    m_Name: eyeLookIn_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookoutl
+    m_Name: eyeLookOut_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookoutr
+    m_Name: eyeLookOut_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookupl
+    m_Name: eyeLookUp_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyelookupr
+    m_Name: eyeLookUp_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyesquintl
+    m_Name: eyeSquint_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyesquintr
+    m_Name: eyeSquint_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyewidel
+    m_Name: eyeWide_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: eyewider
+    m_Name: eyeWide_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: jawforward
+    m_Name: jawForward
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: jawleft
+    m_Name: jawLeft
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: jawopen
+    m_Name: jawOpen
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: jawright
+    m_Name: jawRight
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthclose
+    m_Name: mouthClose
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthdimplel
+    m_Name: mouthDimple_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthdimpler
+    m_Name: mouthDimple_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthfrownl
+    m_Name: mouthFrown_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthfrownr
+    m_Name: mouthFrown_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthfunnel
+    m_Name: mouthFunnel
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthleft
+    m_Name: mouthLeft
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthlowerdownl
+    m_Name: mouthLowerDown_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthlowerdownr
+    m_Name: mouthLowerDown_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthpressl
+    m_Name: mouthPress_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthpressr
+    m_Name: mouthPress_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthpucker
+    m_Name: mouthPucker
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthright
+    m_Name: mouthRight
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthrolllower
+    m_Name: mouthRollLower
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthrollupper
+    m_Name: mouthRollUpper
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthshruglower
+    m_Name: mouthShrugLower
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthshrugupper
+    m_Name: mouthShrugUpper
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthsmilel
+    m_Name: mouthSmile_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthsmiler
+    m_Name: mouthSmile_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthstretchl
+    m_Name: mouthStretch_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthstretchr
+    m_Name: mouthStretch_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthupperupl
+    m_Name: mouthUpperUp_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: mouthupperupr
+    m_Name: mouthUpperUp_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: nosesneerl
+    m_Name: noseSneer_L
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
   - m_UseOverride: 0
-    m_Name: nosesneerr
+    m_Name: noseSneer_R
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
+    m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
-  - m_UseOverride: 0
-    m_Name: tongueout
-    m_BlendShapeSmoothing: 0.1
-    m_BlendShapeThreshold: 0.01
-    m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
-  m_TrackingLossSmoothing: 0.1
 --- !u!137 &137532649854878984
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 1

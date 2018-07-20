@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_StreamSettings: {fileID: 11400000, guid: 87ff99ce494718c46adee6b73f32e6d2, type: 2}
-  m_PlaybackData: {fileID: 0}
+  m_PlaybackData: {fileID: 11400000, guid: 6471208d98b8f5843bc5839ee125a490, type: 2}
   m_Character: {fileID: 0}
   m_UseDebug: 0
   m_Port: 9000

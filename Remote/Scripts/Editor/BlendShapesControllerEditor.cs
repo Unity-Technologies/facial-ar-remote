@@ -28,13 +28,13 @@ namespace Unity.Labs.FacialRemote
         {
             using (var check =  new EditorGUI.ChangeCheckScope())
             {
-                EditorGUILayout.PropertyField(m_SkinnedMeshRenderers);
+                EditorGUILayout.PropertyField(m_SkinnedMeshRenderers, true);
                 EditorGUILayout.PropertyField(m_BlendShapeSmoothing);
                 EditorGUILayout.PropertyField(m_BlendShapeThreshold);
                 EditorGUILayout.PropertyField(m_BlendShapeCoefficient);
                 EditorGUILayout.PropertyField(m_BlendShapeMax);
                 EditorGUILayout.PropertyField(m_TrackingLossSmoothing);
-                EditorGUILayout.PropertyField(m_Overrides);
+                EditorGUILayout.PropertyField(m_Overrides, true);
 
                 if (check.changed)
                 {
