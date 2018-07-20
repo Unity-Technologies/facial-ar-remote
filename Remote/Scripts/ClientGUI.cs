@@ -51,20 +51,27 @@ namespace Unity.Labs.FacialRemote
         TMP_InputField m_IPTextField;
 
         Socket m_Socket;
-
-        bool m_DeviceSupported;
-        bool m_Once;
-        bool m_IPValid;
+        Camera m_Camera;
 
         float m_CenterX;
         float m_CenterY;
 
         void Awake()
         {
-            m_DeviceSupported = UnityEngine.iOS.Device.generation == UnityEngine.iOS.DeviceGeneration.iPhoneX;
-            m_MainGUI.enabled = false;
-            m_FaceLostGUI.enabled = false;
-            m_NotSupprotedGUI.enabled = false;
+            m_Camera = Camera.main;
+            if (UnityEngine.iOS.Device.generation == UnityEngine.iOS.DeviceGeneration.iPhoneX)
+            {
+                m_MainGUI.enabled = false;
+                m_FaceLostGUI.enabled = false;
+                m_NotSupprotedGUI.enabled = false;
+            }
+            else
+            {
+                m_MainGUI.enabled = false;
+                m_FaceLostGUI.enabled = false;
+                m_NotSupprotedGUI.enabled = true;
+                enabled = false;
+            }
         }
 
         void Start()
@@ -82,80 +89,42 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (!m_DeviceSupported)
-            {
-                m_MainGUI.enabled = false;
-                m_FaceLostGUI.enabled = false;
-                m_NotSupprotedGUI.enabled = true;
-                return;
-            }
-
-            m_NotSupprotedGUI.enabled = false;
             m_FaceLostGUI.enabled = !FaceInView();
+            m_MainGUI.enabled = m_Socket == null || !m_Socket.Connected;
 
-            if (m_Socket == null || !m_Socket.Connected)
-            {
-                m_MainGUI.enabled = true;
-                m_ConnectButton.gameObject.SetActive(m_IPValid);
-            }
-            else
-            {
-                m_MainGUI.enabled = false;
-            }
-
-            if (!m_Once && m_Socket != null && m_Socket.Connected)
-            {
+            if (m_Socket != null && m_Socket.Connected)
                 m_Client.SetupSocket(m_Socket);
-                m_Once = true;
-            }
         }
 
         void OnPortValueChanged(string value)
         {
-            int tmpPort;
-            if (int.TryParse(value, out tmpPort))
-            {
-                m_Port = tmpPort;
-            }
+            int port;
+            if (int.TryParse(value, out port))
+                m_Port = port;
             else
-            {
                 m_PortTextField.text = m_Port.ToString();
-            }
         }
 
         void OnIPValueChanged(string value)
         {
-            IPAddress tmpIP;
-            if (IPAddress.TryParse(value, out tmpIP))
-            {
-                m_IPValid = true;
-            }
-
+            IPAddress ip;
+            m_ConnectButton.gameObject.SetActive(IPAddress.TryParse(value, out ip));
             m_IP = value;
         }
 
         void OnConnectClick()
         {
-            if (m_Socket != null)
-            {
-                m_Socket = null;
-                m_Once = false;
-            }
-
-            IPAddress tmpIP;
-            if (!IPAddress.TryParse(m_IP, out tmpIP))
-            {
+            IPAddress ip;
+            if (!IPAddress.TryParse(m_IP, out ip))
                 return;
-            }
 
             new Thread(() =>
             {
                 try
                 {
-                    var endPoint = new IPEndPoint(tmpIP, m_Port);
+                    var endPoint = new IPEndPoint(ip, m_Port);
                     m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     m_Socket.Connect(endPoint);
-                    m_Once = false;
                 }
                 catch (Exception e)
                 {
@@ -169,7 +138,7 @@ namespace Unity.Labs.FacialRemote
 
         bool FaceInView()
         {
-            var anchorScreenPos = Camera.main.WorldToScreenPoint(m_FaceAnchor.position);
+            var anchorScreenPos = m_Camera.WorldToScreenPoint(m_FaceAnchor.position);
 
             return !(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent)
                 && !(Mathf.Abs(anchorScreenPos.y - m_CenterY) / m_CenterY > m_HeightPercent);

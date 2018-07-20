@@ -30,19 +30,19 @@ namespace Unity.Labs.FacialRemote
         void OnEnable()
         {
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += EditorStateChange;
+            EditorApplication.playModeStateChanged += PlayModeStateChanged;
 #endif
         }
 
         void OnDisable()
         {
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged -= EditorStateChange;
+            EditorApplication.playModeStateChanged -= PlayModeStateChanged;
 #endif
         }
 
 #if UNITY_EDITOR
-        void EditorStateChange(PlayModeStateChange state)
+        void PlayModeStateChanged(PlayModeStateChange state)
         {
             StopActivePlaybackBuffer();
         }
@@ -155,6 +155,7 @@ namespace Unity.Labs.FacialRemote
             {
                 buffers[i] = m_PlaybackBuffers[i];
             }
+
             buffers[buffers.Length - 1] = m_ActivePlaybackBuffer;
             m_PlaybackBuffers = buffers;
 

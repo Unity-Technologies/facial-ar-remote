@@ -34,8 +34,6 @@ namespace Unity.Labs.FacialRemote
 
         float m_StartTime;
         bool m_FreshData;
-        float m_TimeStamp;
-        bool m_Once;
         bool m_Running;
 
         byte[] m_Buffer;
@@ -83,14 +81,6 @@ namespace Unity.Labs.FacialRemote
 
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             m_FreshData = true;
-
-            if (m_Socket.Connected && m_Once)
-            {
-                m_TimeStamp = 0f;
-                m_Once = false;
-            }
-            else
-                m_TimeStamp += Time.deltaTime;
         }
 
         void OnDestroy()
@@ -119,13 +109,13 @@ namespace Unity.Labs.FacialRemote
         {
             m_CameraTransform = Camera.main.transform;
             m_StartTime = Time.time;
-            m_Socket = socket;
+            m_Socket = null;
             enabled = true;
             var poseArray = new float[7];
             var cameraPoseArray = new float[7];
             var frameNum = new int[1];
             var frameTime = new float[1];
-            m_Once = true;
+
             Application.targetFrameRate = 60;
             m_Running = true;
             new Thread(() =>
@@ -134,7 +124,7 @@ namespace Unity.Labs.FacialRemote
                 while (m_Running)
                 {
                     try {
-                        if (m_Socket.Connected)
+                        if (socket.Connected)
                         {
                             if (m_FreshData)
                             {
@@ -146,14 +136,14 @@ namespace Unity.Labs.FacialRemote
                                 BlendShapeUtils.PoseToArray(m_CameraPose, cameraPoseArray);
 
                                 frameNum[0] = count++;
-                                frameTime[0] = m_TimeStamp;
+                                frameTime[0] = Time.time - m_StartTime;
                                 Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.HeadPoseOffset, m_StreamSettings.PoseSize);
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, m_StreamSettings.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
                                 m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
 
-                                m_Socket.Send(m_Buffer);
+                                socket.Send(m_Buffer);
                             }
                         }
                         else
@@ -232,7 +222,6 @@ namespace Unity.Labs.FacialRemote
                 enabled = false;
                 if (m_ClientGUI != null)
                     m_ClientGUI.enabled = true;
-                m_Once = true;
             }
         }
     }
