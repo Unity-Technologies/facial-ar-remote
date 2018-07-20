@@ -6,14 +6,9 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(StreamReader))]
     public class StreamReaderEditor : Editor
     {
-        SerializedProperty m_StreamSettings;
-        SerializedProperty m_PlaybackData;
         SerializedProperty m_Character;
-        SerializedProperty m_UseDebug;
-        SerializedProperty m_Port;
-        SerializedProperty m_CatchupThreshold;
-        SerializedProperty m_CatchupSize;
         SerializedProperty m_TrackingLossPadding;
+        SerializedProperty m_UseDebug;
         SerializedProperty m_BlendShapesControllerOverride;
         SerializedProperty m_CharacterRigControllerOverride;
         SerializedProperty m_HeadBoneOverride;
@@ -36,13 +31,8 @@ namespace Unity.Labs.FacialRemote
 
         void OnEnable()
         {
-            m_StreamSettings = serializedObject.FindProperty("m_StreamSettings");
-            m_PlaybackData = serializedObject.FindProperty("m_PlaybackData");
             m_Character = serializedObject.FindProperty("m_Character");
             m_UseDebug = serializedObject.FindProperty("m_UseDebug");
-            m_Port = serializedObject.FindProperty("m_Port");
-            m_CatchupThreshold = serializedObject.FindProperty("m_CatchupThreshold");
-            m_CatchupSize = serializedObject.FindProperty("m_CatchupSize");
             m_TrackingLossPadding = serializedObject.FindProperty("m_TrackingLossPadding");
             m_BlendShapesControllerOverride = serializedObject.FindProperty("m_BlendShapesControllerOverride");
             m_CharacterRigControllerOverride = serializedObject.FindProperty("m_CharacterRigControllerOverride");
@@ -61,17 +51,9 @@ namespace Unity.Labs.FacialRemote
             using (var check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.LabelField("General Settings", EditorStyles.boldLabel);
-                EditorGUILayout.PropertyField(m_StreamSettings);
-                EditorGUILayout.PropertyField(m_PlaybackData);
                 EditorGUILayout.PropertyField(m_Character);
-                EditorGUILayout.PropertyField(m_UseDebug);
-                EditorGUILayout.Space();
-
-                EditorGUILayout.LabelField("Server Settings", EditorStyles.boldLabel);
-                EditorGUILayout.PropertyField(m_Port);
-                EditorGUILayout.PropertyField(m_CatchupThreshold);
-                EditorGUILayout.PropertyField(m_CatchupSize);
                 EditorGUILayout.PropertyField(m_TrackingLossPadding);
+                EditorGUILayout.PropertyField(m_UseDebug);
                 EditorGUILayout.Space();
 
                 EditorGUILayout.LabelField("Controller Settings", EditorStyles.boldLabel);
@@ -90,56 +72,62 @@ namespace Unity.Labs.FacialRemote
 
             EditorGUILayout.LabelField("Remote", EditorStyles.boldLabel);
 
+            var streamPlayback = streamReader.streamPlayback;
             using (new GUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledGroupScope(!Application.isPlaying))
                 {
-                    using (new EditorGUI.DisabledGroupScope(!(streamReader.server.deviceConnected || streamReader.server.streamActive)))
+                    var server = streamReader.server;
+                    using (new EditorGUI.DisabledGroupScope(server == null || !server.active))
                     {
-                        if (!streamReader.server.streamActive)
+                        var streamSource = streamReader.streamSource;
+                        if (streamSource != null && streamSource.Equals(server) && server.active)
                         {
-                            if (GUILayout.Button(m_Connect, m_ButtonStyle))
-                                streamReader.server.ActivateStreamSource();
+                            if (GUILayout.Button(m_Connect, m_ButtonPressStyle))
+                                streamReader.streamSource = null;
+
                         }
                         else
                         {
-                            if (GUILayout.Button(m_Connect, m_ButtonPressStyle))
-                                streamReader.server.DeactivateStreamSource();
+                            if (GUILayout.Button(m_Connect, m_ButtonStyle))
+                                streamReader.streamSource = server;
                         }
                     }
 
-
-                    using (new EditorGUI.DisabledGroupScope( !(streamReader.server.streamActive && streamReader.server.useRecorder) ))
+                    var useRecorder = Application.isEditor && Application.isPlaying
+                        && streamPlayback != null && streamPlayback.playbackData != null;
+                    using (new EditorGUI.DisabledGroupScope(server == null || !(server.active && useRecorder)))
                     {
-                        if (streamReader.server.isRecording)
+                        if (server != null && server.recording)
                         {
                             if (GUILayout.Button(m_RecordIcon, m_ButtonPressStyle))
-                                streamReader.server.StopPlaybackDataUsage();
+                                server.StopRecording();
                         }
                         else
                         {
                             if (GUILayout.Button(m_RecordIcon, m_ButtonStyle))
-                            streamReader.server.StartPlaybackDataUsage();
+                                server.StartRecording();
 
                         }
                     }
 
-                    using (new EditorGUI.DisabledGroupScope(!(streamReader.server.streamActive || streamReader.streamPlayback.activePlaybackBuffer != null)))
+                    using (new EditorGUI.DisabledGroupScope(server == null || streamPlayback == null
+                        || !(server.active || streamPlayback.activePlaybackBuffer != null)))
                     {
-                        if (streamReader.streamPlayback.playing)
+                        if (streamPlayback != null && streamPlayback.active)
                         {
                             if (GUILayout.Button(m_PlayIcon, m_ButtonPressStyle))
                             {
-                                streamReader.streamPlayback.DeactivateStreamSource();
-                                streamReader.streamPlayback.StopPlaybackDataUsage();
+                                streamReader.streamSource = null;
+                                streamPlayback.StopPlayback();
                             }
                         }
                         else
                         {
                             if (GUILayout.Button(m_PlayIcon, m_ButtonStyle))
                             {
-                                streamReader.streamPlayback.ActivateStreamSource();
-                                streamReader.streamPlayback.StartPlaybackDataUsage();
+                                streamReader.streamSource = streamPlayback;
+                                streamPlayback.StartPlayback();
                             }
 
                         }
@@ -149,25 +137,25 @@ namespace Unity.Labs.FacialRemote
 
             EditorGUILayout.Space();
 
-            var clipName = streamReader.streamPlayback.activePlaybackBuffer == null ? "None" : streamReader.streamPlayback.activePlaybackBuffer.name;
+            var clipName = streamPlayback == null || streamPlayback.activePlaybackBuffer == null ? "None" : streamPlayback.activePlaybackBuffer.name;
 
-            using (new EditorGUI.DisabledGroupScope(streamReader.streamPlayback == null))
+            using (new EditorGUI.DisabledGroupScope(streamPlayback == null))
             {
                 if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
                 {
-                    ShowRecordStreamMenu(streamReader.streamPlayback, streamReader.playbackData.playbackBuffers);
+                    ShowRecordStreamMenu(streamPlayback, streamReader.playbackData.playbackBuffers);
                 }
             }
 
             EditorGUILayout.Space();
 
             // Bake Clip Button
-            using (new EditorGUI.DisabledGroupScope(streamReader.streamPlayback.activePlaybackBuffer == null
+            using (new EditorGUI.DisabledGroupScope(streamPlayback == null || streamPlayback.activePlaybackBuffer == null
                 || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
             {
                 if (GUILayout.Button("Bake Animation Clip"))
                 {
-                    streamReader.streamPlayback.DeactivateStreamSource();
+                    streamReader.streamSource = null;
 
                     // Used to initialize values if they were changed before baking.
                     streamReader.InitializeStreamReader();
@@ -183,12 +171,11 @@ namespace Unity.Labs.FacialRemote
 
                         var avatarController = streamReader.characterRigController;
 
-                        streamReader.streamPlayback.ActivateStreamSource();
-                        streamReader.streamPlayback.SetReaderStreamSettings();
-                        streamReader.streamPlayback.StartPlaybackDataUsage();
+                        streamReader.streamSource = streamPlayback;
+                        streamPlayback.StartPlayback();
 
                         var animClip = new AnimationClip();
-                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamReader.streamPlayback,
+                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamPlayback,
                             blendShapeController,  avatarController, path);
                     }
                 }
@@ -206,13 +193,17 @@ namespace Unity.Labs.FacialRemote
         {
             if (m_ButtonStyle == null || m_ButtonPressStyle == null)
             {
-                m_ButtonStyle = new GUIStyle("Button");
-                m_ButtonPressStyle = new GUIStyle("Button");
+                m_ButtonStyle = new GUIStyle("Button")
+                {
+                    fixedHeight = 24
+                };
 
-                m_ButtonPressStyle.active = m_ButtonStyle.normal;
-                m_ButtonPressStyle.normal = m_ButtonStyle.active;
-                m_ButtonPressStyle.fixedHeight = 24;
-                m_ButtonStyle.fixedHeight = 24;
+                m_ButtonPressStyle = new GUIStyle("Button")
+                {
+                    active = m_ButtonStyle.normal,
+                    normal = m_ButtonStyle.active,
+                    fixedHeight = 24
+                };
             }
         }
 

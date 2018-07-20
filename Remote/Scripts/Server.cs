@@ -7,46 +7,58 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class Server : StreamSource, IServerSettings
+    public class Server : MonoBehaviour, IStreamSource
     {
-        const int k_BufferPrewarm = 16;
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
 
-        public Func<int> getPortNumber { get; set; }
-        public Func<int> getFrameCatchupSize { get; set; }
-        public Func<int> getFrameCatchupThreshold { get; set; }
+        [SerializeField]
+        [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
+        StreamSettings m_StreamSettings;
 
-        int portNumber {get { return getPortNumber(); } }
-        int catchupSize {get { return getFrameCatchupSize(); } }
-        int catchupThreshold { get { return getFrameCatchupThreshold(); } }
+        [SerializeField]
+        [Tooltip("Port number that the device will connect to, be sure to have this match the port set on the device.")]
+        int m_Port = 9000;
+
+        [SerializeField]
+        [Tooltip("Threshold for number of missed frames before trying to skip frames with catchup size.")]
+        int m_CatchupThreshold = 16;
+
+        [SerializeField]
+        [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
+        int m_CatchupSize = 3;
 
         Socket m_Socket;
+        bool m_Running;
         int m_LastFrameNum;
         int m_TakeNumber;
         int m_CurrentBufferSize = -1;
 
-        readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>(k_BufferPrewarm);
-        readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>(k_BufferPrewarm);
+        readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
+        readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
 
-        public bool useRecorder
-        {
-            get { return Application.isEditor && Application.isPlaying && playbackData != null; }
-        }
+        public IStreamReader streamReader { private get; set; }
 
-        public bool isRecording { get; private set; }
+        public bool recording { get; private set; }
 
-        protected override bool IsStreamActive()
-        {
-            return isSource && deviceConnected;
-        }
-
-        public bool deviceConnected
+        public bool active
         {
             get { return m_Socket != null && m_Socket.Connected; }
         }
 
-        public override void StartStreamThread()
+        public IStreamSettings streamSettings
         {
+            get { return m_StreamSettings; }
+        }
+
+        void Start()
+        {
+            if (m_StreamSettings == null)
+            {
+                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Stream Reader!", gameObject.name);
+                enabled = false;
+                return;
+            }
+
             m_TakeNumber = 0;
             Debug.Log("Possible IP addresses:");
             foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
@@ -55,12 +67,12 @@ namespace Unity.Labs.FacialRemote
                 Debug.Log(connectionAddress);
                 try
                 {
-                    var endPoint = new IPEndPoint(connectionAddress, portNumber);
+                    var endPoint = new IPEndPoint(connectionAddress, m_Port);
                     m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     m_Socket.Bind(endPoint);
                     m_Socket.Listen(100);
                     m_LastFrameNum = -1;
-                    streamThreadActive = true;
+                    m_Running = true;
                 }
                 catch (Exception e)
                 {
@@ -74,9 +86,10 @@ namespace Unity.Labs.FacialRemote
 
                     var frameNumArray = new int[1];
 
-                    while (streamThreadActive)
+                    while (m_Running)
                     {
-                        if (m_Socket.Connected)
+                        var source = streamReader.streamSource;
+                        if (m_Socket.Connected && source != null && source.Equals(this))
                         {
                             try
                             {
@@ -96,28 +109,25 @@ namespace Unity.Labs.FacialRemote
                                 m_Socket.Receive(buffer);
                                 if (buffer[0] == streamSettings.ErrorCheck)
                                 {
-                                    if (streamActive)
+                                    m_BufferQueue.Enqueue(buffer);
+
+                                    if (recording)
                                     {
-                                        m_BufferQueue.Enqueue(buffer);
-
-                                        if (isRecording)
-                                        {
-                                            playbackData.AddToActiveBuffer(buffer);
-                                        }
-
-                                        Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
-                                            streamSettings.FrameNumberSize);
-
-                                        var frameNum = frameNumArray[0];
-                                        if (useDebug)
-                                        {
-                                            if (m_LastFrameNum != frameNum - 1)
-                                                Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,
-                                                    m_LastFrameNum);
-                                        }
-
-                                        m_LastFrameNum = frameNum;
+                                        streamReader.playbackData.AddToActiveBuffer(buffer);
                                     }
+
+                                    Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
+                                        streamSettings.FrameNumberSize);
+
+                                    var frameNum = frameNumArray[0];
+                                    if (streamReader.useDebug)
+                                    {
+                                        if (m_LastFrameNum != frameNum - 1)
+                                            Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,
+                                                m_LastFrameNum);
+                                    }
+
+                                    m_LastFrameNum = frameNum;
                                 }
                             }
                             catch (Exception e)
@@ -135,38 +145,34 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public override void StartPlaybackDataUsage()
+        public void StartRecording()
         {
-            if (isSource && ! isRecording)
+            if (streamReader.streamSource.Equals(this) && !recording)
             {
-                SetReaderStreamSettings();
-                playbackData.CreatePlaybackBuffer(streamSettings, m_TakeNumber);
-                isRecording = true;
+                streamReader.streamSettings = m_StreamSettings;
+                streamReader.playbackData.CreatePlaybackBuffer(m_StreamSettings, m_TakeNumber);
+                recording = true;
 
                 m_TakeNumber++;
             }
         }
 
-        public override void SetReaderStreamSettings()
+        public void StopRecording()
         {
-            streamReader.UseStreamReaderSettings();
-        }
-
-        public override void StopPlaybackDataUsage()
-        {
-            isRecording = false;
+            recording = false;
+            var playbackData = streamReader.playbackData;
             if (playbackData != null)
                 playbackData.StopActivePlaybackBuffer();
         }
 
-        public override void UpdateCurrentFrameBuffer(bool force = false)
+        void UpdateCurrentFrameBuffer(bool force = false)
         {
             if (m_BufferQueue.Count == 0)
                 return;
 
-            if (m_BufferQueue.Count > catchupThreshold)
+            if (m_BufferQueue.Count > m_CatchupThreshold)
             {
-                for (var i = 0; i < catchupSize; i++)
+                for (var i = 0; i < m_CatchupSize; i++)
                 {
                     m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue()); // Throw out an old frame
                 }
@@ -174,34 +180,37 @@ namespace Unity.Labs.FacialRemote
 
             var buffer = m_BufferQueue.Dequeue();
 
-            if (force || isSource)
+            if (force || streamReader.streamSource.Equals(this))
                 streamReader.UpdateStreamData(ref buffer, 0);
 
             m_UnusedBuffers.Enqueue(buffer);
         }
 
-        public override void StreamSourceUpdate()
+        public void StreamSourceUpdate()
         {
-            if (!isSource && isRecording)
-                StopPlaybackDataUsage();
+            var source = streamReader.streamSource;
+            var notSource = source == null || !source.Equals(this);
+            if (notSource && recording)
+                StopRecording();
 
-            if (!streamActive || !isSource)
+            if (notSource || !active)
                 return;
 
-            if (useDebug)
+            if (streamReader.useDebug)
             {
-                if (m_BufferQueue.Count > catchupSize)
+                if (m_BufferQueue.Count > m_CatchupSize)
                     Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
-                        m_BufferQueue.Count, catchupSize));
+                        m_BufferQueue.Count, m_CatchupSize));
             }
 
             UpdateCurrentFrameBuffer();
         }
 
-        public override void OnStreamSettingsChange()
+        public void OnStreamSettingsChanged(IStreamSettings settings)
         {
-            StopPlaybackDataUsage();
-            if (m_CurrentBufferSize != streamSettings.BufferSize)
+            StopRecording();
+            var bufferSize = settings.BufferSize;
+            if (m_CurrentBufferSize != bufferSize)
             {
                 m_UnusedBuffers.Clear();
                 m_BufferQueue.Clear();
@@ -214,17 +223,25 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
+            m_CurrentBufferSize = bufferSize;
+
+            var playbackData = streamReader.playbackData;
             if(playbackData != null)
-                playbackData.WarmUpPlaybackBuffer(streamSettings);
+                playbackData.WarmUpPlaybackBuffer(settings);
 
             var current = m_UnusedBuffers.Count;
-            if (current >= k_BufferPrewarm)
+            if (current >= m_CatchupThreshold)
                 return;
 
-            for (var i = current; i < k_BufferPrewarm; i++)
+            for (var i = current; i < m_CatchupThreshold; i++)
             {
-                m_UnusedBuffers.Enqueue(new byte[streamSettings.BufferSize]);
+                m_UnusedBuffers.Enqueue(new byte[bufferSize]);
             }
+        }
+
+        void OnDestroy()
+        {
+            m_Running = false;
         }
     }
 }

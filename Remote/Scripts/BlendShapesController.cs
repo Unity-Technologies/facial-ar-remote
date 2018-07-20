@@ -8,7 +8,7 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Applies blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
-    public class BlendShapesController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes
+    public class BlendShapesController : MonoBehaviour, IUsesStreamSettings
     {
         [SerializeField]
         [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
@@ -45,27 +45,13 @@ namespace Unity.Labs.FacialRemote
 
         readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         float[] m_BlendShapes;
-        float[] m_BlendShapesScaled;
 
         public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
         public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
 
-        public float[] blendShapesScaled { get { return m_BlendShapesScaled; } }
+        public float[] blendShapesScaled { get; private set; }
 
-        protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
-        public Func<IStreamSettings> getStreamSettings { get; set; }
-        IStreamSettings readerStreamSettings { get { return getReaderStreamSettings(); } }
-        public Func<IStreamSettings> getReaderStreamSettings { get; set; }
-        bool isReaderStreamActive { get { return isStreamActive(); } }
-        public Func<bool> isStreamActive { get; set; }
-        bool isReaderTrackingActive { get { return isTrackingActive(); } }
-        public Func<bool> isTrackingActive { get; set; }
-        float[] readerBlendShapesBuffer { get { return getBlendShapesBuffer(); } }
-        public Func<float[]> getBlendShapesBuffer { get; set; }
-
-        [NonSerialized]
-        [HideInInspector]
-        public bool connected;
+        public IStreamReader streamReader { private get; set; }
 
         void Start()
         {
@@ -78,7 +64,7 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (!connected || !isReaderStreamActive)
+            if (streamReader == null || !streamReader.active)
                 return;
 
             InterpolateBlendShapes();
@@ -93,15 +79,15 @@ namespace Unity.Labs.FacialRemote
                     if (datum.index < 0)
                         continue;
 
-                    meshRenderer.SetBlendShapeWeight(i, m_BlendShapesScaled[datum.index]);
+                    meshRenderer.SetBlendShapeWeight(i, blendShapesScaled[datum.index]);
                 }
             }
         }
 
-        public void OnStreamSettingsChange()
+        public void OnStreamSettingsChanged(IStreamSettings settings)
         {
-            m_BlendShapes = new float[streamSettings.BlendShapeCount];
-            m_BlendShapesScaled = new float[streamSettings.BlendShapeCount];
+            m_BlendShapes = new float[settings.BlendShapeCount];
+            blendShapesScaled = new float[settings.BlendShapeCount];
 
             SetupBlendShapeIndices();
         }
@@ -109,6 +95,7 @@ namespace Unity.Labs.FacialRemote
         public void SetupBlendShapeIndices()
         {
             m_Indices.Clear();
+            var streamSettings = streamReader.streamSettings;
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
                 var mesh = meshRenderer.sharedMesh;
@@ -118,17 +105,17 @@ namespace Unity.Labs.FacialRemote
                 {
                     var shapeName = mesh.GetBlendShapeName(i);
                     var index = -1;
-                    foreach (var mapping in readerStreamSettings.mappings)
+                    foreach (var mapping in streamSettings.mappings)
                     {
                         if (shapeName.Contains(mapping.from))
-                            index = Array.IndexOf(readerStreamSettings.locations, mapping.to);
+                            index = Array.IndexOf(streamSettings.locations, mapping.to);
                     }
 
                     if (index < 0)
                     {
-                        for (var j = 0; j < readerStreamSettings.locations.Length; j++)
+                        for (var j = 0; j < streamSettings.locations.Length; j++)
                         {
-                            if (shapeName.Contains(readerStreamSettings.locations[j]))
+                            if (shapeName.Contains(streamSettings.locations[j]))
                             {
                                 index = j;
                                 break;
@@ -148,15 +135,16 @@ namespace Unity.Labs.FacialRemote
 
         public void InterpolateBlendShapes(bool force = false)
         {
+            var streamSettings = streamReader.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; i++)
             {
                 var blendShape = m_BlendShapes[i];
-                var blendShapeTarget = readerBlendShapesBuffer[i];
+                var blendShapeTarget = streamReader.blendShapesBuffer[i];
                 var threshold = UseOverride(i) ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
                 var offset = UseOverride(i) ? m_Overrides[i].blendShapeOffset : 0f;
                 var smoothing = UseOverride(i) ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                if (force || isReaderTrackingActive)
+                if (force || streamReader.trackingActive)
                 {
                     if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
                         m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
@@ -168,34 +156,35 @@ namespace Unity.Labs.FacialRemote
 
                 if (UseOverride(i))
                 {
-                    m_BlendShapesScaled[i] = Mathf.Min((m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient) + offset,
+                    blendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient + offset,
                         m_Overrides[i].blendShapeMax);
                 }
                 else
                 {
-                    m_BlendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_BlendShapeCoefficient, m_BlendShapeMax);
+                    blendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_BlendShapeCoefficient, m_BlendShapeMax);
                 }
             }
         }
 
-        public void ValidateOverrides()
+        void ValidateOverrides()
         {
-            if (!connected || readerStreamSettings.locations == null || readerStreamSettings.locations.Length == 0)
+            if (streamReader == null)
                 return;
 
-            if (m_Overrides.Length != readerStreamSettings.BlendShapeCount)
+            var streamSettings = streamReader.streamSettings;
+            if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
+                return;
+
+            if (m_Overrides.Length != streamSettings.BlendShapeCount)
             {
 #if UNITY_EDITOR
-                var overridesCopy = new BlendShapeOverride[readerStreamSettings.BlendShapeCount];
+                var overridesCopy = new BlendShapeOverride[streamSettings.BlendShapeCount];
 
-                for (var i = 0; i < readerStreamSettings.locations.Length; i++)
+                for (var i = 0; i < streamSettings.locations.Length; i++)
                 {
-                    var location = readerStreamSettings.locations[i];
-                    var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location);
-                    if (blendShapeOverride == null)
-                    {
-                        blendShapeOverride = new BlendShapeOverride(location);
-                    }
+                    var location = streamSettings.locations[i];
+                    var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
+                        ?? new BlendShapeOverride(location);
 
                     overridesCopy[i] = blendShapeOverride;
                 }

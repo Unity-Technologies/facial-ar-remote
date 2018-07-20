@@ -3,8 +3,7 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class CharacterRigController : MonoBehaviour, IUseStreamSettings, IUseReaderActive, IUseReaderBlendShapes,
-        IUseReaderHeadPose, IUseReaderCameraPose
+    public class CharacterRigController : MonoBehaviour, IUsesStreamSettings
     {
         [Range(0f, 1f)]
         [SerializeField]
@@ -116,22 +115,9 @@ namespace Unity.Labs.FacialRemote
 
         Quaternion m_BackwardRot = Quaternion.Euler(0, 180, 0);
 
-        protected IStreamSettings streamSettings { get { return getStreamSettings(); } }
-        public Func<IStreamSettings> getStreamSettings { get; set; }
-        IStreamSettings readerStreamSettings { get { return getReaderStreamSettings(); } }
-        public Func<IStreamSettings> getReaderStreamSettings { get; set; }
-        bool isReaderStreamActive { get { return isStreamActive(); } }
-        public Func<bool> isStreamActive { get; set; }
-        bool isReaderTrackingActive { get { return isTrackingActive(); } }
-        public Func<bool> isTrackingActive { get; set; }
-        float[] readerBlendShapesBuffer { get { return getBlendShapesBuffer(); } }
-        public Func<float[]> getBlendShapesBuffer { get; set; }
-        Pose readerHeadPose { get { return getHeadPose(); } }
-        public Func<Pose> getHeadPose { get; set; }
-        Pose readerCameraPose { get { return getCameraPose(); } }
-        public Func<Pose> getCameraPose { get; set; }
+        public IStreamReader streamReader { private get; set; }
 
-        public Transform headBone { get { return m_HeadBone ?? transform; } }
+        public Transform headBone { get { return m_HeadBone != null ? m_HeadBone : transform; } }
 
         public bool driveEyes { get { return m_DriveEyes; } }
         public bool driveHead { get { return m_DriveHead; } }
@@ -139,11 +125,8 @@ namespace Unity.Labs.FacialRemote
 
         [NonSerialized]
         [HideInInspector]
-        public bool connected;
-
-        [NonSerialized]
-        [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
+
         void Start()
         {
             SetupCharacterRigController();
@@ -151,7 +134,7 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (!connected || !isReaderStreamActive)
+            if (streamReader == null || !streamReader.active)
                 return;
 
             InterpolateBlendShapes();
@@ -159,26 +142,25 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            if (connected && isReaderStreamActive)
+            if (streamReader != null && streamReader.active)
                 UpdateBoneTransforms();
         }
 
-        public void OnStreamSettingsChange()
+        public void OnStreamSettingsChanged(IStreamSettings settings)
         {
-            SetupBlendShapeIndices();
+            SetupBlendShapeIndices(settings);
         }
 
-        public void SetupBlendShapeIndices()
+        public void SetupBlendShapeIndices(IStreamSettings settings)
         {
-            // TODO should try to use active settings
-            m_EyeLookDownLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
-            m_EyeLookInLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);
-            m_EyeLookInRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookInRight);
-            m_EyeLookOutLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = readerStreamSettings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);
+            m_EyeLookDownLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
+            m_EyeLookDownRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
+            m_EyeLookInLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);
+            m_EyeLookInRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInRight);
+            m_EyeLookOutLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutLeft);
+            m_EyeLookOutRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutRight);
+            m_EyeLookUpLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpLeft);
+            m_EyeLookUpRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);
         }
 
         public void SetupCharacterRigController()
@@ -302,7 +284,6 @@ namespace Unity.Labs.FacialRemote
             // Set Eye Look Rig
             var eyePoseObject = new GameObject("eye_pose"){ hideFlags = HideFlags.HideAndDontSave};
             m_AREyePose = eyePoseObject.transform;
-            Debug.Log(m_AREyePose);
             var eyePoseLookObject = new GameObject("eye_look"){ hideFlags = HideFlags.HideAndDontSave};
             m_EyePoseLookAt = eyePoseLookObject.transform;
             m_EyePoseLookAt.SetParent(m_AREyePose);
@@ -312,10 +293,7 @@ namespace Unity.Labs.FacialRemote
             m_AREyePose.SetPositionAndRotation(Vector3.Lerp(eyeRightWorldPose.position, eyeLeftWorldPose.position, 0.5f), transform.rotation);
             var eyeOffset = new GameObject("eye_offset"){ hideFlags = HideFlags.HideAndDontSave}.transform;
             eyeOffset.position = m_AREyePose.position;
-            if (m_HeadBone != null)
-                eyeOffset.SetParent(m_HeadBone, true);
-            else
-                eyeOffset.SetParent(transform, true);
+            eyeOffset.SetParent(m_HeadBone != null ? m_HeadBone : transform, true);
 
             m_AREyePose.SetParent(eyeOffset, true);
 
@@ -361,23 +339,15 @@ namespace Unity.Labs.FacialRemote
 
             if (m_HeadBone != null)
                 animatedBones[0] = m_HeadBone;
-            else
-                animatedBones[0] = transform;
 
             if (m_NeckBone != null)
                 animatedBones[1] = m_NeckBone;
-            else
-                animatedBones[1] = transform;
 
             if (m_LeftEye != null)
                 animatedBones[2] = m_LeftEye;
-            else
-                animatedBones[2] = transform;
 
             if (m_RightEye != null)
                 animatedBones[3] = m_RightEye;
-            else
-                animatedBones[3] = transform;
         }
 
         public void ResetBonePoses()
@@ -406,22 +376,26 @@ namespace Unity.Labs.FacialRemote
 
         public void InterpolateBlendShapes(bool force = false)
         {
-            if (!force && !isReaderStreamActive)
+            if (streamReader == null)
                 return;
 
-            if (force || isReaderTrackingActive)
+            if (!force && !streamReader.active)
+                return;
+
+            if (force || streamReader.trackingActive)
             {
                 LocalizeFacePose();
 
-                m_EyeLookDownLeft = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookDownLeftIndex], m_EyeLookDownLeft, m_EyeSmoothing);
-                m_EyeLookInLeft = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookInLeftIndex], m_EyeLookInLeft, m_EyeSmoothing);
-                m_EyeLookOutLeft = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookOutLeftIndex], m_EyeLookOutLeft, m_EyeSmoothing);
-                m_EyeLookUpLeft = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookUpLeftIndex], m_EyeLookUpLeft, m_EyeSmoothing);
+                var buffer = streamReader.blendShapesBuffer;
+                m_EyeLookDownLeft = Mathf.Lerp(buffer[m_EyeLookDownLeftIndex], m_EyeLookDownLeft, m_EyeSmoothing);
+                m_EyeLookInLeft = Mathf.Lerp(buffer[m_EyeLookInLeftIndex], m_EyeLookInLeft, m_EyeSmoothing);
+                m_EyeLookOutLeft = Mathf.Lerp(buffer[m_EyeLookOutLeftIndex], m_EyeLookOutLeft, m_EyeSmoothing);
+                m_EyeLookUpLeft = Mathf.Lerp(buffer[m_EyeLookUpLeftIndex], m_EyeLookUpLeft, m_EyeSmoothing);
 
-                m_EyeLookDownRight = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookDownRightIndex], m_EyeLookDownRight, m_EyeSmoothing);
-                m_EyeLookInRight = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookInRightIndex], m_EyeLookInRight, m_EyeSmoothing);
-                m_EyeLookOutRight = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookOutRightIndex], m_EyeLookOutRight, m_EyeSmoothing);
-                m_EyeLookUpRight = Mathf.Lerp(readerBlendShapesBuffer[m_EyeLookUpRightIndex], m_EyeLookUpRight, m_EyeSmoothing);
+                m_EyeLookDownRight = Mathf.Lerp(buffer[m_EyeLookDownRightIndex], m_EyeLookDownRight, m_EyeSmoothing);
+                m_EyeLookInRight = Mathf.Lerp(buffer[m_EyeLookInRightIndex], m_EyeLookInRight, m_EyeSmoothing);
+                m_EyeLookOutRight = Mathf.Lerp(buffer[m_EyeLookOutRightIndex], m_EyeLookOutRight, m_EyeSmoothing);
+                m_EyeLookUpRight = Mathf.Lerp(buffer[m_EyeLookUpRightIndex], m_EyeLookUpRight, m_EyeSmoothing);
 
                 var leftEyePitch = Quaternion.AngleAxis((m_EyeLookUpLeft - m_EyeLookDownLeft) * m_EyeAngleRange.x, Vector3.right);
                 var leftEyeYaw = Quaternion.AngleAxis((m_EyeLookInLeft - m_EyeLookOutLeft) * m_EyeAngleRange.y, Vector3.up);
@@ -461,10 +435,11 @@ namespace Unity.Labs.FacialRemote
 
         void LocalizeFacePose()
         {
-            m_LocalizedHeadParent.position = readerHeadPose.position;
-            m_LocalizedHeadParent.LookAt(readerCameraPose.position);
+            var headPose = streamReader.headPose;
+            m_LocalizedHeadParent.position = headPose.position;
+            m_LocalizedHeadParent.LookAt(streamReader.cameraPose.position);
 
-            m_LocalizedHeadRot.rotation = readerHeadPose.rotation * m_BackwardRot;
+            m_LocalizedHeadRot.rotation = headPose.rotation * m_BackwardRot;
             m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
         }
 
