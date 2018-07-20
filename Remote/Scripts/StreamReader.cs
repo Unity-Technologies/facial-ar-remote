@@ -61,8 +61,8 @@ namespace Unity.Labs.FacialRemote
 
         bool m_FaceActive;
 
-        float[] m_HeadPoseArray = new float[7];
-        float[] m_CameraPoseArray = new float[7];
+        float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
+        float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
         int[] m_FrameNumArray = new int[1];
         float[] m_FrameTimeArray = new float[1];
 
@@ -157,8 +157,6 @@ namespace Unity.Labs.FacialRemote
             var settings = m_ActiveStreamSettings;
 
             Buffer.BlockCopy(buffer, position + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-            Buffer.BlockCopy(buffer, position + settings.HeadPoseOffset, m_HeadPoseArray, 0, settings.PoseSize);
-            Buffer.BlockCopy(buffer, position + settings.CameraPoseOffset, m_CameraPoseArray, 0, settings.PoseSize);
             m_FaceActive = buffer[position + settings.BufferSize - 1] == 1;
 
             Buffer.BlockCopy(buffer, settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
@@ -169,6 +167,8 @@ namespace Unity.Labs.FacialRemote
 
             if (m_FaceActive)
             {
+                Buffer.BlockCopy(buffer, position + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
+                Buffer.BlockCopy(buffer, position + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
                 BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }

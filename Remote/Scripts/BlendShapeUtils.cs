@@ -8,6 +8,9 @@ namespace Unity.Labs.FacialRemote
 {
     public static class BlendShapeUtils
     {
+        public const int PoseFloatCount = 7;
+        public const int PoseSize = sizeof(float) * PoseFloatCount;
+
 #if UNITY_IOS
         public const string  BrowDownLeft        =   ARBlendShapeLocation.BrowDownLeft;
         public const string  BrowDownRight       =   ARBlendShapeLocation.BrowDownRight;

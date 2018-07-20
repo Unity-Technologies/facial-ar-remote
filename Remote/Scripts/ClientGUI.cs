@@ -83,17 +83,17 @@ namespace Unity.Labs.FacialRemote
 
             m_CenterX = Screen.width / 2f;
             m_CenterY = Screen.height / 2f;
-
-            OnIPValueChanged(m_IP);
         }
 
         void Update()
         {
             m_FaceLostGUI.enabled = !FaceInView();
-            m_MainGUI.enabled = m_Socket == null || !m_Socket.Connected;
 
-            if (m_Socket != null && m_Socket.Connected)
+            var connected = m_Socket != null && m_Socket.Connected;
+            if (m_MainGUI.enabled && connected)
                 m_Client.SetupSocket(m_Socket);
+
+            m_MainGUI.enabled = !connected;
         }
 
         void OnPortValueChanged(string value)
@@ -123,17 +123,21 @@ namespace Unity.Labs.FacialRemote
                 try
                 {
                     var endPoint = new IPEndPoint(ip, m_Port);
-                    m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    m_Socket.Connect(endPoint);
+                    var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    socket.Connect(endPoint);
+
+                    while (!socket.Connected)
+                    {
+                        Thread.Sleep(5);
+                    }
+
+                    m_Socket = socket;
                 }
                 catch (Exception e)
                 {
                     Debug.Log("Exception trying to connect: " + e.Message);
-                    m_Socket = null;
                 }
             }).Start();
-
-            m_ConnectButton.gameObject.SetActive(false);
         }
 
         bool FaceInView()

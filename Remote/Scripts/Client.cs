@@ -33,7 +33,7 @@ namespace Unity.Labs.FacialRemote
         Socket m_Socket;
 
         float m_StartTime;
-        bool m_FreshData;
+        float m_CurrentTime = -1;
         bool m_Running;
 
         byte[] m_Buffer;
@@ -80,7 +80,7 @@ namespace Unity.Labs.FacialRemote
                 return;
 
             m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
-            m_FreshData = true;
+            m_CurrentTime = Time.time;
         }
 
         void OnDestroy()
@@ -109,15 +109,16 @@ namespace Unity.Labs.FacialRemote
         {
             m_CameraTransform = Camera.main.transform;
             m_StartTime = Time.time;
-            m_Socket = null;
+            m_Socket = socket;
             enabled = true;
-            var poseArray = new float[7];
-            var cameraPoseArray = new float[7];
+            var poseArray = new float[BlendShapeUtils.PoseFloatCount];
+            var cameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
             var frameNum = new int[1];
             var frameTime = new float[1];
 
             Application.targetFrameRate = 60;
             m_Running = true;
+
             new Thread(() =>
             {
                 var count = 0;
@@ -126,9 +127,12 @@ namespace Unity.Labs.FacialRemote
                     try {
                         if (socket.Connected)
                         {
-                            if (m_FreshData)
+                            if (m_CurrentTime > 0)
                             {
-                                m_FreshData = false;
+                                frameNum[0] = count++;
+                                frameTime[0] = m_CurrentTime - m_StartTime;
+                                m_CurrentTime = -1;
+
                                 m_Buffer[0] = m_StreamSettings.ErrorCheck;
                                 Buffer.BlockCopy(m_BlendShapes, 0, m_Buffer, 1, m_StreamSettings.BlendShapeSize);
 
@@ -136,9 +140,9 @@ namespace Unity.Labs.FacialRemote
                                 BlendShapeUtils.PoseToArray(m_CameraPose, cameraPoseArray);
 
                                 frameNum[0] = count++;
-                                frameTime[0] = Time.time - m_StartTime;
-                                Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.HeadPoseOffset, m_StreamSettings.PoseSize);
-                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, m_StreamSettings.PoseSize);
+                                frameTime[0] = m_CurrentTime - m_StartTime;
+                                Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.HeadPoseOffset, BlendShapeUtils.PoseSize);
+                                Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
                                 m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
@@ -217,7 +221,7 @@ namespace Unity.Labs.FacialRemote
 
         void TryTimeout()
         {
-            if (Time.time - m_StartTime > k_Timeout)
+            if (m_CurrentTime - m_StartTime > k_Timeout)
             {
                 enabled = false;
                 if (m_ClientGUI != null)
