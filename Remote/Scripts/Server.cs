@@ -174,11 +174,12 @@ namespace Unity.Labs.FacialRemote
             if (m_BufferQueue.Count == 0)
                 return;
 
+            // Throw out some old frames if we are too far behind
             if (m_BufferQueue.Count > m_CatchupThreshold)
             {
                 for (var i = 0; i < m_CatchupSize; i++)
                 {
-                    m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue()); // Throw out an old frame
+                    m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
                 }
             }
 
