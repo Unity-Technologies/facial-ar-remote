@@ -112,7 +112,7 @@ namespace Unity.Labs.FacialRemote
             if (activePlaybackBuffer == null)
             {
                 Debug.Log("No Playback Buffer Set.");
-                SetPlaybackBuffer(streamReader.playbackData.playbackBuffers[0]);
+                SetPlaybackBuffer(playbackData.playbackBuffers[0]);
             }
 
             if (streamReader.streamSettings != activePlaybackBuffer)
@@ -171,7 +171,6 @@ namespace Unity.Labs.FacialRemote
                 }
                 else
                 {
-                    //StopPlayBack();
                     return false;
                 }
             }
