@@ -55,7 +55,7 @@ namespace Unity.Labs.FacialRemote
         {
             if (m_StreamSettings == null)
             {
-                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Stream Reader!", gameObject.name);
+                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Server!", this);
                 enabled = false;
                 return;
             }
@@ -113,9 +113,7 @@ namespace Unity.Labs.FacialRemote
                                     m_BufferQueue.Enqueue(buffer);
 
                                     if (recording)
-                                    {
                                         streamReader.playbackData.AddToActiveBuffer(buffer);
-                                    }
 
                                     Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
                                         streamSettings.FrameNumberSize);
@@ -166,7 +164,7 @@ namespace Unity.Labs.FacialRemote
             recording = false;
             var playbackData = streamReader.playbackData;
             if (playbackData != null)
-                playbackData.StopActivePlaybackBuffer();
+                playbackData.FinishRecording();
         }
 
         void UpdateCurrentFrameBuffer(bool force = false)
@@ -229,10 +227,6 @@ namespace Unity.Labs.FacialRemote
             }
 
             m_CurrentBufferSize = bufferSize;
-
-            var playbackData = streamReader.playbackData;
-            if(playbackData != null)
-                playbackData.WarmUpPlaybackBuffer(settings);
 
             var current = m_UnusedBuffers.Count;
             if (current >= m_CatchupThreshold)
