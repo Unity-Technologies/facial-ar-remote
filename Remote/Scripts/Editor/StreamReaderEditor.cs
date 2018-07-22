@@ -6,6 +6,8 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(StreamReader))]
     public class StreamReaderEditor : Editor
     {
+        const int k_ProgressBarHeight = 22;
+
         SerializedProperty m_Character;
         SerializedProperty m_TrackingLossPadding;
         SerializedProperty m_UseDebug;
@@ -137,53 +139,56 @@ namespace Unity.Labs.FacialRemote
 
             EditorGUILayout.Space();
 
-            var clipName = streamPlayback == null || streamPlayback.activePlaybackBuffer == null ? "None" : streamPlayback.activePlaybackBuffer.name;
-
-            using (new EditorGUI.DisabledGroupScope(streamPlayback == null))
+            if (m_ClipBaker == null)
             {
-                if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
+                var clipName = streamPlayback == null || streamPlayback.activePlaybackBuffer == null ? "None" : streamPlayback.activePlaybackBuffer.name;
+
+                using (new EditorGUI.DisabledGroupScope(streamPlayback == null))
                 {
-                    ShowRecordStreamMenu(streamPlayback, streamReader.playbackData.playbackBuffers);
-                }
-            }
-
-            EditorGUILayout.Space();
-
-            // Bake Clip Button
-            using (new EditorGUI.DisabledGroupScope(streamPlayback == null || streamPlayback.activePlaybackBuffer == null
-                || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
-            {
-                if (GUILayout.Button("Bake Animation Clip"))
-                {
-                    streamReader.streamSource = null;
-
-                    // Used to initialize values if they were changed before baking.
-                    streamReader.InitializeStreamReader();
-
-                    var assetPath = Application.dataPath;
-                    var path = EditorUtility.SaveFilePanel("Save stream as animation clip", assetPath, clipName + ".anim", "anim");
-
-                    path = path.Replace(assetPath, "Assets");
-
-                    if (path.Length != 0)
+                    if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
                     {
-                        var blendShapeController = streamReader.blendShapesController;
+                        ShowRecordStreamMenu(streamPlayback, streamReader.playbackData.playbackBuffers);
+                    }
+                }
 
-                        var avatarController = streamReader.characterRigController;
+                EditorGUILayout.Space();
 
-                        streamReader.streamSource = streamPlayback;
-                        streamPlayback.StartPlayback();
+                // Bake Clip Button
+                using (new EditorGUI.DisabledGroupScope(streamPlayback == null || streamPlayback.activePlaybackBuffer == null
+                    || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
+                {
+                    if (GUILayout.Button("Bake Animation Clip"))
+                    {
+                        streamReader.streamSource = null;
 
-                        var animClip = new AnimationClip();
-                        m_ClipBaker = new ClipBaker(animClip, streamReader, streamPlayback,
-                            blendShapeController,  avatarController, path);
+                        // Used to initialize values if they were changed before baking.
+                        streamReader.InitializeStreamReader();
+
+                        var assetPath = Application.dataPath;
+                        var path = EditorUtility.SaveFilePanel("Save stream as animation clip", assetPath, clipName + ".anim", "anim");
+
+                        path = path.Replace(assetPath, "Assets");
+
+                        if (path.Length != 0)
+                        {
+                            var blendShapeController = streamReader.blendShapesController;
+
+                            var avatarController = streamReader.characterRigController;
+
+                            streamReader.streamSource = streamPlayback;
+                            streamPlayback.StartPlayback();
+
+                            var animClip = new AnimationClip();
+                            m_ClipBaker = new ClipBaker(animClip, streamReader, streamPlayback,
+                                blendShapeController, avatarController, path);
+                        }
                     }
                 }
             }
-
-
-            if (m_ClipBaker != null)
+            else
+            {
                 BakeClipLoop();
+            }
 
             // Want editor to update every frame
             EditorUtility.SetDirty(target);
@@ -212,8 +217,13 @@ namespace Unity.Labs.FacialRemote
             if (m_ClipBaker.baking && m_ClipBaker.currentFrame < m_ClipBaker.frameCount)
             {
                 var progress = m_ClipBaker.currentFrame / (float)m_ClipBaker.frameCount;
-                if (EditorUtility.DisplayCancelableProgressBar("Animation Baking Progress",
-                    "Progress in baking animation frames", progress))
+                var lastRect = GUILayoutUtility.GetLastRect();
+                var rect = GUILayoutUtility.GetRect(lastRect.width, k_ProgressBarHeight);
+                EditorGUILayout.Space();
+                EditorGUI.ProgressBar(rect, progress, "Baking...");
+                // if (EditorUtility.DisplayCancelableProgressBar("Animation Baking Progress",
+                //     "Progress in baking animation frames", progress))
+                if (GUILayout.Button("Cancel"))
                 {
                     m_ClipBaker.StopBake();
                 }
@@ -221,9 +231,10 @@ namespace Unity.Labs.FacialRemote
                 {
                     m_ClipBaker.BakeClipLoop();
                 }
+
                 Repaint();
             }
-            else
+            else if (Event.current.type == EventType.Repaint)
             {
                 if (m_ClipBaker.baking)
                     m_ClipBaker.ApplyAnimationCurves();
@@ -232,7 +243,7 @@ namespace Unity.Labs.FacialRemote
                 m_ClipBaker.StopBake();
 
                 m_ClipBaker = null;
-                Repaint();
+                GUIUtility.ExitGUI();
             }
         }
 

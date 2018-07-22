@@ -126,7 +126,7 @@ namespace Unity.Labs.FacialRemote
                 buffers[i] = m_PlaybackBuffers[i];
             }
 
-            buffers[length - 1] = m_ActivePlaybackBuffer;
+            buffers[length] = m_ActivePlaybackBuffer;
             m_PlaybackBuffers = buffers;
 
             m_ActivePlaybackBuffer = null;
