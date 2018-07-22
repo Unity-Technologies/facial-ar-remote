@@ -214,23 +214,19 @@ namespace Unity.Labs.FacialRemote
 
         void BakeClipLoop()
         {
-            if (m_ClipBaker.baking && m_ClipBaker.currentFrame < m_ClipBaker.frameCount)
+            var currentFrame = m_ClipBaker.currentFrame;
+            var frameCount = m_ClipBaker.frameCount;
+            if (m_ClipBaker.baking && currentFrame < frameCount)
             {
-                var progress = m_ClipBaker.currentFrame / (float)m_ClipBaker.frameCount;
+                var progress = currentFrame / (float)frameCount;
                 var lastRect = GUILayoutUtility.GetLastRect();
                 var rect = GUILayoutUtility.GetRect(lastRect.width, k_ProgressBarHeight);
                 EditorGUILayout.Space();
-                EditorGUI.ProgressBar(rect, progress, "Baking...");
-                // if (EditorUtility.DisplayCancelableProgressBar("Animation Baking Progress",
-                //     "Progress in baking animation frames", progress))
+                EditorGUI.ProgressBar(rect, progress, string.Format("Baking Frame {0} / {1}", currentFrame, frameCount));
                 if (GUILayout.Button("Cancel"))
-                {
                     m_ClipBaker.StopBake();
-                }
                 else
-                {
                     m_ClipBaker.BakeClipLoop();
-                }
 
                 Repaint();
             }
