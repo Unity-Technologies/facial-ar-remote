@@ -38,15 +38,6 @@ namespace Unity.Labs.FacialRemote
                     gameObject.name);
         }
 
-        void Update()
-        {
-            if (Time.time - m_PlaybackStartTime < m_NextFrameTime - m_FirstFrameTime)
-                return;
-
-            if (!PlayBackLoop())
-                StopPlayback();
-        }
-
         public void StreamSourceUpdate()
         {
             var source = streamReader.streamSource;
@@ -55,6 +46,12 @@ namespace Unity.Labs.FacialRemote
 
             if (!active)
                 return;
+
+            if (Time.time - m_PlaybackStartTime < m_NextFrameTime - m_FirstFrameTime)
+                return;
+
+            if (!PlayBackLoop())
+                StopPlayback();
 
             UpdateCurrentFrameBuffer();
         }
