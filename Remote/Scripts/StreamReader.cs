@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <inheritdoc cref="IStreamReader" />
     /// <summary>
     /// This component acts as the hub for using the Facial AR Remote in editor. It is responsible for processing the
     /// stream data from the stream source(s) to be used by connected controllers. It allows you to control the device
-    /// connection, and record & playback captured streams to a character.
+    /// connection, and record and playback captured streams to a character.
     /// </summary>
     public class StreamReader : MonoBehaviour, IStreamReader
     {
@@ -25,25 +27,29 @@ namespace Unity.Labs.FacialRemote
         int m_TrackingLossPadding = 64;
 
         [SerializeField]
-        [Tooltip("Manually override the blend shape controller found in the Character.")]
+        [Tooltip("(Optional) Manually override the blend shape controller found in the Character.")]
         BlendShapesController m_BlendShapesControllerOverride;
 
         [SerializeField]
-        [Tooltip("Manually override the character rig controller found in the Character.")]
+        [Tooltip("(Optional) Manually override the character rig controller found in the Character.")]
         CharacterRigController m_CharacterRigControllerOverride;
 
         [SerializeField]
-        [Tooltip("Manually override the head bone set from the character rig controller. Used for determining the start pose of the character.")]
+        [Tooltip("(Optional) Manually override the head bone set from the character rig controller. Used for determining the start pose of the character.")]
         Transform m_HeadBoneOverride;
 
         [SerializeField]
-        [Tooltip("Manually override the main camera found by the stream reader. Used for determining the starting pose of the camera.")]
+        [Tooltip("(Optional) Manually override the main camera found by the stream reader. Used for determining the starting pose of the camera.")]
         Camera m_CameraOverride;
 
         [SerializeField]
-        MonoBehaviour[] m_StreamSources = { };
+        [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its chldren")]
+        GameObject[] m_StreamSourceOverrides = { };
 
         IStreamSource m_ActiveStreamSource;
+
+        BlendShapesController m_BlendShapesController;
+        CharacterRigController m_CharacterRigController;
 
         Transform m_CameraTransform;
         Transform m_HeadBone;
@@ -62,16 +68,15 @@ namespace Unity.Labs.FacialRemote
 
         HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
 
-        public NetworkStream networkStream { get; private set; }
-        public PlaybackStream playbackStream { get; private set; }
-        public BlendShapesController blendShapesController { get; private set; }
-        public CharacterRigController characterRigController { get; private set; }
         public float[] blendShapesBuffer { get; private set; }
         public bool trackingActive { get; private set; }
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public PlaybackData playbackData { get { return playbackStream.playbackData; } }
+        public bool useDebug { get { return m_UseDebug; } }
+        public HashSet<IStreamSource> sources { get { return m_Sources; } }
+        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
+        public CharacterRigController characterRigController { get { return m_CharacterRigController; } }
 
         public IStreamSource streamSource
         {
@@ -92,44 +97,12 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public bool useDebug { get { return m_UseDebug; } }
-
-        public bool active
-        {
-            get { return streamSource != null && streamSource.active; }
-        }
-
-        void OnValidate()
-        {
-            m_Sources.UnionWith(GetComponentsInChildren<IStreamSource>());
-            foreach (var behavior in m_StreamSources)
-            {
-                var source = behavior as IStreamSource;
-                if (source != null)
-                    m_Sources.Add(source);
-                else
-                    Debug.LogWarningFormat("{0} is not a stream source", behavior);
-            }
-
-            foreach (var source in m_Sources)
-            {
-                ConnectInterfaces(source);
-                var svr = source as NetworkStream;
-                if (svr != null)
-                    networkStream = svr;
-
-                var playback = source as PlaybackStream;
-                if (playback != null)
-                    playbackStream = playback;
-            }
-        }
-
-        public void UpdateStreamData(ref byte[] buffer, int position)
+        public void UpdateStreamData(byte[] buffer, int offset = 0)
         {
             var settings = streamSource.streamSettings;
 
-            Buffer.BlockCopy(buffer, position + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-            m_FaceActive = buffer[position + settings.BufferSize - 1] == 1;
+            Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
+            m_FaceActive = buffer[offset + settings.BufferSize - 1] == 1;
 
             Buffer.BlockCopy(buffer, settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
             Buffer.BlockCopy(buffer, settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
@@ -139,55 +112,58 @@ namespace Unity.Labs.FacialRemote
 
             if (m_FaceActive)
             {
-                Buffer.BlockCopy(buffer, position + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
-                Buffer.BlockCopy(buffer, position + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
+                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
+                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
                 BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
         }
 
-        public void InitializeStreamReader()
+        public void ConnectDependencies()
         {
-            if (playbackStream.playbackData == null)
+            m_Sources.UnionWith(GetComponentsInChildren<IStreamSource>());
+            foreach (var go in m_StreamSourceOverrides)
             {
-                Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
-                    gameObject.name);
+                m_Sources.UnionWith(go.GetComponentsInChildren<IStreamSource>());
+            }
+
+            foreach (var source in m_Sources)
+            {
+                ConnectInterfaces(source);
+                if (source is NetworkStream)
+                    streamSource = source;
             }
 
             if (m_Character != null)
             {
-                blendShapesController = m_BlendShapesControllerOverride != null
+                m_BlendShapesController = m_BlendShapesControllerOverride != null
                     ? m_BlendShapesControllerOverride
                     : m_Character.GetComponentInChildren<BlendShapesController>();
 
-                characterRigController = m_CharacterRigControllerOverride != null
+                m_CharacterRigController = m_CharacterRigControllerOverride != null
                     ? m_CharacterRigControllerOverride
                     : m_Character.GetComponentInChildren<CharacterRigController>();
 
-                if (m_HeadBoneOverride == null)
-                {
-                    if (characterRigController != null)
-                        m_HeadBone = characterRigController.headBone;
-                }
-                else
-                {
-                    m_HeadBone = m_HeadBoneOverride;
-                }
+                m_HeadBone = m_HeadBoneOverride != null
+                    ? m_HeadBoneOverride
+                    : m_CharacterRigController != null
+                        ? m_CharacterRigController.headBone
+                        : null;
             }
             else
             {
                 Debug.Log("Character is not set. Trying to set controllers from overrides.");
-                blendShapesController = m_BlendShapesControllerOverride;
-                characterRigController = m_CharacterRigControllerOverride;
+                m_BlendShapesController = m_BlendShapesControllerOverride;
+                m_CharacterRigController = m_CharacterRigControllerOverride;
                 m_HeadBone = m_HeadBoneOverride;
             }
 
             m_CameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
 
-            if (blendShapesController == null)
+            if (m_BlendShapesController == null)
                 Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
 
-            if (characterRigController == null)
+            if (m_CharacterRigController == null)
                 Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
 
             if (m_HeadBone == null)
@@ -196,16 +172,11 @@ namespace Unity.Labs.FacialRemote
             if (m_CameraTransform == null)
                 Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
 
-            if (blendShapesController != null)
-                ConnectInterfaces(blendShapesController);
+            if (m_BlendShapesController != null)
+                ConnectInterfaces(m_BlendShapesController);
 
-            if (characterRigController != null)
-                ConnectInterfaces(characterRigController);
-        }
-
-        void OnEnable()
-        {
-            InitializeStreamReader();
+            if (m_CharacterRigController != null)
+                ConnectInterfaces(m_CharacterRigController);
         }
 
         void Start()
@@ -232,7 +203,7 @@ namespace Unity.Labs.FacialRemote
                 m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             }
 
-            streamSource = networkStream;
+            ConnectDependencies();
         }
 
         void Update()
@@ -252,22 +223,10 @@ namespace Unity.Labs.FacialRemote
 
             m_LastHeadPose = m_HeadPose.position;
 
-            playbackStream.UpdateTimes();
-
             foreach (var source in m_Sources)
             {
                 source.StreamSourceUpdate();
             }
-        }
-
-        void FixedUpdate()
-        {
-            playbackStream.UpdateTimes();
-        }
-
-        void LateUpdate()
-        {
-            playbackStream.UpdateTimes();
         }
 
         void ConnectInterfaces(object obj)

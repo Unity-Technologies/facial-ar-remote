@@ -4,6 +4,10 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <inheritdoc />
+    /// <summary>
+    /// Contains settings and stream data for a recorded session
+    /// </summary>
     [Serializable]
     public class PlaybackBuffer: IStreamSettings
     {

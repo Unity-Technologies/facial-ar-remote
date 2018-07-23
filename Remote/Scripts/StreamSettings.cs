@@ -76,7 +76,7 @@ namespace Unity.Labs.FacialRemote
 
         // 0 - Error check
         // 1-204 - Blendshapes
-        // 205-232 - Pose
+        // 205-232 - Head Pose
         // 233-260 - Camera Pose
         // 261-264 - Frame Number
         // 265-268 - Frame Time

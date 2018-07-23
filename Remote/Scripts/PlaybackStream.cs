@@ -4,35 +4,32 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class PlaybackStream : MonoBehaviour, IStreamSource
+    /// <inheritdoc cref="IStreamSource" />
+    /// <summary>
+    /// Reads tracking data from a PlaybackData asset and updates a IStreamReader />
+    /// </summary>
+    public class PlaybackStream : MonoBehaviour, IStreamSource, IStreamRecorder
     {
-        const float k_TimeStep = 0.016f;
-
         [SerializeField]
         [Tooltip("Contains the individual streams recorded from a capture session.")]
         PlaybackData m_PlaybackData;
 
-        float m_PlaybackStartTime;
+        float m_PlaybackStartTime = float.PositiveInfinity;
 
         int m_BufferPosition;
+
         byte[] m_CurrentFrameBuffer;
-        byte[] m_NextFrameBuffer;
-
-        float m_NextFrameTime;
-        float m_CurrentTime;
-
-        readonly float[] m_FrameTimes = new float[2];
-        float m_LocalDeltaTime;
+        readonly float[] m_FrameTime = new float[1];
         float m_FirstFrameTime;
-        float m_PlayBackCurrentTime;
+        float m_NextFrameTime;
 
-        bool m_Running;
-        bool m_LastFrame;
+        [NonSerialized]
+        PlaybackBuffer m_ActivePlaybackBuffer;
 
         public IStreamReader streamReader { private get; set; }
         public bool active { get; private set; }
-        public PlaybackBuffer activePlaybackBuffer { get; private set; }
-        public byte[] currentFrameBuffer { get { return m_CurrentFrameBuffer; } }
+
+        public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
 
         public IStreamSettings streamSettings
         {
@@ -46,33 +43,18 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
-            m_Running = true;
-            new Thread(() =>
-            {
-                while (m_Running)
-                {
-                    if (active)
-                    {
-                        try
-                        {
-                            if(!PlayBackLoop())
-                                StopPlayback();
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogError(e.Message);
-                            active = false;
-                        }
-                    }
-
-                    Thread.Sleep(4);
-                }
-            }).Start();
+            if (!m_PlaybackData)
+                Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
+                    gameObject.name);
         }
 
-        void OnDestroy()
+        void Update()
         {
-            m_Running = false;
+            if (Time.time - m_PlaybackStartTime < m_NextFrameTime - m_FirstFrameTime)
+                return;
+
+            if (!PlayBackLoop())
+                StopPlayback();
         }
 
         public void StreamSourceUpdate()
@@ -87,20 +69,12 @@ namespace Unity.Labs.FacialRemote
             UpdateCurrentFrameBuffer();
         }
 
-        public void UpdateTimes()
-        {
-            m_CurrentTime = Time.timeSinceLevelLoad;
-            m_LocalDeltaTime = m_CurrentTime - m_PlaybackStartTime;
-
-            m_PlayBackCurrentTime = m_FirstFrameTime + m_LocalDeltaTime;
-        }
-
         public void SetPlaybackBuffer(PlaybackBuffer buffer)
         {
             if (active)
                 StopPlayback();
 
-            activePlaybackBuffer = buffer;
+            m_ActivePlaybackBuffer = buffer;
         }
 
         public void StartPlayback()
@@ -111,81 +85,65 @@ namespace Unity.Labs.FacialRemote
                 SetPlaybackBuffer(playbackData.playbackBuffers[0]);
             }
 
-            Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
-                streamSettings.FrameTimeSize);
-            Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.BufferSize + streamSettings.FrameTimeOffset,
-                m_FrameTimes, streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
+            var settings = activePlaybackBuffer;
+            m_CurrentFrameBuffer = new byte[settings.BufferSize];
+            for (var i = 0; i < settings.BufferSize; i++)
+            {
+                m_CurrentFrameBuffer[i] = 0;
+            }
 
             Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
-            Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_NextFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTime, 0, streamSettings.FrameTimeSize);
 
-            m_CurrentTime = Time.timeSinceLevelLoad;
-            m_PlaybackStartTime = Time.timeSinceLevelLoad;
-            m_LocalDeltaTime = 0f;
-            m_FirstFrameTime = m_FrameTimes[0];
-            m_PlayBackCurrentTime = m_FrameTimes[0];
-            m_NextFrameTime = m_FrameTimes[0];
+            m_PlaybackStartTime = Time.time;
+            m_FirstFrameTime = m_FrameTime[0];
+            m_NextFrameTime = m_FirstFrameTime;
             m_BufferPosition = 0;
 
-            m_LastFrame = false;
             active = true;
         }
 
         public void StopPlayback()
         {
-            m_NextFrameTime = float.PositiveInfinity;
+            m_PlaybackStartTime = float.PositiveInfinity;
             active = false;
         }
 
-        public bool PlayBackLoop(bool forceNext = false)
+        public bool PlayBackLoop()
         {
-            if (forceNext || m_PlayBackCurrentTime >= m_NextFrameTime)
-            {
-                Buffer.BlockCopy(m_NextFrameBuffer, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
-                Buffer.BlockCopy(m_FrameTimes, streamSettings.FrameTimeSize, m_FrameTimes, 0, streamSettings.FrameTimeSize);
+            if (m_BufferPosition + streamSettings.BufferSize > activePlaybackBuffer.recordStream.Length)
+                return false;
 
-                if (!m_LastFrame)
-                {
-                    if (m_BufferPosition + streamSettings.BufferSize > activePlaybackBuffer.recordStream.Length)
-                    {
-                        m_LastFrame = true;
-                        m_NextFrameTime += k_TimeStep;
-                    }
-                    else
-                    {
-                        Buffer.BlockCopy(activePlaybackBuffer.recordStream, m_BufferPosition,
-                            m_NextFrameBuffer, 0, streamSettings.BufferSize);
-                        Buffer.BlockCopy(m_NextFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
-                            streamSettings.FrameTimeSize, streamSettings.FrameTimeSize);
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, m_BufferPosition,
+                m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTime,
+                0, streamSettings.FrameTimeSize);
 
-                        m_BufferPosition += streamSettings.BufferSize;
-                        m_NextFrameTime = m_FrameTimes[1];
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            }
+            m_BufferPosition += streamSettings.BufferSize;
+            m_NextFrameTime = m_FrameTime[0];
+
             return true;
         }
 
         public void UpdateCurrentFrameBuffer(bool force = false)
         {
             if (force || streamReader.streamSource.Equals(this) && active)
-                streamReader.UpdateStreamData(ref m_CurrentFrameBuffer, 0);
+                streamReader.UpdateStreamData(m_CurrentFrameBuffer);
         }
 
-        public void OnStreamSettingsChanged(IStreamSettings settings)
+        public void StartRecording(IStreamSettings settings, int take)
         {
-            m_BufferPosition = 0;
-            m_CurrentFrameBuffer = new byte[settings.BufferSize];
-            m_NextFrameBuffer = new byte[settings.BufferSize];
-            for (var i = 0; i < settings.BufferSize; i++)
-            {
-                m_CurrentFrameBuffer[i] = 0;
-                m_NextFrameBuffer[i] = 0;
-            }
+            playbackData.StartRecording(settings, take);
+        }
+
+        public void AddDataToRecording(byte[] buffer, int offset = 0)
+        {
+            playbackData.AddDataToRecording(buffer, offset);
+        }
+
+        public void FinishRecording()
+        {
+            playbackData.FinishRecording();
         }
     }
 }

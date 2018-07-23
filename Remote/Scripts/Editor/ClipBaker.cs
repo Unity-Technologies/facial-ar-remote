@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
@@ -9,6 +8,7 @@ namespace Unity.Labs.FacialRemote
 {
     public class ClipBaker
     {
+        const int k_FramesPerStep = 16;
         const string k_BlendShapeProp = "blendShape.{0}";
         static readonly string[] k_RotParams =
         {
@@ -29,16 +29,14 @@ namespace Unity.Labs.FacialRemote
 
         readonly List<AnimationClipCurveData> m_AnimationClipCurveData = new List<AnimationClipCurveData>();
 
-        readonly float[] m_FrameTimes = new float[2];
+        readonly float[] m_FrameTime = new float[1];
+        float m_FirstFrameTime;
 
         string m_FilePath;
 
         public int currentFrame { get; private set; }
         public int frameCount { get; private set; }
         public bool baking { get; private set; }
-
-        bool useCharacterRigController { get { return m_CharacterRigController != null; } }
-        bool useBlendShapeController { get { return m_BlendShapesController != null; } }
 
         public ClipBaker(AnimationClip clip, StreamReader streamReader, PlaybackStream playbackStream,
             BlendShapesController blendShapesController, CharacterRigController characterRigController, string filePath)
@@ -50,15 +48,21 @@ namespace Unity.Labs.FacialRemote
             m_CharacterRigController = characterRigController;
             m_FilePath = filePath;
 
-            StartClipBaker(m_BlendShapesController.transform);
+            StartClipBaker(m_BlendShapesController != null
+                ? m_BlendShapesController.transform
+                : m_CharacterRigController.transform);
         }
 
         void StartClipBaker(Transform transform)
         {
-            if (!useCharacterRigController)
+            var streamSettings = m_PlaybackStream.activePlaybackBuffer;
+            if (streamSettings == null)
+                return;
+
+            if (m_CharacterRigController == null)
                 Debug.LogWarning("No Character Rig Controller Found! Will not be able to bake Character Bone Animations.");
 
-            if (!useBlendShapeController)
+            if (m_BlendShapesController == null)
                 Debug.LogWarning("No Blend Shape Controller Found! Will not be able to bake Character Blend Shape Animations.");
 
             m_AnimationClipCurveData.Clear();
@@ -67,7 +71,7 @@ namespace Unity.Labs.FacialRemote
 
             baking = true;
 
-            if (useBlendShapeController)
+            if (m_BlendShapesController != null)
             {
                 m_BlendShapesController.UpdateBlendShapeIndices(m_PlaybackStream.activePlaybackBuffer);
 
@@ -105,8 +109,7 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            var streamSettings = m_StreamReader.streamSource.streamSettings;
-            if (useCharacterRigController)
+            if (m_CharacterRigController != null)
             {
                 m_CharacterRigController.UpdateBlendShapeIndices(streamSettings);
 
@@ -140,12 +143,12 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            streamSettings = m_PlaybackStream.activePlaybackBuffer;
-            if (streamSettings == null)
-                return;
-
             currentFrame = 0;
             frameCount = m_PlaybackStream.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
+
+            Buffer.BlockCopy(m_PlaybackStream.activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset,
+                m_FrameTime, 0, streamSettings.FrameTimeSize);
+            m_FirstFrameTime = m_FrameTime[0];
         }
 
         public void StopBake()
@@ -183,57 +186,44 @@ namespace Unity.Labs.FacialRemote
 
         public void BakeClipLoop()
         {
-            baking = BakeClipLoopInternal();
-            if (!baking)
+            if (!BakeClipLoopInternal())
                 StopBake();
         }
 
         bool BakeClipLoopInternal()
         {
+            if (frameCount < 1)
+                return false;
+
             var streamSettings = m_StreamReader.streamSource.streamSettings;
-            while (currentFrame <= frameCount)
+            var bufferSize = streamSettings.BufferSize;
+            var frameTimeOffset = streamSettings.FrameTimeOffset;
+            var frameTimeSize = streamSettings.FrameTimeSize;
+            var recordStream = m_PlaybackStream.activePlaybackBuffer.recordStream;
+            for (var i = 0; i < k_FramesPerStep && currentFrame < frameCount; i++, currentFrame++)
             {
-                if (currentFrame == 0)
-                {
-                    var startFrameBuffer = new byte[streamSettings.BufferSize];
-                    Buffer.BlockCopy(m_PlaybackStream.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0,
-                        streamSettings.BufferSize);
-                    Buffer.BlockCopy(startFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes, 0, sizeof(float));
-                    Thread.Sleep(1);
-                }
+                Buffer.BlockCopy(recordStream, currentFrame * bufferSize + frameTimeOffset, m_FrameTime, 0, frameTimeSize);
 
-                if (currentFrame < frameCount)
-                {
-                    m_PlaybackStream.PlayBackLoop(true);
-                    m_PlaybackStream.UpdateCurrentFrameBuffer(true);
+                // Run normal playback to record transform keyframes
+                m_PlaybackStream.PlayBackLoop();
+                m_PlaybackStream.UpdateCurrentFrameBuffer(true);
 
-                    if (useBlendShapeController)
-                        m_BlendShapesController.InterpolateBlendShapes(true);
+                if (m_BlendShapesController != null)
+                    m_BlendShapesController.InterpolateBlendShapes(true);
 
-                    if (useCharacterRigController)
-                        m_CharacterRigController.InterpolateBlendShapes(true);
+                if (m_CharacterRigController != null)
+                    m_CharacterRigController.InterpolateBlendShapes(true);
 
-                    // Get next key frame time
-                    Buffer.BlockCopy(m_PlaybackStream.currentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
-                        sizeof(float), sizeof(float));
-                    KeyFrame(m_FrameTimes[1] - m_FrameTimes[0]);
-
-                    currentFrame++;
-                }
-
-                if (currentFrame == frameCount)
-                    currentFrame++;
-
-                return true;
+                KeyFrame(m_FrameTime[0] - m_FirstFrameTime);
             }
 
-            return false;
+            return true;
         }
 
         void KeyFrame(float time)
         {
             // Key blend shapes
-            if (useBlendShapeController)
+            if (m_BlendShapesController != null)
             {
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
                 {
@@ -259,7 +249,7 @@ namespace Unity.Labs.FacialRemote
             }
 
             // Key bone rotation
-            if (useCharacterRigController)
+            if (m_CharacterRigController)
             {
                 for (var i = 0; i < m_CharacterRigController.animatedBones.Length; i++)
                 {

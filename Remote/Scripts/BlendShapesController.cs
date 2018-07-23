@@ -5,8 +5,9 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <inheritdoc cref="IUsesStreamReader" />
     /// <summary>
-    /// Applies blend shape values from the stream reader to the skinned mesh renders referenced in this script.
+    /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
@@ -66,10 +67,11 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (streamReader == null || !streamReader.active)
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null || !streamSource.active)
                 return;
 
-            var streamSettings = streamReader.streamSource.streamSettings;
+            var streamSettings = streamSource.streamSettings;
             if (streamSettings != m_LastStreamSettings)
                 UpdateBlendShapeIndices(streamSettings);
 
@@ -142,9 +144,11 @@ namespace Unity.Labs.FacialRemote
             {
                 var blendShape = m_BlendShapes[i];
                 var blendShapeTarget = streamReader.blendShapesBuffer[i];
-                var threshold = UseOverride(i) ? m_Overrides[i].blendShapeThreshold : m_BlendShapeThreshold;
-                var offset = UseOverride(i) ? m_Overrides[i].blendShapeOffset : 0f;
-                var smoothing = UseOverride(i) ? m_Overrides[i].blendShapeSmoothing : m_BlendShapeSmoothing;
+                var useOverride = UseOverride(i);
+                var blendShapeOverride = m_Overrides[i];
+                var threshold = useOverride ? blendShapeOverride.blendShapeThreshold : m_BlendShapeThreshold;
+                var offset = useOverride ? blendShapeOverride.blendShapeOffset : 0f;
+                var smoothing = useOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
 
                 if (force || streamReader.trackingActive)
                 {
@@ -153,36 +157,42 @@ namespace Unity.Labs.FacialRemote
                 }
                 else
                 {
-                    m_BlendShapes[i] =  Mathf.Lerp(0f, m_BlendShapes[i], m_TrackingLossSmoothing);
+                    m_BlendShapes[i] =  Mathf.Lerp(0f, blendShape, m_TrackingLossSmoothing);
                 }
 
-                if (UseOverride(i))
+                if (useOverride)
                 {
-                    blendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_Overrides[i].blendShapeCoefficient + offset,
-                        m_Overrides[i].blendShapeMax);
+                    blendShapesScaled[i] = Mathf.Min(blendShape * blendShapeOverride.blendShapeCoefficient + offset,
+                        blendShapeOverride.blendShapeMax);
                 }
                 else
                 {
-                    blendShapesScaled[i] = Mathf.Min(m_BlendShapes[i] * m_BlendShapeCoefficient, m_BlendShapeMax);
+                    blendShapesScaled[i] = Mathf.Min(blendShape * m_BlendShapeCoefficient, m_BlendShapeMax);
                 }
             }
         }
 
-        void ValidateOverrides()
+        void OnValidate()
         {
             if (streamReader == null)
                 return;
 
-            var streamSettings = streamReader.streamSource.streamSettings;
-            if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null)
                 return;
 
-            if (m_Overrides.Length != streamSettings.BlendShapeCount)
+            var streamSettings = streamSource.streamSettings;
+            // if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
+            //     return;
+
+            // We do our best to keep the overrides up-to-date with current settings, but it's possible to get out of sync
+            var blendshapeCount = streamSettings.BlendShapeCount;
+            if (m_Overrides.Length != blendshapeCount)
             {
 #if UNITY_EDITOR
-                var overridesCopy = new BlendShapeOverride[streamSettings.BlendShapeCount];
+                var overridesCopy = new BlendShapeOverride[blendshapeCount];
 
-                for (var i = 0; i < streamSettings.locations.Length; i++)
+                for (var i = 0; i < blendshapeCount; i++)
                 {
                     var location = streamSettings.locations[i];
                     var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
@@ -200,11 +210,6 @@ namespace Unity.Labs.FacialRemote
         {
             return m_Overrides != null && index < m_Overrides.Length
                 && m_Overrides[index] != null && m_Overrides[index].useOverride;
-        }
-
-        void OnValidate()
-        {
-            ValidateOverrides();
         }
     }
 }
