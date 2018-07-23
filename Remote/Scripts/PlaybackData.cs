@@ -115,11 +115,12 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            m_ActivePlaybackBuffer.recordStream = new byte[bufferCount * m_CurrentBufferSize];
+            var recordStream = new byte[bufferCount * m_CurrentBufferSize];
+            m_ActivePlaybackBuffer.recordStream = recordStream;
             for (var i = 0; i < bufferCount; i++)
             {
                 var buffer = m_RecordedBuffers[i];
-                Buffer.BlockCopy(buffer, 0, m_ActivePlaybackBuffer.recordStream, i * m_CurrentBufferSize, m_CurrentBufferSize);
+                Buffer.BlockCopy(buffer, 0, recordStream, i * m_CurrentBufferSize, m_CurrentBufferSize);
                 m_BufferQueue.Enqueue(buffer);
             }
 

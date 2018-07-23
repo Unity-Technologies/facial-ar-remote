@@ -10,12 +10,16 @@ namespace Unity.Labs.FacialRemote
     {
         const int k_FramesPerStep = 16;
         const string k_BlendShapeProp = "blendShape.{0}";
+        const string k_RotationX = "localRotation.x";
+        const string k_RotationY = "localRotation.y";
+        const string k_RotationZ = "localRotation.z";
+        const string k_RotationW = "localRotation.w";
         static readonly string[] k_RotParams =
         {
-            "localRotation.x",
-            "localRotation.y",
-            "localRotation.z",
-            "localRotation.w"
+            k_RotationX,
+            k_RotationY,
+            k_RotationZ,
+            k_RotationW
         };
 
         AnimationClip m_Clip;
@@ -55,8 +59,8 @@ namespace Unity.Labs.FacialRemote
 
         void StartClipBaker(Transform transform)
         {
-            var streamSettings = m_PlaybackStream.activePlaybackBuffer;
-            if (streamSettings == null)
+            var playbackBuffer = m_PlaybackStream.activePlaybackBuffer;
+            if (playbackBuffer == null)
                 return;
 
             if (m_CharacterRigController == null)
@@ -66,14 +70,12 @@ namespace Unity.Labs.FacialRemote
                 Debug.LogWarning("No Blend Shape Controller Found! Will not be able to bake Character Blend Shape Animations.");
 
             m_AnimationClipCurveData.Clear();
-            m_PlaybackStream.SetPlaybackBuffer(m_PlaybackStream.activePlaybackBuffer);
-            m_StreamReader.streamSource = m_PlaybackStream;
 
             baking = true;
 
             if (m_BlendShapesController != null)
             {
-                m_BlendShapesController.UpdateBlendShapeIndices(m_PlaybackStream.activePlaybackBuffer);
+                m_BlendShapesController.UpdateBlendShapeIndices(playbackBuffer);
 
                 // Get curve data for blend shapes
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
@@ -111,7 +113,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_CharacterRigController != null)
             {
-                m_CharacterRigController.UpdateBlendShapeIndices(streamSettings);
+                m_CharacterRigController.UpdateBlendShapeIndices(playbackBuffer);
 
                 m_CharacterRigController.SetupCharacterRigController();
 
@@ -144,10 +146,10 @@ namespace Unity.Labs.FacialRemote
             }
 
             currentFrame = 0;
-            frameCount = m_PlaybackStream.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
+            var recordStream = playbackBuffer.recordStream;
+            frameCount = recordStream.Length / playbackBuffer.BufferSize;
 
-            Buffer.BlockCopy(m_PlaybackStream.activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset,
-                m_FrameTime, 0, streamSettings.FrameTimeSize);
+            Buffer.BlockCopy(recordStream, playbackBuffer.FrameTimeOffset, m_FrameTime, 0, playbackBuffer.FrameTimeSize);
             m_FirstFrameTime = m_FrameTime[0];
         }
 
@@ -161,9 +163,12 @@ namespace Unity.Labs.FacialRemote
         {
             foreach (var curveData in m_AnimationClipCurveData)
             {
-                m_Clip.SetCurve(curveData.path, curveData.type, curveData.propertyName, curveData.curve);
-                AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(curveData.path, curveData.type,
-                    curveData.propertyName), curveData.curve);
+                var path = curveData.path;
+                var propertyName = curveData.propertyName;
+                var type = curveData.type;
+                var curve = curveData.curve;
+                m_Clip.SetCurve(path, type, propertyName, curve);
+                AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(path, type, propertyName), curve);
             }
 
             var fileClip = AssetDatabase.LoadAssetAtPath(m_FilePath, typeof(AnimationClip));
@@ -237,11 +242,12 @@ namespace Unity.Labs.FacialRemote
                             for (var i = 0; i < length; i++)
                             {
                                 var datum = shapeIndices[i];
-                                if (datum.index < 0)
+                                var index = datum.index;
+                                if (index < 0)
                                     continue;
 
                                 var curve = animationCurves[string.Format(k_BlendShapeProp, datum.name)].curve;
-                                curve.AddKey(time, m_BlendShapesController.blendShapesScaled[datum.index]);
+                                curve.AddKey(time, m_BlendShapesController.blendShapesScaled[index]);
                             }
                         }
                     }
@@ -274,18 +280,26 @@ namespace Unity.Labs.FacialRemote
                     {
                         foreach (var datum in animationCurves)
                         {
-                            var prop = datum.Value.propertyName;
-                            var curve = datum.Value.curve;
-                            if (prop == k_RotParams[0])
-                                curve.AddKey(time, bone.localRotation.x);
-                            else if (prop == k_RotParams[1])
-                                curve.AddKey(time, bone.localRotation.y);
-                            else if (prop == k_RotParams[2])
-                                curve.AddKey(time, bone.localRotation.z);
-                            else if (prop == k_RotParams[3])
-                                curve.AddKey(time, bone.localRotation.w);
-                            else
-                                Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
+                            var curveData = datum.Value;
+                            var prop = curveData.propertyName;
+                            var curve = curveData.curve;
+                            switch (prop) {
+                                case k_RotationX:
+                                    curve.AddKey(time, bone.localRotation.x);
+                                    break;
+                                case k_RotationY:
+                                    curve.AddKey(time, bone.localRotation.y);
+                                    break;
+                                case k_RotationZ:
+                                    curve.AddKey(time, bone.localRotation.z);
+                                    break;
+                                case k_RotationW:
+                                    curve.AddKey(time, bone.localRotation.w);
+                                    break;
+                                default:
+                                    Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
+                                    break;
+                            }
                         }
                     }
                 }

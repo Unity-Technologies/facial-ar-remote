@@ -114,6 +114,7 @@ namespace Unity.Labs.FacialRemote
             m_CameraPoseOffset = HeadPoseOffset + poseSize;
             m_FrameNumberOffset = CameraPoseOffset + poseSize;
             m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
+            // Error check + Blendshapes + HeadPose + CameraPose + FrameNumber + FrameTime + Active
             m_BufferSize = 1 + BlendShapeSize + poseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
 
             if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)

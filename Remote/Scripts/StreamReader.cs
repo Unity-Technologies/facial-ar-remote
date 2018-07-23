@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -18,8 +17,8 @@ namespace Unity.Labs.FacialRemote
         GameObject m_Character;
 
         [SerializeField]
-        [Tooltip(" Shows extra debug logging in the console.")]
-        bool m_UseDebug;
+        [Tooltip("Shows extra logging information in the console.")]
+        bool m_VerboseLogging;
 
         [SerializeField]
         [Range(1, 512)]
@@ -48,9 +47,6 @@ namespace Unity.Labs.FacialRemote
 
         IStreamSource m_ActiveStreamSource;
 
-        BlendShapesController m_BlendShapesController;
-        CharacterRigController m_CharacterRigController;
-
         Transform m_CameraTransform;
         Transform m_HeadBone;
 
@@ -59,7 +55,7 @@ namespace Unity.Labs.FacialRemote
         bool m_FaceActive;
         Pose m_CameraPose;
         Pose m_HeadPose;
-        Vector3 m_LastHeadPose;
+        Vector3 m_LastHeadPosition;
 
         float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
         float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
@@ -73,10 +69,10 @@ namespace Unity.Labs.FacialRemote
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public bool useDebug { get { return m_UseDebug; } }
+        public bool verboseLogging { get { return m_VerboseLogging; } }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
-        public BlendShapesController blendShapesController { get { return m_BlendShapesController; } }
-        public CharacterRigController characterRigController { get { return m_CharacterRigController; } }
+        public BlendShapesController blendShapesController { get; private set; }
+        public CharacterRigController characterRigController { get; private set; }
 
         public IStreamSource streamSource
         {
@@ -107,7 +103,7 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
             Buffer.BlockCopy(buffer, settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
 
-            if (m_UseDebug)
+            if (m_VerboseLogging)
                 Debug.Log(string.Format("{0} : {1}", m_FrameNumArray[0], m_FrameTimeArray[0]));
 
             if (m_FaceActive)
@@ -136,34 +132,34 @@ namespace Unity.Labs.FacialRemote
 
             if (m_Character != null)
             {
-                m_BlendShapesController = m_BlendShapesControllerOverride != null
+                blendShapesController = m_BlendShapesControllerOverride != null
                     ? m_BlendShapesControllerOverride
                     : m_Character.GetComponentInChildren<BlendShapesController>();
 
-                m_CharacterRigController = m_CharacterRigControllerOverride != null
+                characterRigController = m_CharacterRigControllerOverride != null
                     ? m_CharacterRigControllerOverride
                     : m_Character.GetComponentInChildren<CharacterRigController>();
 
                 m_HeadBone = m_HeadBoneOverride != null
                     ? m_HeadBoneOverride
-                    : m_CharacterRigController != null
-                        ? m_CharacterRigController.headBone
+                    : characterRigController != null
+                        ? characterRigController.headBone
                         : null;
             }
             else
             {
                 Debug.Log("Character is not set. Trying to set controllers from overrides.");
-                m_BlendShapesController = m_BlendShapesControllerOverride;
-                m_CharacterRigController = m_CharacterRigControllerOverride;
+                blendShapesController = m_BlendShapesControllerOverride;
+                characterRigController = m_CharacterRigControllerOverride;
                 m_HeadBone = m_HeadBoneOverride;
             }
 
             m_CameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
 
-            if (m_BlendShapesController == null)
+            if (blendShapesController == null)
                 Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
 
-            if (m_CharacterRigController == null)
+            if (characterRigController == null)
                 Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
 
             if (m_HeadBone == null)
@@ -172,11 +168,11 @@ namespace Unity.Labs.FacialRemote
             if (m_CameraTransform == null)
                 Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
 
-            if (m_BlendShapesController != null)
-                ConnectInterfaces(m_BlendShapesController);
+            if (blendShapesController != null)
+                ConnectInterfaces(blendShapesController);
 
-            if (m_CharacterRigController != null)
-                ConnectInterfaces(m_CharacterRigController);
+            if (characterRigController != null)
+                ConnectInterfaces(characterRigController);
         }
 
         void Start()
@@ -208,7 +204,8 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (m_HeadPose.position == m_LastHeadPose)
+            var headPosition = m_HeadPose.position;
+            if (headPosition == m_LastHeadPosition)
             {
                 m_TrackingLossCount++;
                 if (!m_FaceActive && m_TrackingLossCount > m_TrackingLossPadding)
@@ -221,7 +218,7 @@ namespace Unity.Labs.FacialRemote
                 m_TrackingLossCount = 0;
             }
 
-            m_LastHeadPose = m_HeadPose.position;
+            m_LastHeadPosition = headPosition;
 
             foreach (var source in m_Sources)
             {

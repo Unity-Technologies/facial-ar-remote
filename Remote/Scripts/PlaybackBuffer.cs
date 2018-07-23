@@ -94,7 +94,11 @@ namespace Unity.Labs.FacialRemote
             set { m_Name = value; }
         }
 
-        public byte[] recordStream { get { return m_RecordStream; } set { m_RecordStream = value; } }
+        public byte[] recordStream
+        {
+            get { return m_RecordStream; }
+            set { m_RecordStream = value; }
+        }
 
         PlaybackBuffer() {}
 

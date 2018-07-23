@@ -15,7 +15,7 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// If true, log debug information to the console
         /// </summary>
-        bool useDebug { get; }
+        bool verboseLogging { get; }
 
         /// <summary>
         /// True when currently getting valid pose tracking data
