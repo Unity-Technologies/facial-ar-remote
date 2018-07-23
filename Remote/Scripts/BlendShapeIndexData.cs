@@ -1,17 +1,17 @@
-﻿using System;
-
-namespace Unity.Labs.FacialRemote
+﻿namespace Unity.Labs.FacialRemote
 {
-    [Serializable]
     public struct BlendShapeIndexData
     {
-        public int index;
-        public string name;
+        readonly int m_Index;
+        readonly string m_Name;
+
+        public int index { get { return m_Index; } }
+        public string name { get { return m_Name; } }
 
         public BlendShapeIndexData(int index, string name)
         {
-            this.index = index;
-            this.name = name;
+            m_Index = index;
+            m_Name = name;
         }
     }
 }

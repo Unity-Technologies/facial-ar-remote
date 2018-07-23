@@ -20,7 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4795781088406236}
   - component: {fileID: 114853668929166538}
-  - component: {fileID: 114059218263745260}
+  - component: {fileID: 114180405116318928}
   - component: {fileID: 114641533554280668}
   m_Layer: 0
   m_Name: StreamReader
@@ -42,7 +42,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114059218263745260
+--- !u!114 &114180405116318928
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_CharacterRigControllerOverride: {fileID: 0}
   m_HeadBoneOverride: {fileID: 0}
   m_CameraOverride: {fileID: 0}
-  m_StreamSources: []
+  m_StreamSourceOverrides: []
 --- !u!114 &114853668929166538
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -88,3 +88,4 @@ MonoBehaviour:
   m_Port: 9000
   m_CatchupThreshold: 16
   m_CatchupSize: 3
+  m_StreamRecorderOverride: {fileID: 0}

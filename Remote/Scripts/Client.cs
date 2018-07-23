@@ -15,7 +15,7 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Streams blend shape data from a device to a connected server.
     /// </summary>
-    public class Client : MonoBehaviour
+    class Client : MonoBehaviour
     {
         const float k_Timeout = 5;
 
@@ -123,7 +123,7 @@ namespace Unity.Labs.FacialRemote
 
                                 Buffer.BlockCopy(poseArray, 0, m_Buffer, m_StreamSettings.HeadPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, BlendShapeUtils.PoseSize);
-                                Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameTimeSize);
+                                Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameNumberSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
                                 m_Buffer[m_Buffer.Length - 1] = (byte)(m_ARFaceActive ? 1 : 0);
 

@@ -7,13 +7,21 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <inheritdoc cref="IStreamSource" />
     /// <summary>
     /// A network-based stream source
-    /// Sets up a listen server on the given port to which <see cref="Client"/>s connect
+    /// Sets up a listen server on the given port to which Clients connect
     /// </summary>
     public class NetworkStream : MonoBehaviour, IStreamSource
     {
-        const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
+        /// <summary>
+        /// Maximum buffer queue size, after which old frames are discarded
+        /// </summary>
+        const int k_MaxBufferQueue = 512;
+
+        /// <summary>
+        /// Value for "backlog" argument in Socket.Listen
+        /// </summary>
         const int k_MaxConnections = 64;
 
         [SerializeField]
@@ -32,12 +40,17 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
         int m_CatchupSize = 3;
 
+        [SerializeField]
+        [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object")]
+        GameObject m_StreamRecorderOverride;
+
         int m_LastFrameNum;
 
         bool m_Running;
 
         Socket m_Socket;
         int m_TakeNumber;
+        IStreamRecorder m_StreamRecorder;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
@@ -57,10 +70,17 @@ namespace Unity.Labs.FacialRemote
         {
             if (m_StreamSettings == null)
             {
-                Debug.LogErrorFormat("No Stream Setting set on {0}! Unable to run Server!", this);
+                Debug.LogErrorFormat("No Stream Setting set on {0}. Unable to run Server.", this);
                 enabled = false;
                 return;
             }
+
+            m_StreamRecorder = m_StreamRecorderOverride
+                ? m_StreamRecorderOverride.GetComponentInChildren<IStreamRecorder>()
+                : GetComponentInChildren<IStreamRecorder>();
+
+            if (m_StreamRecorder == null)
+                Debug.LogWarningFormat("No Stream Recorder found in {0}. You will not be able to record anything.", this);
 
             m_TakeNumber = 0;
             Debug.Log("Possible IP addresses:");
@@ -118,7 +138,7 @@ namespace Unity.Labs.FacialRemote
                                     m_BufferQueue.Enqueue(buffer);
 
                                     if (recording)
-                                        streamReader.playbackData.AddToActiveBuffer(buffer);
+                                        m_StreamRecorder.AddDataToRecording(buffer);
 
                                     Buffer.BlockCopy(buffer, m_StreamSettings.FrameNumberOffset, frameNumArray, 0,
                                         m_StreamSettings.FrameNumberSize);
@@ -150,9 +170,12 @@ namespace Unity.Labs.FacialRemote
 
         public void StartRecording()
         {
+            if (m_StreamRecorder == null)
+                return;
+
             if (streamReader.streamSource.Equals(this) && !recording)
             {
-                streamReader.playbackData.CreatePlaybackBuffer(m_StreamSettings, m_TakeNumber);
+                m_StreamRecorder.StartRecording(m_StreamSettings, m_TakeNumber);
                 recording = true;
 
                 m_TakeNumber++;
@@ -161,11 +184,14 @@ namespace Unity.Labs.FacialRemote
 
         public void StopRecording()
         {
+            if (m_StreamRecorder == null)
+                return;
+
             recording = false;
-            streamReader.playbackData.FinishRecording();
+            m_StreamRecorder.FinishRecording();
         }
 
-        void UpdateCurrentFrameBuffer(bool force = false)
+        void UpdateCurrentFrameBuffer()
         {
             if (m_BufferQueue.Count == 0)
                 return;
@@ -181,8 +207,8 @@ namespace Unity.Labs.FacialRemote
 
             var buffer = m_BufferQueue.Dequeue();
 
-            if (force || streamReader.streamSource.Equals(this))
-                streamReader.UpdateStreamData(ref buffer, 0);
+            if (streamReader.streamSource.Equals(this))
+                streamReader.UpdateStreamData(buffer);
 
             m_UnusedBuffers.Enqueue(buffer);
         }

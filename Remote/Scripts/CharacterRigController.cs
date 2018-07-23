@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <inheritdoc cref="IUsesStreamReader" />
+    /// <summary>
+    /// Updates tracking pose values from the stream reader to the transformed referenced in this script.
+    /// </summary>
     public class CharacterRigController : MonoBehaviour, IUsesStreamReader
     {
         [Range(0f, 1f)]
@@ -136,7 +140,8 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (streamReader == null || !streamReader.active)
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null || !streamSource.active)
                 return;
 
             var streamSettings = streamReader.streamSource.streamSettings;
@@ -148,8 +153,11 @@ namespace Unity.Labs.FacialRemote
 
         void LateUpdate()
         {
-            if (streamReader != null && streamReader.active)
-                UpdateBoneTransforms();
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null || !streamSource.active)
+                return;
+
+            UpdateBoneTransforms();
         }
 
         public void UpdateBlendShapeIndices(IStreamSettings settings)
@@ -378,10 +386,8 @@ namespace Unity.Labs.FacialRemote
 
         public void InterpolateBlendShapes(bool force = false)
         {
-            if (streamReader == null)
-                return;
-
-            if (!force && !streamReader.active)
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null)
                 return;
 
             if (force || streamReader.trackingActive)

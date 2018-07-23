@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <summary>
+    /// Asset for storing recorded sessions
+    /// </summary>
     [Serializable]
     [CreateAssetMenu(fileName = "PlaybackData", menuName = "FacialRemote/PlaybackData")]
     public class PlaybackData : ScriptableObject
@@ -45,7 +48,7 @@ namespace Unity.Labs.FacialRemote
         }
 #endif
 
-        public void CreatePlaybackBuffer(IStreamSettings streamSettings, int take)
+        public void StartRecording(IStreamSettings streamSettings, int take)
         {
             var playbackBuffer = new PlaybackBuffer(streamSettings)
             {
@@ -78,7 +81,7 @@ namespace Unity.Labs.FacialRemote
             }).Start();
         }
 
-        public void AddToActiveBuffer(byte[] buffer)
+        public void AddDataToRecording(byte[] buffer, int offset = 0)
         {
             byte[] copyBuffer;
             if (m_BufferQueue.Count < 1)
@@ -91,7 +94,7 @@ namespace Unity.Labs.FacialRemote
                 copyBuffer = m_BufferQueue.Dequeue();
             }
 
-            Buffer.BlockCopy(buffer, 0, copyBuffer, 0, m_CurrentBufferSize);
+            Buffer.BlockCopy(buffer, offset, copyBuffer, 0, m_CurrentBufferSize);
 
             m_RecordedBuffers.Add(copyBuffer);
         }
