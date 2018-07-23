@@ -73,6 +73,30 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_VerboseLogging);
                 EditorGUILayout.Space();
 
+                if (streamReader.blendShapesController == null)
+                {
+                    EditorGUILayout.HelpBox("No Blend Shape Controller has been set or found. Note this data can " +
+                        "still be recorded in the stream.", MessageType.Warning);
+                }
+
+                if (streamReader.characterRigController == null)
+                {
+                    EditorGUILayout.HelpBox("No Character Rig Controller has been set or found. Note this data can " +
+                        "still be recorded in the stream.", MessageType.Warning);
+                }
+
+                if (streamReader.headBone == null)
+                {
+                    EditorGUILayout.HelpBox("No Head Bone Transform has been set or found. Note this data can still " +
+                        "be recorded in the stream.", MessageType.Warning);
+                }
+
+                if (streamReader.cameraTransform == null)
+                {
+                    EditorGUILayout.HelpBox("No Camera has been set or found. Note this data can still be recorded " +
+                        "in the stream.", MessageType.Warning);
+                }
+
                 EditorGUILayout.LabelField("Controller Settings", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(m_BlendShapesControllerOverride);
                 EditorGUILayout.PropertyField(m_CharacterRigControllerOverride);
