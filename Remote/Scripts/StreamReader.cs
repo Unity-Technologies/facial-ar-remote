@@ -47,9 +47,6 @@ namespace Unity.Labs.FacialRemote
 
         IStreamSource m_ActiveStreamSource;
 
-        Transform m_CameraTransform;
-        Transform m_HeadBone;
-
         int m_TrackingLossCount;
 
         bool m_FaceActive;
@@ -70,6 +67,8 @@ namespace Unity.Labs.FacialRemote
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
         public bool verboseLogging { get { return m_VerboseLogging; } }
+        public Transform headBone { get; private set; }
+        public Transform cameraTransform { get; private set; }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
         public BlendShapesController blendShapesController { get; private set; }
         public CharacterRigController characterRigController { get; private set; }
@@ -140,7 +139,7 @@ namespace Unity.Labs.FacialRemote
                     ? m_CharacterRigControllerOverride
                     : m_Character.GetComponentInChildren<CharacterRigController>();
 
-                m_HeadBone = m_HeadBoneOverride != null
+                headBone = m_HeadBoneOverride != null
                     ? m_HeadBoneOverride
                     : characterRigController != null
                         ? characterRigController.headBone
@@ -148,25 +147,12 @@ namespace Unity.Labs.FacialRemote
             }
             else
             {
-                Debug.Log("Character is not set. Trying to set controllers from overrides.");
                 blendShapesController = m_BlendShapesControllerOverride;
                 characterRigController = m_CharacterRigControllerOverride;
-                m_HeadBone = m_HeadBoneOverride;
+                headBone = m_HeadBoneOverride;
             }
 
-            m_CameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
-
-            if (blendShapesController == null)
-                Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
-
-            if (characterRigController == null)
-                Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
-
-            if (m_HeadBone == null)
-                Debug.LogWarning("No Head Bone Transform has been set or found. Note this data can still be recorded in the stream.");
-
-            if (m_CameraTransform == null)
-                Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
+            cameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
 
             if (blendShapesController != null)
                 ConnectInterfaces(blendShapesController);
@@ -179,24 +165,24 @@ namespace Unity.Labs.FacialRemote
         {
             Application.targetFrameRate = 60;
 
-            if (m_HeadBone == null)
+            if (headBone == null)
             {
                 m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
                 Debug.LogWarning("No Character head bone set. Using default pose.");
             }
             else
             {
-                m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
+                m_HeadPose = new Pose(headBone.position, headBone.rotation);
             }
 
-            if (m_CameraTransform == null)
+            if (cameraTransform == null)
             {
                 m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
                 Debug.LogWarning("No Camera set. Using default pose.");
             }
             else
             {
-                m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
+                m_CameraPose = new Pose(cameraTransform.position, cameraTransform.rotation);
             }
 
             ConnectDependencies();
