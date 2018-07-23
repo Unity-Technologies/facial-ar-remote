@@ -23,7 +23,7 @@ GameObject:
   - component: {fileID: 114059218263745260}
   - component: {fileID: 114641533554280668}
   m_Layer: 0
-  m_Name: Server
+  m_Name: StreamReader
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

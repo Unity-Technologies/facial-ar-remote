@@ -6,7 +6,7 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Interface for common values of a stream source.
     /// </summary>
-    public interface IStreamSource : IUsesStreamSettings
+    public interface IStreamSource : IUsesStreamReader
     {
         IStreamSettings streamSettings { get; }
         bool active { get; }

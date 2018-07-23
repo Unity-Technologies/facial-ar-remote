@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class CharacterRigController : MonoBehaviour, IUsesStreamSettings
+    public class CharacterRigController : MonoBehaviour, IUsesStreamReader
     {
         [Range(0f, 1f)]
         [SerializeField]
@@ -115,6 +115,8 @@ namespace Unity.Labs.FacialRemote
 
         Quaternion m_BackwardRot = Quaternion.Euler(0, 180, 0);
 
+        IStreamSettings m_LastStreamSettings;
+
         public IStreamReader streamReader { private get; set; }
 
         public Transform headBone { get { return m_HeadBone != null ? m_HeadBone : transform; } }
@@ -137,6 +139,10 @@ namespace Unity.Labs.FacialRemote
             if (streamReader == null || !streamReader.active)
                 return;
 
+            var streamSettings = streamReader.streamSource.streamSettings;
+            if (streamSettings != m_LastStreamSettings)
+                UpdateBlendShapeIndices(streamSettings);
+
             InterpolateBlendShapes();
         }
 
@@ -146,13 +152,9 @@ namespace Unity.Labs.FacialRemote
                 UpdateBoneTransforms();
         }
 
-        public void OnStreamSettingsChanged(IStreamSettings settings)
+        public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
-            SetupBlendShapeIndices(settings);
-        }
-
-        public void SetupBlendShapeIndices(IStreamSettings settings)
-        {
+            m_LastStreamSettings = settings;
             m_EyeLookDownLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
             m_EyeLookDownRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
             m_EyeLookInLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);

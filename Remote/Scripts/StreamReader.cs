@@ -43,7 +43,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         MonoBehaviour[] m_StreamSources = { };
 
-        IStreamSettings m_ActiveStreamSettings;
         IStreamSource m_ActiveStreamSource;
 
         Transform m_CameraTransform;
@@ -63,10 +62,8 @@ namespace Unity.Labs.FacialRemote
 
         HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
 
-        event Action<IStreamSettings> streamSettingsChanged;
-
-        public Server server { get; private set; }
-        public StreamPlayback streamPlayback { get; private set; }
+        public NetworkStream networkStream { get; private set; }
+        public PlaybackStream playbackStream { get; private set; }
         public BlendShapesController blendShapesController { get; private set; }
         public CharacterRigController characterRigController { get; private set; }
         public float[] blendShapesBuffer { get; private set; }
@@ -74,7 +71,7 @@ namespace Unity.Labs.FacialRemote
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public PlaybackData playbackData { get { return streamPlayback.playbackData; } }
+        public PlaybackData playbackData { get { return playbackStream.playbackData; } }
 
         public IStreamSource streamSource
         {
@@ -89,36 +86,13 @@ namespace Unity.Labs.FacialRemote
                 if (value == null)
                     return;
 
-                streamSettings = value.streamSettings;
-
-                var blendShapeCount = m_ActiveStreamSettings.BlendShapeCount;
+                var blendShapeCount = value.streamSettings.BlendShapeCount;
                 if (blendShapesBuffer == null || blendShapesBuffer.Length != blendShapeCount)
                     blendShapesBuffer = new float[blendShapeCount];
             }
         }
 
-        public IStreamSettings streamSettings
-        {
-            get { return m_ActiveStreamSettings; }
-            set
-            {
-                if (value == null)
-                    return;
-
-                m_ActiveStreamSettings = value;
-
-                if (m_UseDebug)
-                    Debug.Log("StreamSettings Changed");
-
-                if (streamSettingsChanged != null)
-                    streamSettingsChanged(value);
-            }
-        }
-
-        public bool useDebug
-        {
-            get { return m_UseDebug; }
-        }
+        public bool useDebug { get { return m_UseDebug; } }
 
         public bool active
         {
@@ -140,19 +114,19 @@ namespace Unity.Labs.FacialRemote
             foreach (var source in m_Sources)
             {
                 ConnectInterfaces(source);
-                var svr = source as Server;
+                var svr = source as NetworkStream;
                 if (svr != null)
-                    server = svr;
+                    networkStream = svr;
 
-                var playback = source as StreamPlayback;
+                var playback = source as PlaybackStream;
                 if (playback != null)
-                    streamPlayback = playback;
+                    playbackStream = playback;
             }
         }
 
         public void UpdateStreamData(ref byte[] buffer, int position)
         {
-            var settings = m_ActiveStreamSettings;
+            var settings = streamSource.streamSettings;
 
             Buffer.BlockCopy(buffer, position + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
             m_FaceActive = buffer[position + settings.BufferSize - 1] == 1;
@@ -174,7 +148,7 @@ namespace Unity.Labs.FacialRemote
 
         public void InitializeStreamReader()
         {
-            if (streamPlayback.playbackData == null)
+            if (playbackStream.playbackData == null)
             {
                 Debug.LogWarningFormat("No Playback Data set on {0}. You will be unable to record, playback or bake any stream data.",
                     gameObject.name);
@@ -258,7 +232,7 @@ namespace Unity.Labs.FacialRemote
                 m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             }
 
-            streamSource = server;
+            streamSource = networkStream;
         }
 
         void Update()
@@ -278,7 +252,7 @@ namespace Unity.Labs.FacialRemote
 
             m_LastHeadPose = m_HeadPose.position;
 
-            streamPlayback.UpdateTimes();
+            playbackStream.UpdateTimes();
 
             foreach (var source in m_Sources)
             {
@@ -288,24 +262,19 @@ namespace Unity.Labs.FacialRemote
 
         void FixedUpdate()
         {
-            streamPlayback.UpdateTimes();
+            playbackStream.UpdateTimes();
         }
 
         void LateUpdate()
         {
-            streamPlayback.UpdateTimes();
+            playbackStream.UpdateTimes();
         }
 
         void ConnectInterfaces(object obj)
         {
             var usesStreamReader = obj as IUsesStreamReader;
             if (usesStreamReader != null)
-            {
                 usesStreamReader.streamReader = this;
-                var useStreamSettings = obj as IUsesStreamSettings;
-                if (useStreamSettings != null)
-                    streamSettingsChanged += useStreamSettings.OnStreamSettingsChanged;
-            }
         }
     }
 }

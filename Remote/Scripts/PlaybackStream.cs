@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class StreamPlayback : MonoBehaviour, IStreamSource
+    public class PlaybackStream : MonoBehaviour, IStreamSource
     {
         const float k_TimeStep = 0.016f;
 
@@ -101,10 +101,6 @@ namespace Unity.Labs.FacialRemote
                 StopPlayback();
 
             activePlaybackBuffer = buffer;
-            if (activePlaybackBuffer == null || activePlaybackBuffer.recordStream.Length < activePlaybackBuffer.BufferSize)
-                return;
-
-            streamReader.streamSettings = activePlaybackBuffer;
         }
 
         public void StartPlayback()
@@ -114,9 +110,6 @@ namespace Unity.Labs.FacialRemote
                 Debug.Log("No Playback Buffer Set.");
                 SetPlaybackBuffer(playbackData.playbackBuffers[0]);
             }
-
-            if (streamReader.streamSettings != activePlaybackBuffer)
-                streamReader.streamSettings = activePlaybackBuffer;
 
             Buffer.BlockCopy(activePlaybackBuffer.recordStream, streamSettings.FrameTimeOffset, m_FrameTimes, 0,
                 streamSettings.FrameTimeSize);

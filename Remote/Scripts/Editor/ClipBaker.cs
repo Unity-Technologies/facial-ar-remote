@@ -20,7 +20,7 @@ namespace Unity.Labs.FacialRemote
 
         AnimationClip m_Clip;
         StreamReader m_StreamReader;
-        StreamPlayback m_StreamPlayback;
+        PlaybackStream m_PlaybackStream;
         CharacterRigController m_CharacterRigController;
         BlendShapesController m_BlendShapesController;
 
@@ -40,12 +40,12 @@ namespace Unity.Labs.FacialRemote
         bool useCharacterRigController { get { return m_CharacterRigController != null; } }
         bool useBlendShapeController { get { return m_BlendShapesController != null; } }
 
-        public ClipBaker(AnimationClip clip, StreamReader streamReader, StreamPlayback streamPlayback,
+        public ClipBaker(AnimationClip clip, StreamReader streamReader, PlaybackStream playbackStream,
             BlendShapesController blendShapesController, CharacterRigController characterRigController, string filePath)
         {
             m_Clip = clip;
             m_StreamReader = streamReader;
-            m_StreamPlayback = streamPlayback;
+            m_PlaybackStream = playbackStream;
             m_BlendShapesController = blendShapesController;
             m_CharacterRigController = characterRigController;
             m_FilePath = filePath;
@@ -62,14 +62,14 @@ namespace Unity.Labs.FacialRemote
                 Debug.LogWarning("No Blend Shape Controller Found! Will not be able to bake Character Blend Shape Animations.");
 
             m_AnimationClipCurveData.Clear();
-            m_StreamPlayback.SetPlaybackBuffer(m_StreamPlayback.activePlaybackBuffer);
-            m_StreamReader.streamSource = m_StreamPlayback;
+            m_PlaybackStream.SetPlaybackBuffer(m_PlaybackStream.activePlaybackBuffer);
+            m_StreamReader.streamSource = m_PlaybackStream;
 
             baking = true;
 
             if (useBlendShapeController)
             {
-                m_BlendShapesController.SetupBlendShapeIndices();
+                m_BlendShapesController.UpdateBlendShapeIndices(m_PlaybackStream.activePlaybackBuffer);
 
                 // Get curve data for blend shapes
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
@@ -105,10 +105,10 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            var streamSettings = m_StreamReader.streamSettings;
+            var streamSettings = m_StreamReader.streamSource.streamSettings;
             if (useCharacterRigController)
             {
-                m_CharacterRigController.SetupBlendShapeIndices(streamSettings);
+                m_CharacterRigController.UpdateBlendShapeIndices(streamSettings);
 
                 m_CharacterRigController.SetupCharacterRigController();
 
@@ -140,12 +140,12 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            streamSettings = m_StreamPlayback.activePlaybackBuffer;
+            streamSettings = m_PlaybackStream.activePlaybackBuffer;
             if (streamSettings == null)
                 return;
 
             currentFrame = 0;
-            frameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
+            frameCount = m_PlaybackStream.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
         }
 
         public void StopBake()
@@ -190,13 +190,13 @@ namespace Unity.Labs.FacialRemote
 
         bool BakeClipLoopInternal()
         {
-            var streamSettings = m_StreamReader.streamSettings;
+            var streamSettings = m_StreamReader.streamSource.streamSettings;
             while (currentFrame <= frameCount)
             {
                 if (currentFrame == 0)
                 {
                     var startFrameBuffer = new byte[streamSettings.BufferSize];
-                    Buffer.BlockCopy(m_StreamPlayback.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0,
+                    Buffer.BlockCopy(m_PlaybackStream.activePlaybackBuffer.recordStream, 0, startFrameBuffer, 0,
                         streamSettings.BufferSize);
                     Buffer.BlockCopy(startFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes, 0, sizeof(float));
                     Thread.Sleep(1);
@@ -204,8 +204,8 @@ namespace Unity.Labs.FacialRemote
 
                 if (currentFrame < frameCount)
                 {
-                    m_StreamPlayback.PlayBackLoop(true);
-                    m_StreamPlayback.UpdateCurrentFrameBuffer(true);
+                    m_PlaybackStream.PlayBackLoop(true);
+                    m_PlaybackStream.UpdateCurrentFrameBuffer(true);
 
                     if (useBlendShapeController)
                         m_BlendShapesController.InterpolateBlendShapes(true);
@@ -214,7 +214,7 @@ namespace Unity.Labs.FacialRemote
                         m_CharacterRigController.InterpolateBlendShapes(true);
 
                     // Get next key frame time
-                    Buffer.BlockCopy(m_StreamPlayback.currentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
+                    Buffer.BlockCopy(m_PlaybackStream.currentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTimes,
                         sizeof(float), sizeof(float));
                     KeyFrame(m_FrameTimes[1] - m_FrameTimes[0]);
 

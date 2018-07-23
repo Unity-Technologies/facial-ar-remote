@@ -74,12 +74,12 @@ namespace Unity.Labs.FacialRemote
 
             EditorGUILayout.LabelField("Remote", EditorStyles.boldLabel);
 
-            var streamPlayback = streamReader.streamPlayback;
+            var streamPlayback = streamReader.playbackStream;
             using (new GUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledGroupScope(!Application.isPlaying))
                 {
-                    var server = streamReader.server;
+                    var server = streamReader.networkStream;
                     using (new EditorGUI.DisabledGroupScope(server == null || !server.active))
                     {
                         var streamSource = streamReader.streamSource;
@@ -238,7 +238,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        static void ShowRecordStreamMenu(StreamPlayback streamPlayback, PlaybackBuffer[] buffers)
+        static void ShowRecordStreamMenu(PlaybackStream playbackStream, PlaybackBuffer[] buffers)
         {
             var menu = new GenericMenu();
             foreach (var buffer in buffers)
@@ -248,8 +248,8 @@ namespace Unity.Labs.FacialRemote
 
                 var label = new GUIContent(buffer.name);
                 var playbackBuffer = buffer;
-                var isActive = streamPlayback.activePlaybackBuffer == playbackBuffer;
-                menu.AddItem(label, isActive, () => streamPlayback.SetPlaybackBuffer(playbackBuffer));
+                var isActive = playbackStream.activePlaybackBuffer == playbackBuffer;
+                menu.AddItem(label, isActive, () => playbackStream.SetPlaybackBuffer(playbackBuffer));
             }
 
             menu.ShowAsContext();
