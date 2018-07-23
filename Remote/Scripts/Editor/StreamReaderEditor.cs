@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
 
         SerializedProperty m_Character;
         SerializedProperty m_TrackingLossPadding;
-        SerializedProperty m_UseDebug;
+        SerializedProperty m_VerboseLogging;
         SerializedProperty m_BlendShapesControllerOverride;
         SerializedProperty m_CharacterRigControllerOverride;
         SerializedProperty m_HeadBoneOverride;
@@ -38,7 +38,7 @@ namespace Unity.Labs.FacialRemote
         void OnEnable()
         {
             m_Character = serializedObject.FindProperty("m_Character");
-            m_UseDebug = serializedObject.FindProperty("m_UseDebug");
+            m_VerboseLogging = serializedObject.FindProperty("m_VerboseLogging");
             m_TrackingLossPadding = serializedObject.FindProperty("m_TrackingLossPadding");
             m_BlendShapesControllerOverride = serializedObject.FindProperty("m_BlendShapesControllerOverride");
             m_CharacterRigControllerOverride = serializedObject.FindProperty("m_CharacterRigControllerOverride");
@@ -70,7 +70,7 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.LabelField("General Settings", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(m_Character);
                 EditorGUILayout.PropertyField(m_TrackingLossPadding);
-                EditorGUILayout.PropertyField(m_UseDebug);
+                EditorGUILayout.PropertyField(m_VerboseLogging);
                 EditorGUILayout.Space();
 
                 EditorGUILayout.LabelField("Controller Settings", EditorStyles.boldLabel);
