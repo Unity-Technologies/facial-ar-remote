@@ -4,7 +4,8 @@ using System.Net.Sockets;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using Button = UnityEngine.UI.Button;
+using UnityEngine.iOS;
+using UnityEngine.UI;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -14,7 +15,7 @@ namespace Unity.Labs.FacialRemote
         Transform m_FaceAnchor;
 
         [Tooltip("Percentage of screen width outside which the Face Lost GUI will appear")]
-        [Range(0,1)]
+        [Range(0, 1)]
         [SerializeField]
         float m_WidthPercent = 0.5f;
 
@@ -50,16 +51,17 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         TMP_InputField m_IPTextField;
 
-        Socket m_Socket;
         Camera m_Camera;
 
         float m_CenterX;
         float m_CenterY;
 
+        Socket m_Socket;
+
         void Awake()
         {
             m_Camera = Camera.main;
-            if (UnityEngine.iOS.Device.generation == UnityEngine.iOS.DeviceGeneration.iPhoneX)
+            if (Device.generation == DeviceGeneration.iPhoneX)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;

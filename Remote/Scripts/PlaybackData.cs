@@ -16,11 +16,11 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         PlaybackBuffer[] m_PlaybackBuffers;
 
+        readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         readonly List<byte[]> m_RecordedBuffers = new List<byte[]>();
+
         PlaybackBuffer m_ActivePlaybackBuffer;
         int m_CurrentBufferSize = -1;
-
-        readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
 
         public PlaybackBuffer[] playbackBuffers { get { return m_PlaybackBuffers; } }
 
@@ -72,6 +72,7 @@ namespace Unity.Labs.FacialRemote
                             m_BufferQueue.Enqueue(new byte[m_CurrentBufferSize]);
                         }
                     }
+
                     Thread.Sleep(1);
                 }
             }).Start();

@@ -51,7 +51,7 @@ namespace Unity.Labs.FacialRemote
 
         public override void OnInspectorGUI()
         {
-            using (var check =  new EditorGUI.ChangeCheckScope())
+            using (var check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.LabelField("General Settings", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(m_HeadBone);
@@ -87,9 +87,7 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 if (check.changed)
-                {
                     serializedObject.ApplyModifiedProperties();
-                }
             }
         }
     }

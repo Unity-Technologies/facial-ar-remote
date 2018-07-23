@@ -28,18 +28,20 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
         int m_CatchupSize = 3;
 
-        Socket m_Socket;
-        bool m_Running;
-        int m_LastFrameNum;
-        int m_TakeNumber;
         int m_CurrentBufferSize = -1;
+        int m_LastFrameNum;
+
+        bool m_Running;
+
+        Socket m_Socket;
+        int m_TakeNumber;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
 
-        public IStreamReader streamReader { private get; set; }
-
         public bool recording { get; private set; }
+
+        public IStreamReader streamReader { private get; set; }
 
         public bool active
         {
@@ -100,8 +102,10 @@ namespace Unity.Labs.FacialRemote
                                     break;
                                 }
 
-                                var buffer = m_UnusedBuffers.Count == 0 ? new byte[streamSettings.BufferSize]
-                                : m_UnusedBuffers.Dequeue();
+                                var buffer = m_UnusedBuffers.Count == 0
+                                    ? new byte[streamSettings.BufferSize]
+                                    : m_UnusedBuffers.Dequeue();
+
                                 for (var i = 0; i < streamSettings.BufferSize; i++)
                                 {
                                     buffer[i] = 0;

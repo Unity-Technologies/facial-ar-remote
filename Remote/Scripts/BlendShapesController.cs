@@ -196,7 +196,8 @@ namespace Unity.Labs.FacialRemote
 
         bool UseOverride(int index)
         {
-            return m_Overrides != null && index < m_Overrides.Length && m_Overrides[index] != null && m_Overrides[index].useOverride;
+            return m_Overrides != null && index < m_Overrides.Length
+                && m_Overrides[index] != null && m_Overrides[index].useOverride;
         }
 
         void OnValidate()

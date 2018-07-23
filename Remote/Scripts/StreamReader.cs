@@ -41,42 +41,40 @@ namespace Unity.Labs.FacialRemote
         Camera m_CameraOverride;
 
         [SerializeField]
-        MonoBehaviour[] m_StreamSources = {};
+        MonoBehaviour[] m_StreamSources = { };
 
-        Camera m_Camera;
+        IStreamSettings m_ActiveStreamSettings;
+        IStreamSource m_ActiveStreamSource;
+
+        Transform m_CameraTransform;
         Transform m_HeadBone;
 
-        Pose m_HeadPose;
-        Pose m_CameraPose;
-
-        IStreamSource m_ActiveStreamSource;
-        IStreamSettings m_ActiveStreamSettings;
-
-        Vector3 m_LastPose;
         int m_TrackingLossCount;
+
+        bool m_FaceActive;
+        Pose m_CameraPose;
+        Pose m_HeadPose;
+        Vector3 m_LastHeadPose;
+
+        float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
+        float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
+        int[] m_FrameNumArray = new int[1];
+        float[] m_FrameTimeArray = new float[1];
 
         HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
 
         event Action<IStreamSettings> streamSettingsChanged;
 
-        bool m_FaceActive;
-
-        float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
-        float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
-        int[] m_FrameNumArray = new int[1];
-        float[] m_FrameTimeArray = new float[1];
-
-        public bool trackingActive { get; private set; }
-        public Pose headPose { get { return m_HeadPose; } }
-        public Pose cameraPose { get { return m_CameraPose; } }
         public Server server { get; private set; }
         public StreamPlayback streamPlayback { get; private set; }
-
-        public PlaybackData playbackData { get { return streamPlayback.playbackData; } }
         public BlendShapesController blendShapesController { get; private set; }
         public CharacterRigController characterRigController { get; private set; }
-
         public float[] blendShapesBuffer { get; private set; }
+        public bool trackingActive { get; private set; }
+
+        public Pose headPose { get { return m_HeadPose; } }
+        public Pose cameraPose { get { return m_CameraPose; } }
+        public PlaybackData playbackData { get { return streamPlayback.playbackData; } }
 
         public IStreamSource streamSource
         {
@@ -184,10 +182,12 @@ namespace Unity.Labs.FacialRemote
 
             if (m_Character != null)
             {
-                blendShapesController = m_BlendShapesControllerOverride != null ? m_BlendShapesControllerOverride
+                blendShapesController = m_BlendShapesControllerOverride != null
+                    ? m_BlendShapesControllerOverride
                     : m_Character.GetComponentInChildren<BlendShapesController>();
 
-                characterRigController = m_CharacterRigControllerOverride != null ? m_CharacterRigControllerOverride
+                characterRigController = m_CharacterRigControllerOverride != null
+                    ? m_CharacterRigControllerOverride
                     : m_Character.GetComponentInChildren<CharacterRigController>();
 
                 if (m_HeadBoneOverride == null)
@@ -208,27 +208,19 @@ namespace Unity.Labs.FacialRemote
                 m_HeadBone = m_HeadBoneOverride;
             }
 
-            m_Camera = m_CameraOverride == null ? Camera.main : m_CameraOverride;
+            m_CameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
 
             if (blendShapesController == null)
-            {
                 Debug.LogWarning("No Blend Shape Controller has been set or found. Note this data can still be recorded in the stream.");
-            }
 
             if (characterRigController == null)
-            {
                 Debug.LogWarning("No Character Rig Controller has been set or found. Note this data can still be recorded in the stream.");
-            }
 
             if (m_HeadBone == null)
-            {
                 Debug.LogWarning("No Head Bone Transform has been set or found. Note this data can still be recorded in the stream.");
-            }
 
-            if (m_Camera == null)
-            {
+            if (m_CameraTransform == null)
                 Debug.LogWarning("No Camera has been set or found. Note this data can still be recorded in the stream.");
-            }
 
             if (blendShapesController != null)
                 ConnectInterfaces(blendShapesController);
@@ -256,14 +248,14 @@ namespace Unity.Labs.FacialRemote
                 m_HeadPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
             }
 
-            if (m_Camera == null)
+            if (m_CameraTransform == null)
             {
                 m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
                 Debug.LogWarning("No Camera set. Using default pose.");
             }
             else
             {
-                m_CameraPose = new Pose(m_Camera.transform.position, m_Camera.transform.rotation);
+                m_CameraPose = new Pose(m_CameraTransform.position, m_CameraTransform.rotation);
             }
 
             streamSource = server;
@@ -271,7 +263,7 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            if (m_HeadPose.position == m_LastPose)
+            if (m_HeadPose.position == m_LastHeadPose)
             {
                 m_TrackingLossCount++;
                 if (!m_FaceActive && m_TrackingLossCount > m_TrackingLossPadding)
@@ -283,7 +275,8 @@ namespace Unity.Labs.FacialRemote
             {
                 m_TrackingLossCount = 0;
             }
-            m_LastPose = m_HeadPose.position;
+
+            m_LastHeadPose = m_HeadPose.position;
 
             streamPlayback.UpdateTimes();
 

@@ -87,7 +87,6 @@ namespace Unity.Labs.FacialRemote
                         {
                             if (GUILayout.Button(m_Connect, m_ButtonPressStyle))
                                 streamReader.streamSource = null;
-
                         }
                         else
                         {
@@ -109,7 +108,6 @@ namespace Unity.Labs.FacialRemote
                         {
                             if (GUILayout.Button(m_RecordIcon, m_ButtonStyle))
                                 server.StartRecording();
-
                         }
                     }
 
@@ -131,7 +129,6 @@ namespace Unity.Labs.FacialRemote
                                 streamReader.streamSource = streamPlayback;
                                 streamPlayback.StartPlayback();
                             }
-
                         }
                     }
                 }
@@ -146,9 +143,7 @@ namespace Unity.Labs.FacialRemote
                 using (new EditorGUI.DisabledGroupScope(streamPlayback == null))
                 {
                     if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
-                    {
                         ShowRecordStreamMenu(streamPlayback, streamReader.playbackData.playbackBuffers);
-                    }
                 }
 
                 EditorGUILayout.Space();
@@ -248,7 +243,7 @@ namespace Unity.Labs.FacialRemote
             var menu = new GenericMenu();
             foreach (var buffer in buffers)
             {
-                if (buffer.recordStream == null || buffer.recordStream.Length<1)
+                if (buffer.recordStream == null || buffer.recordStream.Length < 1)
                     continue;
 
                 var label = new GUIContent(buffer.name);
@@ -256,6 +251,7 @@ namespace Unity.Labs.FacialRemote
                 var isActive = streamPlayback.activePlaybackBuffer == playbackBuffer;
                 menu.AddItem(label, isActive, () => streamPlayback.SetPlaybackBuffer(playbackBuffer));
             }
+
             menu.ShowAsContext();
             Event.current.Use();
         }
