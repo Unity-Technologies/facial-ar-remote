@@ -233,6 +233,22 @@ Prefab:
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4967094478328516, guid: f52b9039400198449907ac105acc8616, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4967094478328516, guid: f52b9039400198449907ac105acc8616, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4967094478328516, guid: f52b9039400198449907ac105acc8616, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4967094478328516, guid: f52b9039400198449907ac105acc8616, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: f52b9039400198449907ac105acc8616, type: 2}
   m_IsPrefabParent: 0
@@ -285,16 +301,6 @@ Prefab:
       propertyPath: m_Character
       value: 
       objectReference: {fileID: 786562247}
-    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
-        type: 2}
-      propertyPath: m_TrackingLossPadding
-      value: 64
-      objectReference: {fileID: 0}
-    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
-        type: 2}
-      propertyPath: m_UseDebug
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 2}
   m_IsPrefabParent: 0

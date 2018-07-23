@@ -8,7 +8,7 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Applies blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
-    public class BlendShapesController : MonoBehaviour, IUsesStreamSettings
+    public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
         [SerializeField]
         [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
@@ -46,6 +46,8 @@ namespace Unity.Labs.FacialRemote
         readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         float[] m_BlendShapes;
 
+        IStreamSettings m_LastStreamSettings;
+
         public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
         public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
 
@@ -67,6 +69,10 @@ namespace Unity.Labs.FacialRemote
             if (streamReader == null || !streamReader.active)
                 return;
 
+            var streamSettings = streamReader.streamSource.streamSettings;
+            if (streamSettings != m_LastStreamSettings)
+                UpdateBlendShapeIndices(streamSettings);
+
             InterpolateBlendShapes();
 
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
@@ -84,18 +90,14 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void OnStreamSettingsChanged(IStreamSettings settings)
+        public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
-            m_BlendShapes = new float[settings.BlendShapeCount];
-            blendShapesScaled = new float[settings.BlendShapeCount];
-
-            SetupBlendShapeIndices();
-        }
-
-        public void SetupBlendShapeIndices()
-        {
+            m_LastStreamSettings = settings;
+            var blendShapeCount = settings.BlendShapeCount;
+            m_BlendShapes = new float[blendShapeCount];
+            blendShapesScaled = new float[blendShapeCount];
             m_Indices.Clear();
-            var streamSettings = streamReader.streamSettings;
+            var streamSettings = streamReader.streamSource.streamSettings;
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
                 var mesh = meshRenderer.sharedMesh;
@@ -135,7 +137,7 @@ namespace Unity.Labs.FacialRemote
 
         public void InterpolateBlendShapes(bool force = false)
         {
-            var streamSettings = streamReader.streamSettings;
+            var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; i++)
             {
                 var blendShape = m_BlendShapes[i];
@@ -171,7 +173,7 @@ namespace Unity.Labs.FacialRemote
             if (streamReader == null)
                 return;
 
-            var streamSettings = streamReader.streamSettings;
+            var streamSettings = streamReader.streamSource.streamSettings;
             if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
                 return;
 

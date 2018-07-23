@@ -7,7 +7,11 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    public class Server : MonoBehaviour, IStreamSource
+    /// <summary>
+    /// A network-based stream source
+    /// Sets up a listen server on the given port to which <see cref="Client"/>s connect
+    /// </summary>
+    public class NetworkStream : MonoBehaviour, IStreamSource
     {
         const int k_MaxBufferQueue = 512; // No use in bufferring really old frames
         const int k_MaxConnections = 64;
@@ -28,7 +32,6 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
         int m_CatchupSize = 3;
 
-        int m_CurrentBufferSize = -1;
         int m_LastFrameNum;
 
         bool m_Running;
@@ -48,10 +51,7 @@ namespace Unity.Labs.FacialRemote
             get { return m_Socket != null && m_Socket.Connected; }
         }
 
-        public IStreamSettings streamSettings
-        {
-            get { return m_StreamSettings; }
-        }
+        public IStreamSettings streamSettings { get { return m_StreamSettings; } }
 
         void Start()
         {
@@ -79,15 +79,17 @@ namespace Unity.Labs.FacialRemote
                 }
                 catch (Exception e)
                 {
-                    Debug.LogErrorFormat("Error on address {0} : {1}", connectionAddress, e);
+                    Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
                 }
 
                 new Thread(() =>
                 {
+                    // Block until timeout or successful connection
                     m_Socket = m_Socket.Accept();
                     Debug.Log(string.Format("Client connected on {0}", connectionAddress));
 
                     var frameNumArray = new int[1];
+                    var bufferSize = m_StreamSettings.BufferSize;
 
                     while (m_Running)
                     {
@@ -96,39 +98,34 @@ namespace Unity.Labs.FacialRemote
                         {
                             try
                             {
-                                if (streamSettings == null || streamSettings.BufferSize < 1)
+                                if (m_StreamSettings == null || m_StreamSettings.BufferSize != bufferSize)
                                 {
-                                    Debug.LogError("Abort!");
+                                    Debug.LogError("Settings changed while connnected. Please exit play mode before changing settings");
                                     break;
                                 }
 
-                                var buffer = m_UnusedBuffers.Count == 0
-                                    ? new byte[streamSettings.BufferSize]
-                                    : m_UnusedBuffers.Dequeue();
+                                var buffer = m_UnusedBuffers.Count == 0 ? new byte[bufferSize] : m_UnusedBuffers.Dequeue();
 
-                                for (var i = 0; i < streamSettings.BufferSize; i++)
+                                for (var i = 0; i < bufferSize; i++)
                                 {
                                     buffer[i] = 0;
                                 }
 
                                 m_Socket.Receive(buffer);
-                                if (buffer[0] == streamSettings.ErrorCheck)
+                                // Receive can fail and return an empty buffer
+                                if (buffer[0] == m_StreamSettings.ErrorCheck)
                                 {
                                     m_BufferQueue.Enqueue(buffer);
 
                                     if (recording)
                                         streamReader.playbackData.AddToActiveBuffer(buffer);
 
-                                    Buffer.BlockCopy(buffer, streamSettings.FrameNumberOffset, frameNumArray, 0,
-                                        streamSettings.FrameNumberSize);
+                                    Buffer.BlockCopy(buffer, m_StreamSettings.FrameNumberOffset, frameNumArray, 0,
+                                        m_StreamSettings.FrameNumberSize);
 
                                     var frameNum = frameNumArray[0];
-                                    if (streamReader.useDebug)
-                                    {
-                                        if (m_LastFrameNum != frameNum - 1)
-                                            Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,
-                                                m_LastFrameNum);
-                                    }
+                                    if (streamReader.useDebug && m_LastFrameNum != frameNum - 1)
+                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,  m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
                                 }
@@ -155,7 +152,6 @@ namespace Unity.Labs.FacialRemote
         {
             if (streamReader.streamSource.Equals(this) && !recording)
             {
-                streamReader.streamSettings = m_StreamSettings;
                 streamReader.playbackData.CreatePlaybackBuffer(m_StreamSettings, m_TakeNumber);
                 recording = true;
 
@@ -166,9 +162,7 @@ namespace Unity.Labs.FacialRemote
         public void StopRecording()
         {
             recording = false;
-            var playbackData = streamReader.playbackData;
-            if (playbackData != null)
-                playbackData.FinishRecording();
+            streamReader.playbackData.FinishRecording();
         }
 
         void UpdateCurrentFrameBuffer(bool force = false)
@@ -211,35 +205,6 @@ namespace Unity.Labs.FacialRemote
             }
 
             UpdateCurrentFrameBuffer();
-        }
-
-        public void OnStreamSettingsChanged(IStreamSettings settings)
-        {
-            StopRecording();
-            var bufferSize = settings.BufferSize;
-            if (m_CurrentBufferSize != bufferSize)
-            {
-                m_UnusedBuffers.Clear();
-                m_BufferQueue.Clear();
-            }
-            else
-            {
-                while (m_BufferQueue.Count > 0)
-                {
-                    m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
-                }
-            }
-
-            m_CurrentBufferSize = bufferSize;
-
-            var current = m_UnusedBuffers.Count;
-            if (current >= m_CatchupThreshold)
-                return;
-
-            for (var i = current; i < m_CatchupThreshold; i++)
-            {
-                m_UnusedBuffers.Enqueue(new byte[bufferSize]);
-            }
         }
 
         void OnDestroy()

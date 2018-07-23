@@ -8,8 +8,10 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public interface IStreamReader
     {
+        /// <summary>
+        /// The currently active stream source
+        /// </summary>
         IStreamSource streamSource { get; }
-        IStreamSettings streamSettings { get; set; }
         PlaybackData playbackData { get; }
         bool useDebug { get; }
         bool active { get; }

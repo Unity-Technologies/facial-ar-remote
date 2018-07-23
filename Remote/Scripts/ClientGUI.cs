@@ -28,7 +28,7 @@ namespace Unity.Labs.FacialRemote
         int m_Port = 9000;
 
         [SerializeField]
-        string m_IP = "192.168.1.2";
+        string m_ServerIP = "192.168.1.2";
 
         [SerializeField]
         Client m_Client;
@@ -88,7 +88,7 @@ namespace Unity.Labs.FacialRemote
 
             // Make sure text fields match serialized values
             m_PortTextField.text = m_Port.ToString();
-            m_IPTextField.text = m_IP;
+            m_IPTextField.text = m_ServerIP;
         }
 
         void Update()
@@ -115,13 +115,13 @@ namespace Unity.Labs.FacialRemote
         {
             IPAddress ip;
             m_ConnectButton.gameObject.SetActive(IPAddress.TryParse(value, out ip));
-            m_IP = value;
+            m_ServerIP = value;
         }
 
         void OnConnectClick()
         {
             IPAddress ip;
-            if (!IPAddress.TryParse(m_IP, out ip))
+            if (!IPAddress.TryParse(m_ServerIP, out ip))
                 return;
 
             new Thread(() =>
