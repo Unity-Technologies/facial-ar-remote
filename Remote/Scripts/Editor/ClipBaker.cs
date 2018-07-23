@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using UnityObject = UnityEngine.Object;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -24,8 +24,8 @@ namespace Unity.Labs.FacialRemote
         CharacterRigController m_CharacterRigController;
         BlendShapesController m_BlendShapesController;
 
-        readonly Dictionary<Object, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
-            new Dictionary<Object, Dictionary<string, AnimationClipCurveData>>();
+        readonly Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
+            new Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>>();
 
         readonly List<AnimationClipCurveData> m_AnimationClipCurveData = new List<AnimationClipCurveData>();
 
@@ -96,6 +96,7 @@ namespace Unity.Labs.FacialRemote
                             propertyName = prop,
                             type = skinnedMeshRenderer.GetType()
                         };
+
                         m_AnimationClipCurveData.Add(curveData);
                         animationCurves.Add(prop, curveData);
                     }
@@ -130,6 +131,7 @@ namespace Unity.Labs.FacialRemote
                             propertyName = prop,
                             type = transformType
                         };
+
                         m_AnimationClipCurveData.Add(curveData);
                         animationCurves.Add(prop, curveData);
                     }
@@ -140,14 +142,11 @@ namespace Unity.Labs.FacialRemote
 
             streamSettings = m_StreamPlayback.activePlaybackBuffer;
             if (streamSettings == null)
-            {
                 return;
-            }
 
             currentFrame = 0;
             frameCount = m_StreamPlayback.activePlaybackBuffer.recordStream.Length / streamSettings.BufferSize;
         }
-
 
         public void StopBake()
         {
@@ -181,8 +180,6 @@ namespace Unity.Labs.FacialRemote
             StopBake();
             Debug.Log("End Bake");
         }
-
-        bool m_AnimatorInitialized;
 
         public void BakeClipLoop()
         {
@@ -225,12 +222,11 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 if (currentFrame == frameCount)
-                {
                     currentFrame++;
-                }
 
                 return true;
             }
+
             return false;
         }
 
@@ -291,30 +287,19 @@ namespace Unity.Labs.FacialRemote
                             var prop = datum.Value.propertyName;
                             var curve = datum.Value.curve;
                             if (prop == k_RotParams[0])
-                            {
                                 curve.AddKey(time, bone.localRotation.x);
-                            }
                             else if (prop == k_RotParams[1])
-                            {
                                 curve.AddKey(time, bone.localRotation.y);
-                            }
                             else if (prop == k_RotParams[2])
-                            {
                                 curve.AddKey(time, bone.localRotation.z);
-                            }
                             else if (prop == k_RotParams[3])
-                            {
                                 curve.AddKey(time, bone.localRotation.w);
-                            }
                             else
-                            {
                                 Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
-                            }
                         }
                     }
                 }
             }
         }
-
     }
 }

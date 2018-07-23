@@ -35,7 +35,7 @@ namespace Unity.Labs.FacialRemote
         int m_BlendShapeCount = 51;
 
         [SerializeField]
-        Mapping[] m_Mappings = {};
+        Mapping[] m_Mappings = { };
 
         [SerializeField]
         int m_BlendShapeSize;
@@ -94,17 +94,19 @@ namespace Unity.Labs.FacialRemote
                     var locs = new List<string>();
                     foreach (var location in BlendShapeUtils.Locations)
                     {
-                        locs.Add(location); // Eliminate capitalization and _ mismatch
+                        locs.Add(location);
                     }
+
                     m_Locations = locs.ToArray();
                 }
+
                 return m_Locations;
             }
         }
 
         void OnValidate()
         {
-            var poseSize = BlendShapeUtils.PoseSize;
+            const int poseSize = BlendShapeUtils.PoseSize;
             m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             m_FrameNumberSize = sizeof(int);
             m_FrameTimeSize = sizeof(float);

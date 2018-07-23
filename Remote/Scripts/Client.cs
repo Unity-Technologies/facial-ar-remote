@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Net.Sockets;
+using System.Threading;
 #if UNITY_IOS
 using System.Linq;
 using System.Collections.Generic;
 #endif
-using System.Net.Sockets;
-using System.Threading;
 using UnityEngine;
 #if UNITY_IOS
 using UnityEngine.XR.iOS;
@@ -23,24 +23,23 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
 
-        Transform m_CameraTransform;
-        Pose m_CameraPose;
-
-        float m_StartTime;
-        float m_CurrentTime = -1;
-        bool m_Running;
-
-        byte[] m_Buffer;
+        bool m_ARFaceActive;
         float[] m_BlendShapes;
 
-#if UNITY_IOS
-        Dictionary<string, float> m_CurrentBlendShapes;
-        Dictionary<string, int> m_BlendShapeIndices;
-#endif
+        byte[] m_Buffer;
+        Pose m_CameraPose;
+
+        Transform m_CameraTransform;
+        float m_CurrentTime = -1;
 
         Pose m_FacePose = new Pose(Vector3.zero, Quaternion.identity);
+        bool m_Running;
 
-        bool m_ARFaceActive;
+        float m_StartTime;
+
+#if UNITY_IOS
+        Dictionary<string, int> m_BlendShapeIndices;
+#endif
 
         void Awake()
         {
@@ -106,7 +105,8 @@ namespace Unity.Labs.FacialRemote
                 var count = 0;
                 while (m_Running)
                 {
-                    try {
+                    try
+                    {
                         if (socket.Connected)
                         {
                             if (m_CurrentTime > 0)
@@ -147,13 +147,13 @@ namespace Unity.Labs.FacialRemote
         }
 
 #if UNITY_IOS
-        void FaceAdded (ARFaceAnchor anchorData)
+        void FaceAdded(ARFaceAnchor anchorData)
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
             m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
             m_ARFaceActive = true;
 
-            m_CurrentBlendShapes = anchorData.blendShapes;
+            var blendShapes = anchorData.blendShapes;
 
             if (m_BlendShapeIndices == null)
             {
@@ -162,7 +162,7 @@ namespace Unity.Labs.FacialRemote
                 var names = m_StreamSettings.locations.ToList();
                 names.Sort();
 
-                foreach (var kvp in m_CurrentBlendShapes)
+                foreach (var kvp in blendShapes)
                 {
                     var index = names.IndexOf(kvp.Key);
                     if (index >= 0)
@@ -170,27 +170,25 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            UpdateBlendShapes();
+            UpdateBlendShapes(blendShapes);
         }
 
-        void FaceUpdated (ARFaceAnchor anchorData)
+        void FaceUpdated(ARFaceAnchor anchorData)
         {
             m_FacePose.position = UnityARMatrixOps.GetPosition(anchorData.transform);
             m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorData.transform);
 
-            m_CurrentBlendShapes = anchorData.blendShapes;
-            UpdateBlendShapes();
+            UpdateBlendShapes(anchorData.blendShapes);
         }
 
-        void FaceRemoved (ARFaceAnchor anchorData)
+        void FaceRemoved(ARFaceAnchor anchorData)
         {
             m_ARFaceActive = false;
         }
 
-
-        void UpdateBlendShapes()
+        void UpdateBlendShapes(Dictionary<string, float> blendShapes)
         {
-            foreach (var kvp in m_CurrentBlendShapes)
+            foreach (var kvp in blendShapes)
             {
                 int index;
                 if (m_BlendShapeIndices.TryGetValue(kvp.Key, out index))
