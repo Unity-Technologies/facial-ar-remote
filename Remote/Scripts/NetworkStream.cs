@@ -144,7 +144,7 @@ namespace Unity.Labs.FacialRemote
                                         m_StreamSettings.FrameNumberSize);
 
                                     var frameNum = frameNumArray[0];
-                                    if (streamReader.useDebug && m_LastFrameNum != frameNum - 1)
+                                    if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
                                         Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,  m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
@@ -223,7 +223,7 @@ namespace Unity.Labs.FacialRemote
             if (notSource || !active)
                 return;
 
-            if (streamReader.useDebug)
+            if (streamReader.verboseLogging)
             {
                 if (m_BufferQueue.Count > m_CatchupSize)
                     Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -28,18 +27,9 @@ namespace Unity.Labs.FacialRemote
 
         public IStreamReader streamReader { private get; set; }
         public bool active { get; private set; }
-
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
-
-        public IStreamSettings streamSettings
-        {
-            get { return activePlaybackBuffer; }
-        }
-
-        public PlaybackData playbackData
-        {
-            get { return m_PlaybackData; }
-        }
+        public IStreamSettings streamSettings { get { return activePlaybackBuffer; } }
+        public PlaybackData playbackData { get { return m_PlaybackData; } }
 
         void Start()
         {

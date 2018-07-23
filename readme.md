@@ -40,19 +40,17 @@ Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.uni
 
 4. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
 
-5. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Server` game object.
+5. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Stream Reader` game object.
 
 6. Set the `IP` of the device to one listed in the console debug log.
 
 7. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
-*Note* You need to be on the same network and you may have to disable any active VPNs and or disable firewall(s) on the ports you are using. This may either be on your computer or on the network.
+*Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
 *Note* Our internal setup was using a dedicated wireless router attached to the editor computer or lighting port to ethernet adaptor.
 
 
 ### Issues
 
-1. Character Rig Controller requires all bones to be set to work correctly.
+1. Character Rig Controller does not support Humanoid Avatar for bone animation.
 
-2. Character Rig Controller does not support Humanoid Avatar for bone animation.
-
-3. Animation Baking does not support Humanoid Avatar for avatar bone animation.
+2. Animation Baking does not support Humanoid Avatar for avatar bone animation.
