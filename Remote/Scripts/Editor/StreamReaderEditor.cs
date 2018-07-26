@@ -103,6 +103,19 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_HeadBoneOverride);
                 EditorGUILayout.PropertyField(m_CameraOverride);
                 EditorGUILayout.PropertyField(m_StreamSourceOverrides, true);
+
+                if (m_NetworkStream == null)
+                {
+                    EditorGUILayout.HelpBox("No Network Stream Component has been set or found. You will be unable " +
+                        "to connect to a device!", MessageType.Warning);
+                }
+
+                if (m_PlaybackStream == null)
+                {
+                    EditorGUILayout.HelpBox("No Playback Stream Component has been set or found. You Will be unable " +
+                        "to Record, Playback, or Bake a Stream Data!", MessageType.Warning);
+                }
+
                 EditorGUILayout.Space();
 
                 if (check.changed)
@@ -138,7 +151,11 @@ namespace Unity.Labs.FacialRemote
                         && m_PlaybackStream != null && m_PlaybackStream.playbackData != null;
                     using (new EditorGUI.DisabledGroupScope(m_NetworkStream == null || !(m_NetworkStream.active && useRecorder)))
                     {
-                        if (m_NetworkStream != null && m_NetworkStream.recording)
+                        if (m_NetworkStream == null)
+                        {
+                            GUILayout.Button(m_RecordIcon, m_ButtonStyle);
+                        }
+                        else if (m_NetworkStream.recording)
                         {
                             if (GUILayout.Button(m_RecordIcon, m_ButtonPressStyle))
                                 m_NetworkStream.StopRecording();
@@ -153,7 +170,11 @@ namespace Unity.Labs.FacialRemote
                     using (new EditorGUI.DisabledGroupScope(m_NetworkStream == null || m_PlaybackStream == null
                         || !(m_NetworkStream.active || m_PlaybackStream.activePlaybackBuffer != null)))
                     {
-                        if (m_PlaybackStream != null && m_PlaybackStream.active)
+                        if (m_PlaybackStream == null)
+                        {
+                            GUILayout.Button(m_PlayIcon, m_ButtonStyle);
+                        }
+                        else if (m_PlaybackStream.active)
                         {
                             if (GUILayout.Button(m_PlayIcon, m_ButtonPressStyle))
                             {
@@ -177,12 +198,20 @@ namespace Unity.Labs.FacialRemote
 
             if (m_ClipBaker == null)
             {
-                var clipName = m_PlaybackStream == null || m_PlaybackStream.activePlaybackBuffer == null ? "None" : m_PlaybackStream.activePlaybackBuffer.name;
+                var clipName = m_PlaybackStream == null || m_PlaybackStream.activePlaybackBuffer == null ? "None"
+                    : m_PlaybackStream.activePlaybackBuffer.name;
 
                 using (new EditorGUI.DisabledGroupScope(m_PlaybackStream == null))
                 {
-                    if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
-                        ShowRecordStreamMenu(m_PlaybackStream, m_PlaybackStream.playbackData.playbackBuffers);
+                    if (m_PlaybackStream == null || m_PlaybackStream.playbackData == null)
+                    {
+                        GUILayout.Button("Play Stream: NULL!");
+                    }
+                    else
+                    {
+                        if (GUILayout.Button(string.Format("Play Stream: {0}", clipName)))
+                            ShowRecordStreamMenu(m_PlaybackStream, m_PlaybackStream.playbackData.playbackBuffers);
+                    }
                 }
 
                 EditorGUILayout.Space();
