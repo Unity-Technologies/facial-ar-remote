@@ -7,16 +7,17 @@ using UnityEngine;
 namespace Unity.Labs.FacialRemote
 {
     /// <summary>
-    /// Asset for storing recorded sessions
+    /// Asset for storing recorded sessions.
     /// </summary>
     [Serializable]
-    [CreateAssetMenu(fileName = "PlaybackData", menuName = "FacialRemote/PlaybackData")]
+    [CreateAssetMenu(fileName = "PlaybackData", menuName = "Facial Remote/Playback Data")]
     public class PlaybackData : ScriptableObject
     {
         const int k_MinBufferAmount = 32;
         const int k_BufferCreateAmount = 6;
 
         [SerializeField]
+        [Tooltip("Individual recorded playback buffers from a streaming source.")]
         PlaybackBuffer[] m_PlaybackBuffers;
 
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
@@ -59,7 +60,7 @@ namespace Unity.Labs.FacialRemote
 
             m_ActivePlaybackBuffer = playbackBuffer;
 
-            var bufferSize = streamSettings.BufferSize;
+            var bufferSize = streamSettings.bufferSize;
             if (bufferSize != m_CurrentBufferSize)
                 m_BufferQueue.Clear();
 
