@@ -44,7 +44,7 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
-            m_Buffer = new byte[m_StreamSettings.BufferSize];
+            m_Buffer = new byte[m_StreamSettings.bufferSize];
             m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
             m_CameraTransform = Camera.main.transform;
 

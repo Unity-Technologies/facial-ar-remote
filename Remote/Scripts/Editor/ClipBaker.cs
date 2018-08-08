@@ -147,7 +147,7 @@ namespace Unity.Labs.FacialRemote
 
             currentFrame = 0;
             var recordStream = playbackBuffer.recordStream;
-            frameCount = recordStream.Length / playbackBuffer.BufferSize;
+            frameCount = recordStream.Length / playbackBuffer.bufferSize;
 
             Buffer.BlockCopy(recordStream, playbackBuffer.FrameTimeOffset, m_FrameTime, 0, playbackBuffer.FrameTimeSize);
             m_FirstFrameTime = m_FrameTime[0];
@@ -201,7 +201,7 @@ namespace Unity.Labs.FacialRemote
                 return false;
 
             var streamSettings = m_StreamReader.streamSource.streamSettings;
-            var bufferSize = streamSettings.BufferSize;
+            var bufferSize = streamSettings.bufferSize;
             var frameTimeOffset = streamSettings.FrameTimeOffset;
             var frameTimeSize = streamSettings.FrameTimeSize;
             var recordStream = m_PlaybackStream.activePlaybackBuffer.recordStream;
