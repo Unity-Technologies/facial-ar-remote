@@ -99,18 +99,21 @@ namespace Unity.Labs.FacialRemote
 
                     var connectionAddress = address;
                     Debug.Log(connectionAddress);
-                    try
+                    if (m_Socket == null)
                     {
-                        var endPoint = new IPEndPoint(connectionAddress, m_Port);
-                        m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        m_Socket.Bind(endPoint);
-                        m_Socket.Listen(k_MaxConnections);
-                        m_LastFrameNum = -1;
-                        m_Running = true;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
+                        try
+                        {
+                            var endPoint = new IPEndPoint(connectionAddress, m_Port);
+                            m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                            m_Socket.Bind(endPoint);
+                            m_Socket.Listen(k_MaxConnections);
+                            m_LastFrameNum = -1;
+                            m_Running = true;
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
+                        }
                     }
 
                     new Thread(() =>
@@ -124,6 +127,9 @@ namespace Unity.Labs.FacialRemote
 
                         while (m_Running)
                         {
+                            if (streamReader == null)
+                                continue;
+
                             var source = streamReader.streamSource;
                             if (m_Socket.Connected && source != null && source.Equals(this))
                             {
@@ -164,7 +170,9 @@ namespace Unity.Labs.FacialRemote
                                 }
                                 catch (Exception e)
                                 {
-                                    Debug.LogError(e.Message);
+                                    // Expect an exception on the last frame when OnDestroy closes the socket
+                                    if (m_Running)
+                                        Debug.LogError(e.Message + "\n" + e.StackTrace);
                                 }
                             }
 
@@ -176,6 +184,8 @@ namespace Unity.Labs.FacialRemote
 
                         if (m_Socket != null)
                             m_Socket.Disconnect(false);
+
+                        m_Socket = null;
                     }).Start();
                 }
             }
@@ -249,6 +259,12 @@ namespace Unity.Labs.FacialRemote
         void OnDestroy()
         {
             m_Running = false;
+
+            if (m_Socket != null)
+            {
+                m_Socket.Close();
+                m_Socket = null;
+            }
         }
     }
 }
