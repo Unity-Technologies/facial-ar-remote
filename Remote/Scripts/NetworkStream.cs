@@ -49,7 +49,8 @@ namespace Unity.Labs.FacialRemote
 
         bool m_Running;
 
-        Socket m_Socket;
+        readonly List<Socket> m_ListenSockets = new List<Socket>();
+        Socket m_TransferSocket;
         int m_TakeNumber;
         IStreamRecorder m_StreamRecorder;
 
@@ -62,7 +63,7 @@ namespace Unity.Labs.FacialRemote
 
         public bool active
         {
-            get { return m_Socket != null && m_Socket.Connected; }
+            get { return m_TransferSocket != null && m_TransferSocket.Connected; }
         }
 
         public IStreamSettings streamSettings { get { return m_StreamSettings; } }
@@ -105,6 +106,7 @@ namespace Unity.Labs.FacialRemote
                 addresses = addressList.ToArray();
             }
 
+
             foreach (var address in addresses)
             {
                 if (address.AddressFamily != AddressFamily.InterNetwork)
@@ -115,27 +117,35 @@ namespace Unity.Labs.FacialRemote
 
                 var connectionAddress = address;
                 Debug.Log(connectionAddress);
-                if (m_Socket == null)
+
+                Socket listenSocket;
+                try
                 {
-                    try
-                    {
-                        var endPoint = new IPEndPoint(connectionAddress, m_Port);
-                        m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        m_Socket.Bind(endPoint);
-                        m_Socket.Listen(k_MaxConnections);
-                        m_LastFrameNum = -1;
-                        m_Running = true;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
-                    }
+                    var endPoint = new IPEndPoint(connectionAddress, m_Port);
+                    listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    listenSocket.Bind(endPoint);
+                    listenSocket.Listen(k_MaxConnections);
+                    m_ListenSockets.Add(listenSocket);
+
+                    m_LastFrameNum = -1;
+                    m_Running = true;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
+                    continue;
                 }
 
                 new Thread(() =>
                 {
                     // Block until timeout or successful connection
-                    m_Socket = m_Socket.Accept();
+                    var socket = listenSocket.Accept();
+
+                    // If another socket has already accepted a connection, exit the thread
+                    if (m_TransferSocket != null)
+                        return;
+
+                    m_TransferSocket = socket;
                     Debug.Log(string.Format("Client connected on {0}", connectionAddress));
 
                     var frameNumArray = new int[1];
@@ -147,7 +157,7 @@ namespace Unity.Labs.FacialRemote
                             continue;
 
                         var source = streamReader.streamSource;
-                        if (m_Socket.Connected && source != null && source.Equals(this))
+                        if (socket.Connected && source != null && source.Equals(this))
                         {
                             try
                             {
@@ -164,7 +174,7 @@ namespace Unity.Labs.FacialRemote
                                     buffer[i] = 0;
                                 }
 
-                                m_Socket.Receive(buffer);
+                                socket.Receive(buffer);
 
                                 // Receive can fail and return an empty buffer
                                 if (buffer[0] == m_StreamSettings.ErrorCheck)
@@ -198,10 +208,7 @@ namespace Unity.Labs.FacialRemote
                         Thread.Sleep(1);
                     }
 
-                    if (m_Socket != null)
-                        m_Socket.Disconnect(false);
-
-                    m_Socket = null;
+                    socket.Disconnect(false);
                 }).Start();
             }
         }
@@ -275,10 +282,9 @@ namespace Unity.Labs.FacialRemote
         {
             m_Running = false;
 
-            if (m_Socket != null)
+            foreach (var socket in m_ListenSockets)
             {
-                m_Socket.Close();
-                m_Socket = null;
+                socket.Close();
             }
         }
     }
