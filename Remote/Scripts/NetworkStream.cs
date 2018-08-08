@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
@@ -84,87 +85,99 @@ namespace Unity.Labs.FacialRemote
 
             m_TakeNumber = 0;
             Debug.Log("Possible IP addresses:");
-            foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+
+            foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
-                var connectionAddress = address;
-                Debug.Log(connectionAddress);
-                try
+                foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
                 {
-                    var endPoint = new IPEndPoint(connectionAddress, m_Port);
-                    m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    m_Socket.Bind(endPoint);
-                    m_Socket.Listen(k_MaxConnections);
-                    m_LastFrameNum = -1;
-                    m_Running = true;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
-                }
+                    var address = ip.Address;
+                    if (address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
 
-                new Thread(() =>
-                {
-                    // Block until timeout or successful connection
-                    m_Socket = m_Socket.Accept();
-                    Debug.Log(string.Format("Client connected on {0}", connectionAddress));
+                    if (IPAddress.IsLoopback(address))
+                        continue;
 
-                    var frameNumArray = new int[1];
-                    var bufferSize = m_StreamSettings.BufferSize;
-
-                    while (m_Running)
+                    var connectionAddress = address;
+                    Debug.Log(connectionAddress);
+                    try
                     {
-                        var source = streamReader.streamSource;
-                        if (m_Socket.Connected && source != null && source.Equals(this))
-                        {
-                            try
-                            {
-                                if (m_StreamSettings == null || m_StreamSettings.BufferSize != bufferSize)
-                                {
-                                    Debug.LogError("Settings changed while connnected. Please exit play mode before changing settings");
-                                    break;
-                                }
-
-                                var buffer = m_UnusedBuffers.Count == 0 ? new byte[bufferSize] : m_UnusedBuffers.Dequeue();
-
-                                for (var i = 0; i < bufferSize; i++)
-                                {
-                                    buffer[i] = 0;
-                                }
-
-                                m_Socket.Receive(buffer);
-                                // Receive can fail and return an empty buffer
-                                if (buffer[0] == m_StreamSettings.ErrorCheck)
-                                {
-                                    m_BufferQueue.Enqueue(buffer);
-
-                                    if (recording)
-                                        m_StreamRecorder.AddDataToRecording(buffer);
-
-                                    Buffer.BlockCopy(buffer, m_StreamSettings.FrameNumberOffset, frameNumArray, 0,
-                                        m_StreamSettings.FrameNumberSize);
-
-                                    var frameNum = frameNumArray[0];
-                                    if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
-                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,  m_LastFrameNum);
-
-                                    m_LastFrameNum = frameNum;
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.LogError(e.Message);
-                            }
-                        }
-
-                        if (m_BufferQueue.Count > k_MaxBufferQueue)
-                            m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
-
-                        Thread.Sleep(1);
+                        var endPoint = new IPEndPoint(connectionAddress, m_Port);
+                        m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        m_Socket.Bind(endPoint);
+                        m_Socket.Listen(k_MaxConnections);
+                        m_LastFrameNum = -1;
+                        m_Running = true;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
                     }
 
-                    if (m_Socket != null)
-                        m_Socket.Disconnect(false);
-                }).Start();
+                    new Thread(() =>
+                    {
+                        // Block until timeout or successful connection
+                        m_Socket = m_Socket.Accept();
+                        Debug.Log(string.Format("Client connected on {0}", connectionAddress));
+
+                        var frameNumArray = new int[1];
+                        var bufferSize = m_StreamSettings.BufferSize;
+
+                        while (m_Running)
+                        {
+                            var source = streamReader.streamSource;
+                            if (m_Socket.Connected && source != null && source.Equals(this))
+                            {
+                                try
+                                {
+                                    if (m_StreamSettings == null || m_StreamSettings.BufferSize != bufferSize)
+                                    {
+                                        Debug.LogError("Settings changed while connnected. Please exit play mode before changing settings");
+                                        break;
+                                    }
+
+                                    var buffer = m_UnusedBuffers.Count == 0 ? new byte[bufferSize] : m_UnusedBuffers.Dequeue();
+
+                                    for (var i = 0; i < bufferSize; i++)
+                                    {
+                                        buffer[i] = 0;
+                                    }
+
+                                    m_Socket.Receive(buffer);
+
+                                    // Receive can fail and return an empty buffer
+                                    if (buffer[0] == m_StreamSettings.ErrorCheck)
+                                    {
+                                        m_BufferQueue.Enqueue(buffer);
+
+                                        if (recording)
+                                            m_StreamRecorder.AddDataToRecording(buffer);
+
+                                        Buffer.BlockCopy(buffer, m_StreamSettings.FrameNumberOffset, frameNumArray, 0,
+                                            m_StreamSettings.FrameNumberSize);
+
+                                        var frameNum = frameNumArray[0];
+                                        if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
+                                            Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+
+                                        m_LastFrameNum = frameNum;
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.LogError(e.Message);
+                                }
+                            }
+
+                            if (m_BufferQueue.Count > k_MaxBufferQueue)
+                                m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
+
+                            Thread.Sleep(1);
+                        }
+
+                        if (m_Socket != null)
+                            m_Socket.Disconnect(false);
+                    }).Start();
+                }
             }
         }
 
