@@ -66,7 +66,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Character: {fileID: 0}
-  m_UseDebug: 0
+  m_VerboseLogging: 0
   m_TrackingLossPadding: 64
   m_BlendShapesControllerOverride: {fileID: 0}
   m_CharacterRigControllerOverride: {fileID: 0}
@@ -86,6 +86,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StreamSettings: {fileID: 11400000, guid: 87ff99ce494718c46adee6b73f32e6d2, type: 2}
   m_Port: 9000
-  m_CatchupThreshold: 16
-  m_CatchupSize: 3
+  m_CatchUpThreshold: 16
+  m_CatchUpSize: 3
   m_StreamRecorderOverride: {fileID: 0}
