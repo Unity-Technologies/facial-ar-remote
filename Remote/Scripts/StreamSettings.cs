@@ -54,7 +54,7 @@ namespace Unity.Labs.FacialRemote
         int m_BufferSize;
 
         [SerializeField]
-        [Tooltip("Sting names of the blend shapes in the stream with their index in the array being their relative location.")]
+        [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_Locations = { };
 
         [SerializeField]
