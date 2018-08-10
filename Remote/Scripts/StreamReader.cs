@@ -42,7 +42,7 @@ namespace Unity.Labs.FacialRemote
         Camera m_CameraOverride;
 
         [SerializeField]
-        [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its chldren")]
+        [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its children.")]
         GameObject[] m_StreamSourceOverrides = { };
 
         IStreamSource m_ActiveStreamSource;
@@ -97,7 +97,7 @@ namespace Unity.Labs.FacialRemote
             var settings = streamSource.streamSettings;
 
             Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-            m_FaceActive = buffer[offset + settings.BufferSize - 1] == 1;
+            m_FaceActive = buffer[offset + settings.bufferSize - 1] == 1;
 
             Buffer.BlockCopy(buffer, settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
             Buffer.BlockCopy(buffer, settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);

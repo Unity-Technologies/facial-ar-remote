@@ -53,7 +53,7 @@
         /// <summary>
         /// Total size of buffer of byte array for single same of data.
         /// </summary>
-        int BufferSize { get; }
+        int bufferSize { get; }
 
         /// <summary>
         /// Sting names of the blend shapes in the stream with their index in the array being their relative location.

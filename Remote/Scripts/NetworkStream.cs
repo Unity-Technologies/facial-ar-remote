@@ -34,15 +34,15 @@ namespace Unity.Labs.FacialRemote
         int m_Port = 9000;
 
         [SerializeField]
-        [Tooltip("Threshold for number of missed frames before trying to skip frames with catchup size.")]
-        int m_CatchupThreshold = 16;
+        [Tooltip("Threshold for number of missed frames before trying to skip frames with catch up size.")]
+        int m_CatchUpThreshold = 16;
 
         [SerializeField]
         [Tooltip("How many frames should be processed at once if the editor falls behind processing the device stream. In an active recording these frames are still captured even if they are skipped in editor.")]
-        int m_CatchupSize = 3;
+        int m_CatchUpSize = 3;
 
         [SerializeField]
-        [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object")]
+        [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object.")]
         GameObject m_StreamRecorderOverride;
 
         int m_LastFrameNum;
@@ -160,7 +160,7 @@ namespace Unity.Labs.FacialRemote
                     Debug.Log(string.Format("Client connected on {0}", connectionAddress));
 
                     var frameNumArray = new int[1];
-                    var bufferSize = m_StreamSettings.BufferSize;
+                    var bufferSize = m_StreamSettings.bufferSize;
 
                     while (m_Running)
                     {
@@ -172,7 +172,7 @@ namespace Unity.Labs.FacialRemote
                         {
                             try
                             {
-                                if (m_StreamSettings == null || m_StreamSettings.BufferSize != bufferSize)
+                                if (m_StreamSettings == null || m_StreamSettings.bufferSize != bufferSize)
                                 {
                                     Debug.LogError("Settings changed while connnected. Please exit play mode before changing settings");
                                     break;
@@ -253,9 +253,9 @@ namespace Unity.Labs.FacialRemote
                 return;
 
             // Throw out some old frames if we are too far behind
-            if (m_BufferQueue.Count > m_CatchupThreshold)
+            if (m_BufferQueue.Count > m_CatchUpThreshold)
             {
-                for (var i = 0; i < m_CatchupSize; i++)
+                for (var i = 0; i < m_CatchUpSize; i++)
                 {
                     m_UnusedBuffers.Enqueue(m_BufferQueue.Dequeue());
                 }
@@ -281,9 +281,9 @@ namespace Unity.Labs.FacialRemote
 
             if (streamReader.verboseLogging)
             {
-                if (m_BufferQueue.Count > m_CatchupSize)
+                if (m_BufferQueue.Count > m_CatchUpSize)
                     Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
-                        m_BufferQueue.Count, m_CatchupSize));
+                        m_BufferQueue.Count, m_CatchUpSize));
             }
 
             UpdateCurrentFrameBuffer();

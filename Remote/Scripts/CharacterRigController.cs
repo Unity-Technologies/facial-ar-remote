@@ -70,7 +70,7 @@ namespace Unity.Labs.FacialRemote
         bool m_DriveNeck = true;
 
         [SerializeField]
-        [Tooltip("Amount of smoothing to apply to head movement")]
+        [Tooltip("Neck bone transform")]
         Transform m_NeckBone;
 
         [Range(0f, 1f)]
