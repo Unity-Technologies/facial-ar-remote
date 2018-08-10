@@ -24,7 +24,6 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
 
-        bool m_ARFaceActive;
         float[] m_BlendShapes;
 
         byte[] m_Buffer;
@@ -39,6 +38,7 @@ namespace Unity.Labs.FacialRemote
         float m_StartTime;
 
 #if UNITY_IOS
+        bool m_ARFaceActive;
         Dictionary<string, int> m_BlendShapeIndices;
 #endif
 
@@ -104,7 +104,9 @@ namespace Unity.Labs.FacialRemote
             new Thread(() =>
             {
                 var count = 0;
+#if UNITY_IOS
                 var lastIndex = m_Buffer.Length - 1;
+#endif
                 while (m_Running)
                 {
                     try
@@ -127,7 +129,9 @@ namespace Unity.Labs.FacialRemote
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameNumberSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
+#if UNITY_IOS
                                 m_Buffer[lastIndex] = (byte)(m_ARFaceActive ? 1 : 0);
+#endif
 
                                 socket.Send(m_Buffer);
                             }
