@@ -101,12 +101,16 @@ namespace Unity.Labs.FacialRemote
                     if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
                         continue;
 
-                    if (networkInterface.OperationalStatus != OperationalStatus.Up)
-                        continue;
-
-                    foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
+                    switch (networkInterface.OperationalStatus)
                     {
-                        addressList.Add(ip.Address);
+                        case OperationalStatus.Up:
+                        case OperationalStatus.Unknown:
+                            foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
+                            {
+                                addressList.Add(ip.Address);
+                            }
+
+                            break;
                     }
                 }
 
