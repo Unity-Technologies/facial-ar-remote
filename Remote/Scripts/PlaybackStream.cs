@@ -5,7 +5,7 @@ namespace Unity.Labs.FacialRemote
 {
     /// <inheritdoc cref="IStreamSource" />
     /// <summary>
-    /// Reads tracking data from a PlaybackData asset and updates a IStreamReader />
+    /// Reads tracking data from a PlaybackData asset and updates a Stream Reader.
     /// </summary>
     public class PlaybackStream : MonoBehaviour, IStreamSource, IStreamRecorder
     {
@@ -73,13 +73,13 @@ namespace Unity.Labs.FacialRemote
             }
 
             var settings = activePlaybackBuffer;
-            m_CurrentFrameBuffer = new byte[settings.BufferSize];
-            for (var i = 0; i < settings.BufferSize; i++)
+            m_CurrentFrameBuffer = new byte[settings.bufferSize];
+            for (var i = 0; i < settings.bufferSize; i++)
             {
                 m_CurrentFrameBuffer[i] = 0;
             }
 
-            Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+            Buffer.BlockCopy(activePlaybackBuffer.recordStream, 0, m_CurrentFrameBuffer, 0, streamSettings.bufferSize);
             Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTime, 0, streamSettings.FrameTimeSize);
 
             m_PlaybackStartTime = Time.time;
@@ -98,15 +98,15 @@ namespace Unity.Labs.FacialRemote
 
         public bool PlayBackLoop()
         {
-            if (m_BufferPosition + streamSettings.BufferSize > activePlaybackBuffer.recordStream.Length)
+            if (m_BufferPosition + streamSettings.bufferSize > activePlaybackBuffer.recordStream.Length)
                 return false;
 
             Buffer.BlockCopy(activePlaybackBuffer.recordStream, m_BufferPosition,
-                m_CurrentFrameBuffer, 0, streamSettings.BufferSize);
+                m_CurrentFrameBuffer, 0, streamSettings.bufferSize);
             Buffer.BlockCopy(m_CurrentFrameBuffer, streamSettings.FrameTimeOffset, m_FrameTime,
                 0, streamSettings.FrameTimeSize);
 
-            m_BufferPosition += streamSettings.BufferSize;
+            m_BufferPosition += streamSettings.bufferSize;
             m_NextFrameTime = m_FrameTime[0];
 
             return true;

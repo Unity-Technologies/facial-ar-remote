@@ -25,7 +25,9 @@ Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.uni
 *Note* You may need to set the `Target Minimum iOS Version` to `11.3` or higher. You may also need to enable `Requires ARKit Support`
 *Note* To use ARkit 2.0 you will need to set `ARKIT_2_0` in `Other Settings > Scripting Define Symbols*` this will be required for any platform you want to use ARKit 2.0 features with.
 
-5. Set `Client.scene` as your build scene and build the Xcode project.
+5. Open `Client.scene` and on the `Client` gameobject, set the correct `Stream Settings` on the `Client` component for your version of ARKit.
+
+6. Set `Client.scene` as your build scene and build the Xcode project.
 
 ### Editor Animation Setup
 
@@ -49,8 +51,12 @@ Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.uni
 *Note* Our internal setup was using a dedicated wireless router attached to the editor computer or lighting port to ethernet adaptor.
 
 
-### Issues
+### Known Issues
 
 1. Character Rig Controller does not support Humanoid Avatar for bone animation.
 
 2. Animation Baking does not support Humanoid Avatar for avatar bone animation.
+
+3. Stream source can only connect to a single stream reader.
+
+4. Some network setups cause an issue with DNS lookup for getting IP addresses of the server computer.
