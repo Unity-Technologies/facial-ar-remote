@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
@@ -48,7 +49,8 @@ namespace Unity.Labs.FacialRemote
 
         bool m_Running;
 
-        Socket m_Socket;
+        readonly List<Socket> m_ListenSockets = new List<Socket>();
+        Socket m_TransferSocket;
         int m_TakeNumber;
         IStreamRecorder m_StreamRecorder;
 
@@ -61,7 +63,7 @@ namespace Unity.Labs.FacialRemote
 
         public bool active
         {
-            get { return m_Socket != null && m_Socket.Connected; }
+            get { return m_TransferSocket != null && m_TransferSocket.Connected; }
         }
 
         public IStreamSettings streamSettings { get { return m_StreamSettings; } }
@@ -84,28 +86,77 @@ namespace Unity.Labs.FacialRemote
 
             m_TakeNumber = 0;
             Debug.Log("Possible IP addresses:");
-            foreach (var address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+
+            IPAddress[] addresses;
+            try
             {
+                addresses = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+            }
+            catch (Exception)
+            {
+                Debug.LogWarning("DNS-based method failed, using network interfaces to find local IP");
+                var addressList = new List<IPAddress>();
+                foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                        continue;
+
+                    switch (networkInterface.OperationalStatus)
+                    {
+                        case OperationalStatus.Up:
+                        case OperationalStatus.Unknown:
+                            foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
+                            {
+                                addressList.Add(ip.Address);
+                            }
+
+                            break;
+                    }
+                }
+
+                addresses = addressList.ToArray();
+            }
+
+
+            foreach (var address in addresses)
+            {
+                if (address.AddressFamily != AddressFamily.InterNetwork)
+                    continue;
+
+                if (IPAddress.IsLoopback(address))
+                    continue;
+
                 var connectionAddress = address;
                 Debug.Log(connectionAddress);
+
+                Socket listenSocket;
                 try
                 {
                     var endPoint = new IPEndPoint(connectionAddress, m_Port);
-                    m_Socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    m_Socket.Bind(endPoint);
-                    m_Socket.Listen(k_MaxConnections);
+                    listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    listenSocket.Bind(endPoint);
+                    listenSocket.Listen(k_MaxConnections);
+                    m_ListenSockets.Add(listenSocket);
+
                     m_LastFrameNum = -1;
                     m_Running = true;
                 }
                 catch (Exception e)
                 {
                     Debug.LogErrorFormat("Error creating listen socket on address {0} : {1}", connectionAddress, e);
+                    continue;
                 }
 
                 new Thread(() =>
                 {
                     // Block until timeout or successful connection
-                    m_Socket = m_Socket.Accept();
+                    var socket = listenSocket.Accept();
+
+                    // If another socket has already accepted a connection, exit the thread
+                    if (m_TransferSocket != null)
+                        return;
+
+                    m_TransferSocket = socket;
                     Debug.Log(string.Format("Client connected on {0}", connectionAddress));
 
                     var frameNumArray = new int[1];
@@ -113,8 +164,11 @@ namespace Unity.Labs.FacialRemote
 
                     while (m_Running)
                     {
+                        if (streamReader == null)
+                            continue;
+
                         var source = streamReader.streamSource;
-                        if (m_Socket.Connected && source != null && source.Equals(this))
+                        if (socket.Connected && source != null && source.Equals(this))
                         {
                             try
                             {
@@ -131,7 +185,8 @@ namespace Unity.Labs.FacialRemote
                                     buffer[i] = 0;
                                 }
 
-                                m_Socket.Receive(buffer);
+                                socket.Receive(buffer);
+
                                 // Receive can fail and return an empty buffer
                                 if (buffer[0] == m_StreamSettings.ErrorCheck)
                                 {
@@ -145,14 +200,16 @@ namespace Unity.Labs.FacialRemote
 
                                     var frameNum = frameNumArray[0];
                                     if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
-                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum,  m_LastFrameNum);
+                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
                                 }
                             }
                             catch (Exception e)
                             {
-                                Debug.LogError(e.Message);
+                                // Expect an exception on the last frame when OnDestroy closes the socket
+                                if (m_Running)
+                                    Debug.LogError(e.Message + "\n" + e.StackTrace);
                             }
                         }
 
@@ -162,8 +219,7 @@ namespace Unity.Labs.FacialRemote
                         Thread.Sleep(1);
                     }
 
-                    if (m_Socket != null)
-                        m_Socket.Disconnect(false);
+                    socket.Disconnect(false);
                 }).Start();
             }
         }
@@ -236,6 +292,11 @@ namespace Unity.Labs.FacialRemote
         void OnDestroy()
         {
             m_Running = false;
+
+            foreach (var socket in m_ListenSockets)
+            {
+                socket.Close();
+            }
         }
     }
 }
