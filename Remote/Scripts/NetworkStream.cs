@@ -94,9 +94,16 @@ namespace Unity.Labs.FacialRemote
             }
             catch (Exception)
             {
+                Debug.LogWarning("DNS-based method failed, using network interfaces to find local IP");
                 var addressList = new List<IPAddress>();
                 foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
                 {
+                    if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                        continue;
+
+                    if (networkInterface.OperationalStatus != OperationalStatus.Up)
+                        continue;
+
                     foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
                     {
                         addressList.Add(ip.Address);
