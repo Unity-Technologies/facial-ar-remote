@@ -56,7 +56,7 @@
         int bufferSize { get; }
 
         /// <summary>
-        /// Sting names of the blend shapes in the stream with their index in the array being their relative location.
+        /// String names of the blend shapes in the stream with their index in the array being their relative location.
         /// </summary>
         string[] locations { get; }
 
