@@ -11,7 +11,7 @@ This repository is tested against the latest stable version of Unity and require
 ## How To Use/Quick Start Guide  
 
 Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.unity3d.com/Packages/com.unity.textmeshpro@1.2/manual/index.html), and [ARKit plugin](https://assetstore.unity.com/packages/essentials/tutorial-projects/unity-arkit-plugin-92515). 
-*Note* ARKit plugin is only required for iOS build of remote. For your convenience, you may want to build the remote from a separate project. For best results use Bitbucker tip of [ARKit plugin](https://bitbucket.org/Unity-Technologies/unity-arkit-plugin)
+*Note* ARKit plugin is only required for iOS build of remote. For your convenience, you may want to build the remote from a separate project. For best results use Bitbucket tip of [ARKit plugin](https://bitbucket.org/Unity-Technologies/unity-arkit-plugin)
 
 ### iOS Build Setup
 
