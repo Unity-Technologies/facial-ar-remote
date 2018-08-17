@@ -58,9 +58,29 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
-            if (m_SkinnedMeshRenderers.Length < 1 || m_SkinnedMeshRenderers.All(a => a == null))
+            var filteredList = new List<SkinnedMeshRenderer>();
+            foreach (var renderer in m_SkinnedMeshRenderers)
             {
-                Debug.LogWarning("Blend Shape Controller needs a Skinned Mesh Renderer set.");
+                if (renderer == null)
+                {
+                    Debug.LogWarning("Null element in SkinnedMeshRenderer list in " + this);
+                    continue;
+                }
+
+                if (renderer.sharedMesh == null)
+                {
+                    Debug.LogWarning("Missing mesh in " + renderer);
+                    continue;
+                }
+
+                filteredList.Add(renderer);
+            }
+
+            m_SkinnedMeshRenderers = filteredList.ToArray();
+
+            if (m_SkinnedMeshRenderers.Length < 1)
+            {
+                Debug.LogWarning("Blend Shape Controller has no valid Skinned Mesh Renderers.");
                 enabled = false;
             }
         }
