@@ -19,7 +19,7 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 1. Setup a new project either from the ARKit plugin project from BitBucket or a new project with the ARKit plugin from the asset store.
 
-2. Add `TextMesh-Pro` to the project from `Window > Package Manager`.
+2. (Unity 2018.1) Add `TextMesh-Pro` to the project from `Window > Package Manager`. The package is added automatically in Unity 2018.2 and above.
 
 3. Add this repo to the project and set the build target to iOS.
 
@@ -29,7 +29,11 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 5. Open `Client.scene` and on the `Client` gameobject, set the correct `Stream Settings` on the `Client` component for your version of ARKit.
 
-6. Set `Client.scene` as your build scene and build the Xcode project.
+6. When prompted, import TMP Essential Resources for TextMesh Pro
+
+7. Enable "ARKit Uses Facetracking" on UnityARKitPlugin > Resources > UnityARKitPlugIn > ARKitSettings
+
+8. Set `Client.scene` as your build scene and build the Xcode project.
 
 ### Editor Animation Setup
 
