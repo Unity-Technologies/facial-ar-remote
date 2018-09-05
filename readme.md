@@ -13,13 +13,13 @@ This repository is tested against the latest stable version of Unity and require
 Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.unity3d.com/Packages/com.unity.textmeshpro@1.2/manual/index.html), and [ARKit plugin](https://assetstore.unity.com/packages/essentials/tutorial-projects/unity-arkit-plugin-92515). 
 *Note* ARKit plugin is only required for iOS build of remote. For your convenience, you may want to build the remote from a separate project. For best results use Bitbucket tip of [ARKit plugin](https://bitbucket.org/Unity-Technologies/unity-arkit-plugin)
 
-This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you have LFS installed to get all the files.
+This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you have LFS installed to get all the files. Unfortunately this means that the large files are also not included in the "Download ZIP" option on Github, and the example head model, among other assets, will be missing.
 
 ### iOS Build Setup
 
 1. Setup a new project either from the ARKit plugin project from BitBucket or a new project with the ARKit plugin from the asset store.
 
-2. Add `TextMesh-Pro` to the project from `Window > Package Manager`.
+2. (Unity 2018.1) Add `TextMesh-Pro` to the project from `Window > Package Manager`. The package is added automatically in Unity 2018.2 and above.
 
 3. Add this repo to the project and set the build target to iOS.
 
@@ -29,7 +29,11 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 5. Open `Client.scene` and on the `Client` gameobject, set the correct `Stream Settings` on the `Client` component for your version of ARKit.
 
-6. Set `Client.scene` as your build scene and build the Xcode project.
+6. When prompted, import TMP Essential Resources for TextMesh Pro
+
+7. Enable "ARKit Uses Facetracking" on UnityARKitPlugin > Resources > UnityARKitPlugIn > ARKitSettings
+
+8. Set `Client.scene` as your build scene and build the Xcode project.
 
 ### Editor Animation Setup
 
