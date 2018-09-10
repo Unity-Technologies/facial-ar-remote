@@ -8,6 +8,9 @@ Facial AR Remote is a tool that allows you to capture blendshape animations dire
 
 This repository is tested against the latest stable version of Unity and requires the user to build their own iOS app to use as a remote. It is presented on an experimental basis - there is no formal support.
 
+## Download
+Get the latest release from the [Releases tab](https://github.com/Unity-Technologies/facial-ar-remote/releases)
+
 ## How To Use/Quick Start Guide  
 
 Project built using Unity 2018+, [TextMesh Pro Package Manager](https://docs.unity3d.com/Packages/com.unity.textmeshpro@1.2/manual/index.html), and [ARKit plugin](https://assetstore.unity.com/packages/essentials/tutorial-projects/unity-arkit-plugin-92515). 
