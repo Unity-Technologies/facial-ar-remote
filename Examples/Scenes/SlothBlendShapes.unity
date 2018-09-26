@@ -285,12 +285,6 @@ Prefab:
       propertyPath: m_Character
       value: 
       objectReference: {fileID: 786562247}
-    - target: {fileID: 114853668929166538, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
-        type: 2}
-      propertyPath: m_StreamSettings
-      value: 
-      objectReference: {fileID: 11400000, guid: a40a3380648a240bab934a19984df455,
-        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 2}
   m_IsPrefabParent: 0
