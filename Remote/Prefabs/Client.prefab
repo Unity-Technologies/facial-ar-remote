@@ -1563,7 +1563,7 @@ MonoBehaviour:
   m_Client: {fileID: 114306834681226924}
   m_MainGUI: {fileID: 223724698400265780}
   m_FaceLostGUI: {fileID: 223011695432814138}
-  m_NotSupprotedGUI: {fileID: 223853865603706680}
+  m_NotSupportedGUI: {fileID: 223853865603706680}
   m_ConnectButton: {fileID: 114748139102597400}
   m_PortTextField: {fileID: 114268972160000486}
   m_IPTextField: {fileID: 114972750310622832}
