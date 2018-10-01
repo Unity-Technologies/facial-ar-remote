@@ -28,7 +28,8 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 4. Setup the iOS build settings for the remote. In `Other Settings > Camera Usage Description` be sure you add "AR Face Tracking" or something to that effect to the field. 
 *Note* You may need to set the `Target Minimum iOS Version` to `11.3` or higher. You may also need to enable `Requires ARKit Support`
-*Note* To use ARkit 2.0 you will need to set `ARKIT_2_0` in `Other Settings > Scripting Define Symbols*` this will be required for any platform you want to use ARKit 2.0 features with.
+*Note* The project defaults to ARkit 2.0, To use ARkit 1.5 you will need to set `ARKIT_1_5` in `Other Settings > Scripting Define Symbols*` this will be required only if you have not updated your remote app to support ARkit 2.0. 
+*Note* You may need to update your version of the ARkit plugin and update to XCode 10 or greater for ARKit 2.0.
 
 5. Open `Client.scene` and on the `Client` gameobject, set the correct `Stream Settings` on the `Client` component for your version of ARKit.
 
