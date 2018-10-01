@@ -63,9 +63,9 @@ namespace Unity.Labs.FacialRemote
         public const string  MouthUpperUpRight   =   ARBlendShapeLocation.MouthUpperUpRight;
         public const string  NoseSneerLeft       =   ARBlendShapeLocation.NoseSneerLeft;
         public const string  NoseSneerRight      =   ARBlendShapeLocation.NoseSneerRight;
-#if ARKIT_2_0
+#if !(ARKIT_1_5)
         public const string  TongueOut           =   ARBlendShapeLocation.TongueOut;
-#endif //ARKIT_2_0
+#endif //ARKIT_1_5
 #else
         public const string  BrowDownLeft        =   "browDown_L";
         public const string  BrowDownRight       =   "browDown_R";
@@ -118,9 +118,9 @@ namespace Unity.Labs.FacialRemote
         public const string  MouthUpperUpRight   =   "mouthUpperUp_R";
         public const string  NoseSneerLeft       =   "noseSneer_L";
         public const string  NoseSneerRight      =   "noseSneer_R";
-#if ARKIT_2_0
+#if !(ARKIT_1_5)
         public const string  TongueOut           =   "tongueOut";
-#endif //ARKIT_2_0
+#endif //ARKIT_1_5
 #endif
 
         /// <summary>

@@ -552,7 +552,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 641dabe3b66ed43478857b350ca6bf90, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -638,7 +638,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 641dabe3b66ed43478857b350ca6bf90, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -891,7 +891,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 641dabe3b66ed43478857b350ca6bf90, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -1019,8 +1019,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bee8c0b839d4394a9d27a7b36be2eea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ClientGUI: {fileID: 114641071989034726}
-  m_StreamSettings: {fileID: 11400000, guid: 87ff99ce494718c46adee6b73f32e6d2, type: 2}
+  m_StreamSettings: {fileID: 11400000, guid: a40a3380648a240bab934a19984df455, type: 2}
 --- !u!114 &114511850193313110
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1373,7 +1372,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 641dabe3b66ed43478857b350ca6bf90, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
@@ -1560,11 +1559,11 @@ MonoBehaviour:
   m_WidthPercent: 0.5
   m_HeightPercent: 0.5
   m_Port: 9000
-  m_IP: 192.168.1.2
+  m_ServerIP: 192.168.1.2
   m_Client: {fileID: 114306834681226924}
   m_MainGUI: {fileID: 223724698400265780}
   m_FaceLostGUI: {fileID: 223011695432814138}
-  m_NotSupprotedGUI: {fileID: 223853865603706680}
+  m_NotSupportedGUI: {fileID: 223853865603706680}
   m_ConnectButton: {fileID: 114748139102597400}
   m_PortTextField: {fileID: 114268972160000486}
   m_IPTextField: {fileID: 114972750310622832}
