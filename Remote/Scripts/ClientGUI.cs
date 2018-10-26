@@ -61,7 +61,10 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_Camera = Camera.main;
-            if (Device.generation == DeviceGeneration.iPhoneX)
+            if (Device.generation == DeviceGeneration.iPhoneX || 
+                Device.generation == DeviceGeneration.iPhoneXS || 
+                Device.generation == DeviceGeneration.iPhoneXSMax || 
+                Device.generation == DeviceGeneration.iPhoneXR)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
