@@ -69,3 +69,5 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 3. Stream source can only connect to a single stream reader.
 
 4. Some network setups cause an issue with DNS lookup for getting IP addresses of the server computer.
+
+Note: History edits were made on 10/29/2018. If you cloned this repository before that date, please rebase before submitting a Pull Request.
