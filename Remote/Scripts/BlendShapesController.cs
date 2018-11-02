@@ -58,6 +58,26 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null)
+            {
+                Debug.LogError("Disabling BlendShapesController. No stream source set.", this);
+                enabled = false;
+                return;
+            }
+
+            var streamSettings = streamSource.streamSettings;
+            if (streamSettings == null)
+            {
+                Debug.LogError("Disabling BlendShapesController. No stream settings", this);
+                enabled = false;
+                return;
+            }
+
+            var blendShapesCount = streamSettings.BlendShapeCount;
+            if (m_Overrides.Length != blendShapesCount)
+                Array.Resize(ref m_Overrides, blendShapesCount);
+
             var filteredList = new List<SkinnedMeshRenderer>();
             foreach (var renderer in m_SkinnedMeshRenderers)
             {

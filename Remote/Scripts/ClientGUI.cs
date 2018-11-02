@@ -4,7 +4,10 @@ using System.Net.Sockets;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
+#if UNITY_IOS
 using UnityEngine.iOS;
+#endif
 using UnityEngine.UI;
 
 namespace Unity.Labs.FacialRemote
@@ -40,7 +43,7 @@ namespace Unity.Labs.FacialRemote
         Canvas m_FaceLostGUI;
 
         [SerializeField]
-        Canvas m_NotSupprotedGUI;
+        Canvas m_NotSupportedGUI;
 
         [SerializeField]
         Button m_ConnectButton;
@@ -61,19 +64,23 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_Camera = Camera.main;
+#if UNITY_IOS
             if (Device.generation == DeviceGeneration.iPhoneX)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
-                m_NotSupprotedGUI.enabled = false;
+                m_NotSupportedGUI.enabled = false;
             }
             else
             {
+#endif
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
-                m_NotSupprotedGUI.enabled = true;
+                m_NotSupportedGUI.enabled = true;
                 enabled = false;
+#if UNITY_IOS
             }
+#endif
         }
 
         void Start()

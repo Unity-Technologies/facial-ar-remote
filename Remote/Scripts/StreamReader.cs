@@ -161,7 +161,7 @@ namespace Unity.Labs.FacialRemote
                 ConnectInterfaces(characterRigController);
         }
 
-        void Start()
+        void Awake()
         {
             Application.targetFrameRate = 60;
 
