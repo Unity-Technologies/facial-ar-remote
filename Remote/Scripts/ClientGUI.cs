@@ -4,11 +4,11 @@ using System.Net.Sockets;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
-#if UNITY_IOS
-using UnityEngine.iOS;
-#endif
 using UnityEngine.UI;
+
+#if UNITY_IOS
+using UnityEngine.XR.iOS;
+#endif
 
 namespace Unity.Labs.FacialRemote
 {
@@ -65,7 +65,8 @@ namespace Unity.Labs.FacialRemote
         {
             m_Camera = Camera.main;
 #if UNITY_IOS
-            if (Device.generation == DeviceGeneration.iPhoneX)
+            var config = new ARKitFaceTrackingConfiguration();
+            if (config.IsSupported)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
