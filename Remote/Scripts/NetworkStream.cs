@@ -50,6 +50,8 @@ namespace Unity.Labs.FacialRemote
         bool m_Running;
 
         readonly List<Socket> m_ListenSockets = new List<Socket>();
+        readonly List<Thread> m_ActiveThreads = new List<Thread>();
+
         Socket m_TransferSocket;
         int m_TakeNumber;
         IStreamRecorder m_StreamRecorder;
@@ -147,7 +149,7 @@ namespace Unity.Labs.FacialRemote
                     continue;
                 }
 
-                new Thread(() =>
+                var newtworkThread = new Thread(() =>
                 {
                     // Block until timeout or successful connection
                     var socket = listenSocket.Accept();
@@ -220,7 +222,9 @@ namespace Unity.Labs.FacialRemote
                     }
 
                     socket.Disconnect(false);
-                }).Start();
+                });
+                newtworkThread.Start();
+                m_ActiveThreads.Add(newtworkThread);
             }
         }
 
@@ -293,8 +297,16 @@ namespace Unity.Labs.FacialRemote
         {
             m_Running = false;
 
+            foreach (var thread in m_ActiveThreads)
+            {
+                thread.Abort();
+            }
+
             foreach (var socket in m_ListenSockets)
             {
+                if (socket.Connected)
+                    socket.Disconnect(false);
+
                 socket.Close();
             }
         }
