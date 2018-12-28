@@ -79,6 +79,15 @@ namespace Unity.Labs.FacialRemote
         // 261-264 - Frame Number
         // 265-268 - Frame Time
         // 269 - Active state
+        
+        // ARKit 2.0 buffer layout
+        // 0 - Error check
+        // 1-208 - Blend Shapes
+        // 209-236 - Head Pose
+        // 237-264 - Camera Pose
+        // 265-268 - Frame Number
+        // 269-273 - Frame Time
+        // 274 - Active state
         public int bufferSize { get { return m_BufferSize; } }
 
         public Mapping[] mappings { get { return m_Mappings; }}

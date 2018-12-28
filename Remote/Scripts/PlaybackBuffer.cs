@@ -23,52 +23,52 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [HideInInspector]
         [Tooltip("Error check byte value.")]
-        byte m_ErrorCheck = 42;
+        byte m_ErrorCheck;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Number of blend shapes in the stream.")]
-        int m_BlendShapeCount = 51;
+        int m_BlendShapeCount;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Size of blend shapes in the byte array.")]
-        int m_BlendShapeSize = 51 * sizeof(float);
+        int m_BlendShapeSize;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Size of frame number value in byte array.")]
-        int m_FrameNumberSize = sizeof(int);
+        int m_FrameNumberSize;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Size of frame time value in byte array.")]
-        int m_FrameTimeSize = sizeof(float);
+        int m_FrameTimeSize;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Location of head pose in byte array.")]
-        int m_HeadPoseOffset = 205;
+        int m_HeadPoseOffset;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Location of camera pose in byte array.")]
-        int m_CameraPoseOffset = 233;
+        int m_CameraPoseOffset;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Location of frame number value in byte array.")]
-        int m_FrameNumberOffset = 261;
+        int m_FrameNumberOffset;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Location of frame time value in byte array.")]
-        int m_FrameTimeOffset = 265;
+        int m_FrameTimeOffset;
 
         [SerializeField]
         [HideInInspector]
         [Tooltip("Total size of buffer of byte array for single same of data.")]
-        int m_BufferSize = 270;
+        int m_BufferSize;
 
         [SerializeField]
         [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
@@ -125,6 +125,10 @@ namespace Unity.Labs.FacialRemote
             m_HeadPoseOffset = streamSettings.HeadPoseOffset;
             m_CameraPoseOffset = streamSettings.CameraPoseOffset;
             m_FrameNumberOffset = streamSettings.FrameNumberOffset;
+            m_FrameTimeOffset = streamSettings.FrameTimeOffset;
+
+            m_FrameNumberSize = streamSettings.FrameNumberSize;
+            m_FrameTimeSize = streamSettings.FrameTimeSize;
 
             m_Locations = streamSettings.locations;
             m_Mappings = streamSettings.mappings;
