@@ -1,0 +1,16 @@
+{
+    "name": "com.unity.xr.facial-ar-remote.editor",
+    "references": [
+        "com.unity.xr.facial-ar-remote"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
