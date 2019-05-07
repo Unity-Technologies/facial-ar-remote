@@ -7,8 +7,9 @@ using System.Collections.Generic;
 #endif
 using UnityEngine;
 #if UNITY_IOS
-using UnityEngine.XR.iOS;
+using UnityEngine.XR.ARKit;
 #endif
+using UnityEngine.XR.ARFoundation;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -23,6 +24,9 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
+
+        [SerializeField]
+        ARFaceManager m_ARFaceManager;
 
         float[] m_BlendShapes;
 
@@ -49,11 +53,11 @@ namespace Unity.Labs.FacialRemote
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
-#if UNITY_IOS
-            UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
-            UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
-            UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
-#endif
+
+            m_ARFaceManager.facesUpdated += FacesUpdated;
+            // UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
+            // UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
+            // UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
         }
 
         void Start()
@@ -150,6 +154,30 @@ namespace Unity.Labs.FacialRemote
                     Thread.Sleep(k_SleepTime);
                 }
             }).Start();
+        }
+
+#if UNITY_IOS
+        void ExtractBlendShapes(ARFace face)
+        {
+            var subsystem = m_ARFaceManager.subsystem as ARKitFaceManager;
+            using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
+            {
+                // do something with coefficients
+            }
+        }
+#endif
+
+        void FacesUpdated(ARFacesUpdatedEventArgs eventArgs)
+        {
+            foreach (var face in eventArgs.added)
+            {
+                var pose = new Pose(face.transform.position, face.transform.rotation);
+            }
+
+            foreach (var face in eventArgs.updated)
+            {
+
+            }
         }
 
 #if UNITY_IOS

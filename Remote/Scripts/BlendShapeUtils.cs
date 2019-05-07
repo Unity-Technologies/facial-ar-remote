@@ -1,7 +1,8 @@
 ﻿using System;
 using UnityEngine;
 #if UNITY_IOS
-using UnityEngine.XR.iOS;
+using UnityEngine.XR.ARKit;
+using UnityEngine.XR;
 #endif
 
 namespace Unity.Labs.FacialRemote
@@ -10,118 +11,116 @@ namespace Unity.Labs.FacialRemote
     {
         public const int PoseFloatCount = 7;
         public const int PoseSize = sizeof(float) * PoseFloatCount;
-
+        public enum BlendShapeLocation
+        {
 #if UNITY_IOS
-        public const string  BrowDownLeft        =   ARBlendShapeLocation.BrowDownLeft;
-        public const string  BrowDownRight       =   ARBlendShapeLocation.BrowDownRight;
-        public const string  BrowInnerUp         =   ARBlendShapeLocation.BrowInnerUp;
-        public const string  BrowOuterUpLeft     =   ARBlendShapeLocation.BrowOuterUpLeft;
-        public const string  BrowOuterUpRight    =   ARBlendShapeLocation.BrowOuterUpRight;
-        public const string  CheekPuff           =   ARBlendShapeLocation.CheekPuff;
-        public const string  CheekSquintLeft     =   ARBlendShapeLocation.CheekSquintLeft;
-        public const string  CheekSquintRight    =   ARBlendShapeLocation.CheekSquintRight;
-        public const string  EyeBlinkLeft        =   ARBlendShapeLocation.EyeBlinkLeft;
-        public const string  EyeBlinkRight       =   ARBlendShapeLocation.EyeBlinkRight;
-        public const string  EyeLookDownLeft     =   ARBlendShapeLocation.EyeLookDownLeft;
-        public const string  EyeLookDownRight    =   ARBlendShapeLocation.EyeLookDownRight;
-        public const string  EyeLookInLeft       =   ARBlendShapeLocation.EyeLookInLeft;
-        public const string  EyeLookInRight      =   ARBlendShapeLocation.EyeLookInRight;
-        public const string  EyeLookOutLeft      =   ARBlendShapeLocation.EyeLookOutLeft;
-        public const string  EyeLookOutRight     =   ARBlendShapeLocation.EyeLookOutRight;
-        public const string  EyeLookUpLeft       =   ARBlendShapeLocation.EyeLookUpLeft;
-        public const string  EyeLookUpRight      =   ARBlendShapeLocation.EyeLookUpRight;
-        public const string  EyeSquintLeft       =   ARBlendShapeLocation.EyeSquintLeft;
-        public const string  EyeSquintRight      =   ARBlendShapeLocation.EyeSquintRight;
-        public const string  EyeWideLeft         =   ARBlendShapeLocation.EyeWideLeft;
-        public const string  EyeWideRight        =   ARBlendShapeLocation.EyeWideRight;
-        public const string  JawForward          =   ARBlendShapeLocation.JawForward;
-        public const string  JawLeft             =   ARBlendShapeLocation.JawLeft;
-        public const string  JawOpen             =   ARBlendShapeLocation.JawOpen;
-        public const string  JawRight            =   ARBlendShapeLocation.JawRight;
-        public const string  MouthClose          =   ARBlendShapeLocation.MouthClose;
-        public const string  MouthDimpleLeft     =   ARBlendShapeLocation.MouthDimpleLeft;
-        public const string  MouthDimpleRight    =   ARBlendShapeLocation.MouthDimpleRight;
-        public const string  MouthFrownLeft      =   ARBlendShapeLocation.MouthFrownLeft;
-        public const string  MouthFrownRight     =   ARBlendShapeLocation.MouthFrownRight;
-        public const string  MouthFunnel         =   ARBlendShapeLocation.MouthFunnel;
-        public const string  MouthLeft           =   ARBlendShapeLocation.MouthLeft;
-        public const string  MouthLowerDownLeft  =   ARBlendShapeLocation.MouthLowerDownLeft;
-        public const string  MouthLowerDownRight =   ARBlendShapeLocation.MouthLowerDownRight;
-        public const string  MouthPressLeft      =   ARBlendShapeLocation.MouthPressLeft;
-        public const string  MouthPressRight     =   ARBlendShapeLocation.MouthPressRight;
-        public const string  MouthPucker         =   ARBlendShapeLocation.MouthPucker;
-        public const string  MouthRight          =   ARBlendShapeLocation.MouthRight;
-        public const string  MouthRollLower      =   ARBlendShapeLocation.MouthRollLower;
-        public const string  MouthRollUpper      =   ARBlendShapeLocation.MouthRollUpper;
-        public const string  MouthShrugLower     =   ARBlendShapeLocation.MouthShrugLower;
-        public const string  MouthShrugUpper     =   ARBlendShapeLocation.MouthShrugUpper;
-        public const string  MouthSmileLeft      =   ARBlendShapeLocation.MouthSmileLeft;
-        public const string  MouthSmileRight     =   ARBlendShapeLocation.MouthSmileRight;
-        public const string  MouthStretchLeft    =   ARBlendShapeLocation.MouthStretchLeft;
-        public const string  MouthStretchRight   =   ARBlendShapeLocation.MouthStretchRight;
-        public const string  MouthUpperUpLeft    =   ARBlendShapeLocation.MouthUpperUpLeft;
-        public const string  MouthUpperUpRight   =   ARBlendShapeLocation.MouthUpperUpRight;
-        public const string  NoseSneerLeft       =   ARBlendShapeLocation.NoseSneerLeft;
-        public const string  NoseSneerRight      =   ARBlendShapeLocation.NoseSneerRight;
-#if !(ARKIT_1_5)
-        public const string  TongueOut           =   ARBlendShapeLocation.TongueOut;
-#endif //ARKIT_1_5
-#else
-        public const string  BrowDownLeft        =   "browDown_L";
-        public const string  BrowDownRight       =   "browDown_R";
-        public const string  BrowInnerUp         =   "browInnerUp";
-        public const string  BrowOuterUpLeft     =   "browOuterUp_L";
-        public const string  BrowOuterUpRight    =   "browOuterUp_R";
-        public const string  CheekPuff           =   "cheekPuff";
-        public const string  CheekSquintLeft     =   "cheekSquint_L";
-        public const string  CheekSquintRight    =   "cheekSquint_R";
-        public const string  EyeBlinkLeft        =   "eyeBlink_L";
-        public const string  EyeBlinkRight       =   "eyeBlink_R";
-        public const string  EyeLookDownLeft     =   "eyeLookDown_L";
-        public const string  EyeLookDownRight    =   "eyeLookDown_R";
-        public const string  EyeLookInLeft       =   "eyeLookIn_L";
-        public const string  EyeLookInRight      =   "eyeLookIn_R";
-        public const string  EyeLookOutLeft      =   "eyeLookOut_L";
-        public const string  EyeLookOutRight     =   "eyeLookOut_R";
-        public const string  EyeLookUpLeft       =   "eyeLookUp_L";
-        public const string  EyeLookUpRight      =   "eyeLookUp_R";
-        public const string  EyeSquintLeft       =   "eyeSquint_L";
-        public const string  EyeSquintRight      =   "eyeSquint_R";
-        public const string  EyeWideLeft         =   "eyeWide_L";
-        public const string  EyeWideRight        =   "eyeWide_R";
-        public const string  JawForward          =   "jawForward";
-        public const string  JawLeft             =   "jawLeft";
-        public const string  JawOpen             =   "jawOpen";
-        public const string  JawRight            =   "jawRight";
-        public const string  MouthClose          =   "mouthClose";
-        public const string  MouthDimpleLeft     =   "mouthDimple_L";
-        public const string  MouthDimpleRight    =   "mouthDimple_R";
-        public const string  MouthFrownLeft      =   "mouthFrown_L";
-        public const string  MouthFrownRight     =   "mouthFrown_R";
-        public const string  MouthFunnel         =   "mouthFunnel";
-        public const string  MouthLeft           =   "mouthLeft";
-        public const string  MouthLowerDownLeft  =   "mouthLowerDown_L";
-        public const string  MouthLowerDownRight =   "mouthLowerDown_R";
-        public const string  MouthPressLeft      =   "mouthPress_L";
-        public const string  MouthPressRight     =   "mouthPress_R";
-        public const string  MouthPucker         =   "mouthPucker";
-        public const string  MouthRight          =   "mouthRight";
-        public const string  MouthRollLower      =   "mouthRollLower";
-        public const string  MouthRollUpper      =   "mouthRollUpper";
-        public const string  MouthShrugLower     =   "mouthShrugLower";
-        public const string  MouthShrugUpper     =   "mouthShrugUpper";
-        public const string  MouthSmileLeft      =   "mouthSmile_L";
-        public const string  MouthSmileRight     =   "mouthSmile_R";
-        public const string  MouthStretchLeft    =   "mouthStretch_L";
-        public const string  MouthStretchRight   =   "mouthStretch_R";
-        public const string  MouthUpperUpLeft    =   "mouthUpperUp_L";
-        public const string  MouthUpperUpRight   =   "mouthUpperUp_R";
-        public const string  NoseSneerLeft       =   "noseSneer_L";
-        public const string  NoseSneerRight      =   "noseSneer_R";
-#if !(ARKIT_1_5)
-        public const string  TongueOut           =   "tongueOut";
-#endif //ARKIT_1_5
+            BrowDownLeft        =   ARKitBlendShapeLocation.BrowDownLeft,
+            BrowDownRight       =   ARKitBlendShapeLocation.BrowDownRight,
+            BrowInnerUp         =   ARKitBlendShapeLocation.BrowInnerUp,
+            BrowOuterUpLeft     =   ARKitBlendShapeLocation.BrowOuterUpLeft,
+            BrowOuterUpRight    =   ARKitBlendShapeLocation.BrowOuterUpRight,
+            CheekPuff           =   ARKitBlendShapeLocation.CheekPuff,
+            CheekSquintLeft     =   ARKitBlendShapeLocation.CheekSquintLeft,
+            CheekSquintRight    =   ARKitBlendShapeLocation.CheekSquintRight,
+            EyeBlinkLeft        =   ARKitBlendShapeLocation.EyeBlinkLeft,
+            EyeBlinkRight       =   ARKitBlendShapeLocation.EyeBlinkRight,
+            EyeLookDownLeft     =   ARKitBlendShapeLocation.EyeLookDownLeft,
+            EyeLookDownRight    =   ARKitBlendShapeLocation.EyeLookDownRight,
+            EyeLookInLeft       =   ARKitBlendShapeLocation.EyeLookInLeft,
+            EyeLookInRight      =   ARKitBlendShapeLocation.EyeLookInRight,
+            EyeLookOutLeft      =   ARKitBlendShapeLocation.EyeLookOutLeft,
+            EyeLookOutRight     =   ARKitBlendShapeLocation.EyeLookOutRight,
+            EyeLookUpLeft       =   ARKitBlendShapeLocation.EyeLookUpLeft,
+            EyeLookUpRight      =   ARKitBlendShapeLocation.EyeLookUpRight,
+            EyeSquintLeft       =   ARKitBlendShapeLocation.EyeSquintLeft,
+            EyeSquintRight      =   ARKitBlendShapeLocation.EyeSquintRight,
+            EyeWideLeft         =   ARKitBlendShapeLocation.EyeWideLeft,
+            EyeWideRight        =   ARKitBlendShapeLocation.EyeWideRight,
+            JawForward          =   ARKitBlendShapeLocation.JawForward,
+            JawLeft             =   ARKitBlendShapeLocation.JawLeft,
+            JawOpen             =   ARKitBlendShapeLocation.JawOpen,
+            JawRight            =   ARKitBlendShapeLocation.JawRight,
+            MouthClose          =   ARKitBlendShapeLocation.MouthClose,
+            MouthDimpleLeft     =   ARKitBlendShapeLocation.MouthDimpleLeft,
+            MouthDimpleRight    =   ARKitBlendShapeLocation.MouthDimpleRight,
+            MouthFrownLeft      =   ARKitBlendShapeLocation.MouthFrownLeft,
+            MouthFrownRight     =   ARKitBlendShapeLocation.MouthFrownRight,
+            MouthFunnel         =   ARKitBlendShapeLocation.MouthFunnel,
+            MouthLeft           =   ARKitBlendShapeLocation.MouthLeft,
+            MouthLowerDownLeft  =   ARKitBlendShapeLocation.MouthLowerDownLeft,
+            MouthLowerDownRight =   ARKitBlendShapeLocation.MouthLowerDownRight,
+            MouthPressLeft      =   ARKitBlendShapeLocation.MouthPressLeft,
+            MouthPressRight     =   ARKitBlendShapeLocation.MouthPressRight,
+            MouthPucker         =   ARKitBlendShapeLocation.MouthPucker,
+            MouthRight          =   ARKitBlendShapeLocation.MouthRight,
+            MouthRollLower      =   ARKitBlendShapeLocation.MouthRollLower,
+            MouthRollUpper      =   ARKitBlendShapeLocation.MouthRollUpper,
+            MouthShrugLower     =   ARKitBlendShapeLocation.MouthShrugLower,
+            MouthShrugUpper     =   ARKitBlendShapeLocation.MouthShrugUpper,
+            MouthSmileLeft      =   ARKitBlendShapeLocation.MouthSmileLeft,
+            MouthSmileRight     =   ARKitBlendShapeLocation.MouthSmileRight,
+            MouthStretchLeft    =   ARKitBlendShapeLocation.MouthStretchLeft,
+            MouthStretchRight   =   ARKitBlendShapeLocation.MouthStretchRight,
+            MouthUpperUpLeft    =   ARKitBlendShapeLocation.MouthUpperUpLeft,
+            MouthUpperUpRight   =   ARKitBlendShapeLocation.MouthUpperUpRight,
+            NoseSneerLeft       =   ARKitBlendShapeLocation.NoseSneerLeft,
+            NoseSneerRight      =   ARKitBlendShapeLocation.NoseSneerRight,
+            TongueOut           =   ARKitBlendShapeLocation.TongueOut
+    #else
+            BrowDownLeft        ,
+            BrowDownRight       ,
+            BrowInnerUp         ,
+            BrowOuterUpLeft     ,
+            BrowOuterUpRight    ,
+            CheekPuff           ,
+            CheekSquintLeft     ,
+            CheekSquintRight    ,
+            EyeBlinkLeft        ,
+            EyeBlinkRight       ,
+            EyeLookDownLeft     ,
+            EyeLookDownRight    ,
+            EyeLookInLeft       ,
+            EyeLookInRight      ,
+            EyeLookOutLeft      ,
+            EyeLookOutRight     ,
+            EyeLookUpLeft       ,
+            EyeLookUpRight      ,
+            EyeSquintLeft       ,
+            EyeSquintRight      ,
+            EyeWideLeft         ,
+            EyeWideRight        ,
+            JawForward          ,
+            JawLeft             ,
+            JawOpen             ,
+            JawRight            ,
+            MouthClose          ,
+            MouthDimpleLeft     ,
+            MouthDimpleRight    ,
+            MouthFrownLeft      ,
+            MouthFrownRight     ,
+            MouthFunnel         ,
+            MouthLeft           ,
+            MouthLowerDownLeft  ,
+            MouthLowerDownRight ,
+            MouthPressLeft      ,
+            MouthPressRight     ,
+            MouthPucker         ,
+            MouthRight          ,
+            MouthRollLower      ,
+            MouthRollUpper      ,
+            MouthShrugLower     ,
+            MouthShrugUpper     ,
+            MouthSmileLeft      ,
+            MouthSmileRight     ,
+            MouthStretchLeft    ,
+            MouthStretchRight   ,
+            MouthUpperUpLeft    ,
+            MouthUpperUpRight   ,
+            NoseSneerLeft       ,
+            NoseSneerRight      ,
+            TongueOut
 #endif
+        }
 
         /// <summary>
         /// Array of the blend shape locations supported by the unity ARKit plugin.
@@ -183,9 +182,7 @@ namespace Unity.Labs.FacialRemote
             MouthUpperUpRight,
             NoseSneerLeft,
             NoseSneerRight,
-#if ARKIT_2_0
-            TongueOut,
-#endif
+            TongueOut
         };
 
         /// <summary>

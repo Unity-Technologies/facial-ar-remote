@@ -5,10 +5,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
-#if UNITY_IOS
-using UnityEngine.XR.iOS;
-#endif
+using UnityEngine.XR.ARFoundation;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -54,6 +51,9 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         TMP_InputField m_IPTextField;
 
+        [SerializeField]
+        ARFaceManager m_ARFaceManager;
+
         Camera m_Camera;
 
         float m_CenterX;
@@ -64,9 +64,12 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_Camera = Camera.main;
-#if UNITY_IOS
-            var config = new ARKitFaceTrackingConfiguration();
-            if (config.IsSupported)
+        }
+
+        void OnEnable()
+        {
+            var subsystem  = m_ARFaceManager.subsystem;
+            if (subsystem != null && subsystem.supported)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
@@ -74,14 +77,11 @@ namespace Unity.Labs.FacialRemote
             }
             else
             {
-#endif
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
                 m_NotSupportedGUI.enabled = true;
                 enabled = false;
-#if UNITY_IOS
             }
-#endif
         }
 
         void Start()
