@@ -1,9 +1,9 @@
 {
     "name": "com.unity.facial-ar-remote",
-    "displayName": "Facial AR Remote",
+    "displayName": "AR Face Capture",
     "version": "0.0.1",
     "unity": "2018.3",
-    "description": "Facial AR Remote is a tool that allows you to capture blendshape animations an iPhone X into Unity.",
+    "description": "A tool that allows you to capture blendshape animations an iPhone X into Unity.",
     "keywords": [
         "ARKit",
         "unity"

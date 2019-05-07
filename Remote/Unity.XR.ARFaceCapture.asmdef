@@ -1,0 +1,25 @@
+{
+    "name": "com.unity.xr.ar-face-capture",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.XR.ARKit",
+        "Unity.XR.ARKit.FaceTracking"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor",
+        "iOS",
+        "LinuxStandalone32",
+        "LinuxStandalone64",
+        "LinuxStandaloneUniversal",
+        "macOSStandalone",
+        "WindowsStandalone32",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
