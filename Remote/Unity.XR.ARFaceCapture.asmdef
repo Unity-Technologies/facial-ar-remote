@@ -3,7 +3,9 @@
     "references": [
         "Unity.TextMeshPro",
         "Unity.XR.ARKit",
-        "Unity.XR.ARKit.FaceTracking"
+        "Unity.XR.ARKit.FaceTracking",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

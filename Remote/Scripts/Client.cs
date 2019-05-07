@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Threading;
+using Unity.Collections;
 #if UNITY_IOS
 using System.Linq;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using UnityEngine;
 using UnityEngine.XR.ARKit;
 #endif
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -54,10 +56,7 @@ namespace Unity.Labs.FacialRemote
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
-            m_ARFaceManager.facesUpdated += FacesUpdated;
-            // UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
-            // UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
-            // UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
+            m_ARFaceManager.facesChanged += FacesUpdated;
         }
 
         void Start()
@@ -159,70 +158,55 @@ namespace Unity.Labs.FacialRemote
 #if UNITY_IOS
         void ExtractBlendShapes(ARFace face)
         {
-            var subsystem = m_ARFaceManager.subsystem as ARKitFaceManager;
+            var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
+            /*
             using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
             {
-                // do something with coefficients
+                if (m_BlendShapeIndices == null)
+                {
+                    m_BlendShapeIndices = new Dictionary<string, int>();
+
+                    var names = m_StreamSettings.locations.ToList();
+                    names.Sort();
+
+                    foreach (var kvp in coefficients)
+                    {
+                        var key = kvp.Key;
+                        var index = names.IndexOf(key);
+                        if (index >= 0)
+                            m_BlendShapeIndices[key] = index;
+                    }
+                }
+
+                UpdateBlendShapes(blendShapes);
             }
+            */
         }
 #endif
 
-        void FacesUpdated(ARFacesUpdatedEventArgs eventArgs)
+        void FacesUpdated(ARFacesChangedEventArgs eventArgs)
         {
             foreach (var face in eventArgs.added)
             {
-                var pose = new Pose(face.transform.position, face.transform.rotation);
+                m_FacePose = new Pose(face.transform.position, face.transform.rotation);
+                m_ARFaceActive = true;
+
+                ExtractBlendShapes(face);
             }
 
             foreach (var face in eventArgs.updated)
             {
+                m_FacePose = new Pose(face.transform.position, face.transform.rotation);
+                //UpdateBlendShapes(anchorData.blendShapes);
+            }
 
+            foreach (var face in eventArgs.removed)
+            {
+                m_ARFaceActive = false;
             }
         }
 
 #if UNITY_IOS
-        void FaceAdded(ARFaceAnchor anchorData)
-        {
-            var anchorTransform = anchorData.transform;
-            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorTransform);
-            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorTransform);
-            m_ARFaceActive = true;
-
-            var blendShapes = anchorData.blendShapes;
-
-            if (m_BlendShapeIndices == null)
-            {
-                m_BlendShapeIndices = new Dictionary<string, int>();
-
-                var names = m_StreamSettings.locations.ToList();
-                names.Sort();
-
-                foreach (var kvp in blendShapes)
-                {
-                    var key = kvp.Key;
-                    var index = names.IndexOf(key);
-                    if (index >= 0)
-                        m_BlendShapeIndices[key] = index;
-                }
-            }
-
-            UpdateBlendShapes(blendShapes);
-        }
-
-        void FaceUpdated(ARFaceAnchor anchorData)
-        {
-            var anchorTransform = anchorData.transform;
-            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorTransform);
-            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorTransform);
-
-            UpdateBlendShapes(anchorData.blendShapes);
-        }
-
-        void FaceRemoved(ARFaceAnchor anchorData)
-        {
-            m_ARFaceActive = false;
-        }
-
         void UpdateBlendShapes(Dictionary<string, float> blendShapes)
         {
             foreach (var kvp in blendShapes)

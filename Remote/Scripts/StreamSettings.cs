@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
     /// This data needs to match on the server and client side.
     /// </summary>
     [Serializable]
-    [CreateAssetMenu(fileName = "Stream Settings", menuName = "Facial Remote/Stream Settings")]
+    [CreateAssetMenu(fileName = "Stream Settings", menuName = "AR Face Capture/Stream Settings")]
     public class StreamSettings : ScriptableObject, IStreamSettings
     {
         [SerializeField]

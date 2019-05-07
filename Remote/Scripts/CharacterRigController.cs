@@ -163,14 +163,14 @@ namespace Unity.Labs.FacialRemote
         public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
-            m_EyeLookDownLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
+            /*m_EyeLookDownLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
             m_EyeLookDownRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
             m_EyeLookInLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);
             m_EyeLookInRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInRight);
             m_EyeLookOutLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutLeft);
             m_EyeLookOutRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutRight);
             m_EyeLookUpLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);
+            m_EyeLookUpRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);*/
         }
 
         public void SetupCharacterRigController()
