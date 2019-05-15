@@ -149,23 +149,14 @@ namespace Unity.Labs.FacialRemote
                 {
                     var shapeName = mesh.GetBlendShapeName(i);
                     var index = -1;
-                    /*foreach (var mapping in streamSettings.mappings)
+                    for (var j = 0; j < streamSettings.mappings.Length; j++)
                     {
-                        if (shapeName.Contains(mapping.from))
-                            index = Array.IndexOf(streamSettings.locations, mapping.to);
-                    }
-
-                    if (index < 0)
-                    {*/
-                        for (var j = 0; j < streamSettings.mappings.Length; j++)
+                        if (shapeName.Contains(streamSettings.mappings[j]))
                         {
-                            if (shapeName.Contains(streamSettings.mappings[j]))
-                            {
-                                index = j;
-                                break;
-                            }
+                            index = j;
+                            break;
                         }
-                    //}
+                    }
 
                     indices[i] = new BlendShapeIndexData(index, shapeName);
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using Unity.Collections;
@@ -188,10 +189,13 @@ namespace Unity.Labs.FacialRemote
                 {
                     m_BlendShapeIndices = new Dictionary<string, int>();
 
-                    for (var i = 0; i < coefficients.Length; i++)
+                    var names = m_StreamSettings.locations.ToList();
+                    names.Sort();
+
+                    foreach (var coef in coefficients)
                     {
-                        var coef = coefficients[i];
-                        m_BlendShapeIndices[coef.blendShapeLocation.ToString()] = i;
+                        var key = coef.blendShapeLocation.ToString();
+                        m_BlendShapeIndices[key] = names.IndexOf(key);
                     }
                 }
             }
@@ -202,10 +206,9 @@ namespace Unity.Labs.FacialRemote
             var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
             using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
             {
-                var index = 0;
                 foreach (var coef in coefficients)
                 {
-                    if (m_BlendShapeIndices.TryGetValue(coef.blendShapeLocation.ToString(), out index))
+                    if (m_BlendShapeIndices.TryGetValue(coef.blendShapeLocation.ToString(), out var index))
                         m_BlendShapes[index] = coef.coefficient;
                 }
             }
