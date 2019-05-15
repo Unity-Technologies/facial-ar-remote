@@ -48,6 +48,8 @@ namespace Unity.Labs.FacialRemote
         Dictionary<string, int> m_BlendShapeIndices;
 #endif
 
+        public ARFaceManager arFaceManager => m_ARFaceManager;
+
         void Awake()
         {
             m_Buffer = new byte[m_StreamSettings.bufferSize];
@@ -155,35 +157,6 @@ namespace Unity.Labs.FacialRemote
             }).Start();
         }
 
-#if UNITY_IOS
-        void ExtractBlendShapes(ARFace face)
-        {
-            var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
-            /*
-            using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
-            {
-                if (m_BlendShapeIndices == null)
-                {
-                    m_BlendShapeIndices = new Dictionary<string, int>();
-
-                    var names = m_StreamSettings.locations.ToList();
-                    names.Sort();
-
-                    foreach (var kvp in coefficients)
-                    {
-                        var key = kvp.Key;
-                        var index = names.IndexOf(key);
-                        if (index >= 0)
-                            m_BlendShapeIndices[key] = index;
-                    }
-                }
-
-                UpdateBlendShapes(blendShapes);
-            }
-            */
-        }
-#endif
-
         void FacesUpdated(ARFacesChangedEventArgs eventArgs)
         {
             foreach (var face in eventArgs.added)
@@ -191,13 +164,14 @@ namespace Unity.Labs.FacialRemote
                 m_FacePose = new Pose(face.transform.position, face.transform.rotation);
                 m_ARFaceActive = true;
 
-                ExtractBlendShapes(face);
+                ExtractBlendShapesIndices(face);
+                UpdateBlendShapes(face);
             }
 
             foreach (var face in eventArgs.updated)
             {
                 m_FacePose = new Pose(face.transform.position, face.transform.rotation);
-                //UpdateBlendShapes(anchorData.blendShapes);
+                UpdateBlendShapes(face);
             }
 
             foreach (var face in eventArgs.removed)
@@ -207,13 +181,39 @@ namespace Unity.Labs.FacialRemote
         }
 
 #if UNITY_IOS
-        void UpdateBlendShapes(Dictionary<string, float> blendShapes)
+        void ExtractBlendShapesIndices(ARFace face)
         {
-            foreach (var kvp in blendShapes)
+            var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
+            
+            using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
             {
-                int index;
-                if (m_BlendShapeIndices.TryGetValue(kvp.Key, out index))
-                    m_BlendShapes[index] = kvp.Value;
+                if (m_BlendShapeIndices == null)
+                {
+                    m_BlendShapeIndices = new Dictionary<string, int>();
+
+                    var index = 0;
+                    foreach (var coef in coefficients)
+                    {
+                        if (index >= 0)
+                            m_BlendShapeIndices[coef.blendShapeLocation.ToString()] = index;
+                        index++;
+                    }
+                }
+            }
+        }
+
+        void UpdateBlendShapes(ARFace face)
+        {
+            var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
+            using (var coefficients = subsystem.GetBlendShapeCoefficients(face.trackableId, Allocator.Temp))
+            {
+                var index = 0;
+                foreach (var coef in coefficients)
+                {
+                    if (m_BlendShapeIndices.TryGetValue(coef.blendShapeLocation.ToString(), out index))
+                        m_BlendShapes[index] = coef.coefficient;
+                    index++;
+                }
             }
         }
 #endif

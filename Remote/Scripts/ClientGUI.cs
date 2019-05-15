@@ -51,9 +51,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         TMP_InputField m_IPTextField;
 
-        [SerializeField]
-        ARFaceManager m_ARFaceManager;
-
         Camera m_Camera;
 
         float m_CenterX;
@@ -68,7 +65,7 @@ namespace Unity.Labs.FacialRemote
 
         void OnEnable()
         {
-            var subsystem  = m_ARFaceManager.subsystem;
+            var subsystem  = m_Client.arFaceManager.subsystem;
             if (subsystem != null && subsystem.supported)
             {
                 m_MainGUI.enabled = false;

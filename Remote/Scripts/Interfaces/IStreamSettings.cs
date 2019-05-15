@@ -63,6 +63,6 @@
         /// <summary>
         /// Rename mapping values to apply blend shape locations to a blend shape controller.
         /// </summary>
-        Mapping[] mappings { get; }
+        string[] mappings { get; }
     }
 }

@@ -55,11 +55,11 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
-        string[] m_Locations = { };
+        string[] m_Locations;
 
         [SerializeField]
         [Tooltip("Rename mapping values to apply blend shape locations to a blend shape controller.")]
-        Mapping[] m_Mappings = { };
+        string[] m_Mappings;
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
@@ -71,15 +71,6 @@ namespace Unity.Labs.FacialRemote
         public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
         public int FrameTimeOffset { get { return m_FrameTimeOffset;  } }
 
-        // ARKit 1.5 buffer layout
-        // 0 - Error check
-        // 1-204 - Blend Shapes
-        // 205-232 - Head Pose
-        // 233-260 - Camera Pose
-        // 261-264 - Frame Number
-        // 265-268 - Frame Time
-        // 269 - Active state
-        
         // ARKit 2.0 buffer layout
         // 0 - Error check
         // 1-208 - Blend Shapes
@@ -90,13 +81,13 @@ namespace Unity.Labs.FacialRemote
         // 274 - Active state
         public int bufferSize { get { return m_BufferSize; } }
 
-        public Mapping[] mappings { get { return m_Mappings; }}
+        public string[] mappings { get { return m_Mappings; }}
 
         public string[] locations
         {
             get
             {
-                if (m_Locations.Length != m_BlendShapeCount)
+                /*if (m_Locations.Length != m_BlendShapeCount)
                 {
                     var locs = new List<string>();
                     foreach (var location in BlendShapeUtils.Locations)
@@ -105,7 +96,7 @@ namespace Unity.Labs.FacialRemote
                     }
 
                     m_Locations = locs.ToArray();
-                }
+                }*/
 
                 return m_Locations;
             }
@@ -124,17 +115,23 @@ namespace Unity.Labs.FacialRemote
             // Error check + Blend Shapes + HeadPose + CameraPose + FrameNumber + FrameTime + Active
             m_BufferSize = 1 + BlendShapeSize + poseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
 
-            if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
-            {
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+            
+//            if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
+            /*{
                 var locs = new List<string>();
                 foreach (var location in BlendShapeUtils.Locations)
                 {
                     locs.Add(location);
                 }
 
-                locs.Sort();
+                //locs.Sort();
                 m_Locations = locs.ToArray();
-            }
+//                m_Mappings = m_Locations;
+            }*/
+            
         }
     }
 }
