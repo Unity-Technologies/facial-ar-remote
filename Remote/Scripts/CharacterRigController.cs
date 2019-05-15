@@ -78,13 +78,28 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
         float m_NeckFollowAmount = 0.4f;
 
+        [SerializeField]
         int m_EyeLookDownLeftIndex;
+        
+        [SerializeField]
         int m_EyeLookDownRightIndex;
+        
+        [SerializeField]
         int m_EyeLookInLeftIndex;
+        
+        [SerializeField]
         int m_EyeLookInRightIndex;
+        
+        [SerializeField]
         int m_EyeLookOutLeftIndex;
+        
+        [SerializeField]
         int m_EyeLookOutRightIndex;
+        
+        [SerializeField]
         int m_EyeLookUpLeftIndex;
+        
+        [SerializeField]
         int m_EyeLookUpRightIndex;
 
         float m_EyeLookDownLeft;
@@ -144,9 +159,11 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null || !streamSource.active)
                 return;
 
+            /*
             var streamSettings = streamReader.streamSource.streamSettings;
             if (streamSettings != m_LastStreamSettings)
                 UpdateBlendShapeIndices(streamSettings);
+            */
 
             InterpolateBlendShapes();
         }
@@ -160,18 +177,20 @@ namespace Unity.Labs.FacialRemote
             UpdateBoneTransforms();
         }
 
+        /*
         public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
-            /*m_EyeLookDownLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownLeft);
-            m_EyeLookDownRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookDownRight);
-            m_EyeLookInLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInLeft);
-            m_EyeLookInRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookInRight);
-            m_EyeLookOutLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutLeft);
-            m_EyeLookOutRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookOutRight);
-            m_EyeLookUpLeftIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpLeft);
-            m_EyeLookUpRightIndex = settings.GetLocationIndex(BlendShapeUtils.EyeLookUpRight);*/
+            m_EyeLookDownLeftIndex = Array.IndexOf(settings.locations, "EyeLookDownLeft");
+            m_EyeLookDownRightIndex = Array.IndexOf(settings.locations, "EyeLookDownRight");
+            m_EyeLookInLeftIndex = Array.IndexOf(settings.locations, "EyeLookInLeft");
+            m_EyeLookInRightIndex = Array.IndexOf(settings.locations, "EyeLookInRight");
+            m_EyeLookOutLeftIndex = Array.IndexOf(settings.locations, "EyeLookOutLeft");
+            m_EyeLookOutRightIndex = Array.IndexOf(settings.locations, "EyeLookOutRight");
+            m_EyeLookUpLeftIndex = Array.IndexOf(settings.locations, "EyeLookUpLeft");
+            m_EyeLookUpRightIndex = Array.IndexOf(settings.locations, "EyeLookUpRight");
         }
+        */
 
         public void SetupCharacterRigController()
         {

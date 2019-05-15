@@ -113,7 +113,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_CharacterRigController != null)
             {
-                m_CharacterRigController.UpdateBlendShapeIndices(playbackBuffer);
+                //m_CharacterRigController.UpdateBlendShapeIndices(playbackBuffer);
 
                 m_CharacterRigController.SetupCharacterRigController();
 
@@ -232,11 +232,9 @@ namespace Unity.Labs.FacialRemote
             {
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
                 {
-                    Dictionary<string, AnimationClipCurveData> animationCurves;
-                    if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out animationCurves))
+                    if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out var animationCurves))
                     {
-                        BlendShapeIndexData[] shapeIndices;
-                        if (m_BlendShapesController.blendShapeIndices.TryGetValue(skinnedMeshRenderer, out shapeIndices))
+                        if (m_BlendShapesController.blendShapeIndices.TryGetValue(skinnedMeshRenderer, out var shapeIndices))
                         {
                             var length = shapeIndices.Length;
                             for (var i = 0; i < length; i++)
