@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -31,19 +30,19 @@ namespace Unity.Labs.FacialRemote
         void OnEnable()
         {
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += PlayModeStateChanged;
+            UnityEditor.EditorApplication.playModeStateChanged += PlayModeStateChanged;
 #endif
         }
 
         void OnDisable()
         {
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged -= PlayModeStateChanged;
+            UnityEditor.EditorApplication.playModeStateChanged -= PlayModeStateChanged;
 #endif
         }
 
 #if UNITY_EDITOR
-        void PlayModeStateChanged(PlayModeStateChange state)
+        void PlayModeStateChanged(UnityEditor.PlayModeStateChange state)
         {
             FinishRecording();
         }
@@ -138,7 +137,7 @@ namespace Unity.Labs.FacialRemote
             m_ActivePlaybackBuffer = null;
 
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
+            UnityEditor.EditorUtility.SetDirty(this);
 #endif
         }
 
