@@ -2,13 +2,10 @@
 using System.Net.Sockets;
 using System.Threading;
 using Unity.Collections;
-#if UNITY_IOS
-using System.Linq;
-using System.Collections.Generic;
-#endif
 using UnityEngine;
 #if UNITY_IOS
 using UnityEngine.XR.ARKit;
+using System.Collections.Generic;
 #endif
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -191,12 +188,10 @@ namespace Unity.Labs.FacialRemote
                 {
                     m_BlendShapeIndices = new Dictionary<string, int>();
 
-                    var index = 0;
-                    foreach (var coef in coefficients)
+                    for (var i = 0; i < coefficients.Length; i++)
                     {
-                        if (index >= 0)
-                            m_BlendShapeIndices[coef.blendShapeLocation.ToString()] = index;
-                        index++;
+                        var coef = coefficients[i];
+                        m_BlendShapeIndices[coef.blendShapeLocation.ToString()] = i;
                     }
                 }
             }
@@ -212,7 +207,6 @@ namespace Unity.Labs.FacialRemote
                 {
                     if (m_BlendShapeIndices.TryGetValue(coef.blendShapeLocation.ToString(), out index))
                         m_BlendShapes[index] = coef.coefficient;
-                    index++;
                 }
             }
         }
