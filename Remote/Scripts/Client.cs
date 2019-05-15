@@ -41,8 +41,9 @@ namespace Unity.Labs.FacialRemote
 
         float m_StartTime;
 
+        ARFace m_MainFace;
+
 #if UNITY_IOS
-        bool m_ARFaceActive;
         Dictionary<string, int> m_BlendShapeIndices;
 #endif
 
@@ -133,7 +134,7 @@ namespace Unity.Labs.FacialRemote
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameNumberSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
 #if UNITY_IOS
-                                m_Buffer[lastIndex] = (byte)(m_ARFaceActive ? 1 : 0);
+                                m_Buffer[lastIndex] = (byte)(m_MainFace != null ? 1 : 0);
 #endif
 
                                 socket.Send(m_Buffer);
@@ -159,8 +160,9 @@ namespace Unity.Labs.FacialRemote
         {
             foreach (var face in eventArgs.added)
             {
+                m_MainFace = face;
+                
                 m_FacePose = new Pose(face.transform.position, face.transform.rotation);
-                m_ARFaceActive = true;
 
                 ExtractBlendShapesIndices(face);
                 UpdateBlendShapes(face);
@@ -174,7 +176,8 @@ namespace Unity.Labs.FacialRemote
 
             foreach (var face in eventArgs.removed)
             {
-                m_ARFaceActive = false;
+                if (face == m_MainFace)
+                    m_MainFace = null;
             }
         }
 
