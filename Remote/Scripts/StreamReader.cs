@@ -120,7 +120,8 @@ namespace Unity.Labs.FacialRemote
             m_Sources.UnionWith(GetComponentsInChildren<IStreamSource>());
             foreach (var go in m_StreamSourceOverrides)
             {
-                m_Sources.UnionWith(go.GetComponentsInChildren<IStreamSource>());
+                if (go != null)
+                    m_Sources.UnionWith(go.GetComponentsInChildren<IStreamSource>());
             }
 
             foreach (var source in m_Sources)
