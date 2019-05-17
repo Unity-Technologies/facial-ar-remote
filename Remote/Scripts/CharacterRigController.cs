@@ -78,28 +78,13 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
         float m_NeckFollowAmount = 0.4f;
 
-        [SerializeField]
         int m_EyeLookDownLeftIndex;
-        
-        [SerializeField]
         int m_EyeLookDownRightIndex;
-        
-        [SerializeField]
         int m_EyeLookInLeftIndex;
-        
-        [SerializeField]
         int m_EyeLookInRightIndex;
-        
-        [SerializeField]
         int m_EyeLookOutLeftIndex;
-        
-        [SerializeField]
         int m_EyeLookOutRightIndex;
-        
-        [SerializeField]
         int m_EyeLookUpLeftIndex;
-        
-        [SerializeField]
         int m_EyeLookUpRightIndex;
 
         float m_EyeLookDownLeft;
@@ -159,11 +144,11 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null || !streamSource.active)
                 return;
 
-            /*
+            
             var streamSettings = streamReader.streamSource.streamSettings;
             if (streamSettings != m_LastStreamSettings)
                 UpdateBlendShapeIndices(streamSettings);
-            */
+            
 
             InterpolateBlendShapes();
         }
@@ -177,7 +162,6 @@ namespace Unity.Labs.FacialRemote
             UpdateBoneTransforms();
         }
 
-        /*
         public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
@@ -190,7 +174,6 @@ namespace Unity.Labs.FacialRemote
             m_EyeLookUpLeftIndex = Array.IndexOf(settings.locations, "EyeLookUpLeft");
             m_EyeLookUpRightIndex = Array.IndexOf(settings.locations, "EyeLookUpRight");
         }
-        */
 
         public void SetupCharacterRigController()
         {
