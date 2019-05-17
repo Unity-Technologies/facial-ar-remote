@@ -44,6 +44,7 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_BlendShapeSize);
                 EditorGUILayout.PropertyField(m_FrameNumberSize);
                 EditorGUILayout.PropertyField(m_FrameTimeSize);
+                EditorGUILayout.PropertyField(m_HeadPoseOffset);
                 EditorGUILayout.PropertyField(m_CameraPoseOffset);
                 EditorGUILayout.PropertyField(m_FrameNumberOffset);
                 EditorGUILayout.PropertyField(m_FrameTimeOffset);
@@ -51,7 +52,7 @@ namespace Unity.Labs.FacialRemote
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Location Identifier");
-                EditorGUILayout.LabelField("Blendshape Name");
+                EditorGUILayout.LabelField("BlendShape Name");
                 EditorGUILayout.EndHorizontal();
                 for (var i = 0; i < m_Locations.arraySize; i++)
                 {
