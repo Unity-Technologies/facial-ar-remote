@@ -57,7 +57,9 @@ namespace Unity.Labs.FacialRemote
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
+#if UNITY_IOS
             m_ARFaceManager.facesChanged += FacesUpdated;
+#endif
         }
 
         void Start()
@@ -155,7 +157,8 @@ namespace Unity.Labs.FacialRemote
                 }
             }).Start();
         }
-
+        
+#if UNITY_IOS
         void FacesUpdated(ARFacesChangedEventArgs eventArgs)
         {
             foreach (var face in eventArgs.added)
@@ -181,7 +184,6 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-#if UNITY_IOS
         void ExtractBlendShapesIndices(ARFace face)
         {
             var subsystem = m_ARFaceManager.subsystem as ARKitFaceSubsystem;
