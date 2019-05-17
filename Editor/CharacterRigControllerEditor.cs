@@ -22,10 +22,6 @@ namespace Unity.Labs.FacialRemote
         SerializedProperty m_NeckBone;
         SerializedProperty m_NeckFollowAmount;
 
-        bool m_EyeFoldout;
-        bool m_HeadFoldout;
-        bool m_NeckFoldout;
-
         void OnEnable()
         {
             m_HeadBone = serializedObject.FindProperty("m_HeadBone");
@@ -53,39 +49,42 @@ namespace Unity.Labs.FacialRemote
         {
             using (var check = new EditorGUI.ChangeCheckScope())
             {
-                EditorGUILayout.LabelField("General Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_TrackingLossSmoothing);
+                
                 EditorGUILayout.PropertyField(m_HeadBone);
                 EditorGUILayout.PropertyField(m_NeckBone);
                 EditorGUILayout.PropertyField(m_LeftEye);
                 EditorGUILayout.PropertyField(m_RightEye);
-                EditorGUILayout.PropertyField(m_TrackingLossSmoothing);
-
-                m_EyeFoldout = EditorGUILayout.Foldout(m_EyeFoldout, "Eye Settings");
-                if (m_EyeFoldout)
+                
+                EditorGUILayout.PropertyField(m_DriveHead);
+                EditorGUI.indentLevel++;
+                if (m_DriveHead.boolValue)
                 {
-                    EditorGUILayout.PropertyField(m_DriveEyes);
+                    EditorGUILayout.PropertyField(m_HeadFollowAmount);
+                    EditorGUILayout.PropertyField(m_HeadSmoothing);
+                }
+                EditorGUI.indentLevel--;
+                
+                EditorGUILayout.PropertyField(m_DriveNeck);
+                EditorGUI.indentLevel++;
+                if (m_DriveNeck.boolValue)
+                {
+                    EditorGUILayout.PropertyField(m_NeckFollowAmount);
+                }
+                EditorGUI.indentLevel--;
+                
+                EditorGUILayout.PropertyField(m_DriveEyes);
+                EditorGUI.indentLevel++;
+                if (m_DriveEyes.boolValue)
+                {
                     EditorGUILayout.PropertyField(m_EyeLookDistance);
                     EditorGUILayout.PropertyField(m_RightEyeNegZ);
                     EditorGUILayout.PropertyField(m_LeftEyeNegZ);
                     EditorGUILayout.PropertyField(m_EyeAngleRange);
                     EditorGUILayout.PropertyField(m_EyeSmoothing);
                 }
-
-                m_HeadFoldout = EditorGUILayout.Foldout(m_HeadFoldout, "Head Settings");
-                if (m_HeadFoldout)
-                {
-                    EditorGUILayout.PropertyField(m_DriveHead);
-                    EditorGUILayout.PropertyField(m_HeadFollowAmount);
-                    EditorGUILayout.PropertyField(m_HeadSmoothing);
-                }
-
-                m_NeckFoldout = EditorGUILayout.Foldout(m_NeckFoldout, "Neck Settings");
-                if (m_NeckFoldout)
-                {
-                    EditorGUILayout.PropertyField(m_DriveNeck);
-                    EditorGUILayout.PropertyField(m_NeckFollowAmount);
-                }
-
+                EditorGUI.indentLevel--;
+                
                 if (check.changed)
                     serializedObject.ApplyModifiedProperties();
             }
