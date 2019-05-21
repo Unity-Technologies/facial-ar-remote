@@ -13,6 +13,9 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Contains the individual streams recorded from a capture session.")]
         PlaybackData m_PlaybackData;
 
+        [SerializeField]
+        BlendShapeMappings m_BlendShapeMappings;
+
         float m_PlaybackStartTime = float.PositiveInfinity;
 
         int m_BufferPosition;

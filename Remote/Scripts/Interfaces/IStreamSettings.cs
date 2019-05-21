@@ -59,10 +59,5 @@
         /// String names of the blend shapes in the stream with their index in the array being their relative location.
         /// </summary>
         string[] locations { get; }
-
-        /// <summary>
-        /// Rename mapping values to apply blend shape locations to a blend shape controller.
-        /// </summary>
-        string[] mappings { get; }
     }
 }

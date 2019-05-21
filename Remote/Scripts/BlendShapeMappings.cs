@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -8,6 +9,9 @@ namespace Unity.Labs.FacialRemote
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject
     {
+        [SerializeField]
+        StreamSettings m_StreamSettings;
+        
         [SerializeField]
         [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_LocationIdentifiers;
@@ -18,18 +22,25 @@ namespace Unity.Labs.FacialRemote
 
         public string[] blendShapeNames { get { return m_BlendShapeNames; }}
 
-        public string[] locationIdentifiers
-        {
-            get
-            {
-                return m_LocationIdentifiers;
-            }
-        }
-
 #if UNITY_EDITOR
         void OnValidate()
         {
             UnityEditor.EditorUtility.SetDirty(this);
+
+            if (m_StreamSettings == null)
+                return;
+            
+            if (m_LocationIdentifiers.Length == 0 && m_StreamSettings.locations.Length != 0 
+                || m_LocationIdentifiers.Length != m_StreamSettings.BlendShapeCount)
+            {
+                var locs = new List<string>();
+                foreach (var location in m_StreamSettings.locations)
+                {
+                    locs.Add(location);
+                }
+
+                m_LocationIdentifiers = locs.ToArray();
+            }
         }
 #endif
     }

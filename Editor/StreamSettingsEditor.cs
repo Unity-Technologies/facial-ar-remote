@@ -17,7 +17,6 @@ namespace Unity.Labs.FacialRemote
         SerializedProperty m_FrameTimeOffset;
         SerializedProperty m_BufferSize;
         SerializedProperty m_Locations;
-        SerializedProperty m_Mappings;
 
         void OnEnable()
         {
@@ -32,7 +31,6 @@ namespace Unity.Labs.FacialRemote
             m_FrameTimeOffset = serializedObject.FindProperty("m_FrameTimeOffset");
             m_BufferSize = serializedObject.FindProperty("m_BufferSize");
             m_Locations = serializedObject.FindProperty("m_Locations");
-            m_Mappings = serializedObject.FindProperty("m_Mappings");
         }
 
         public override void OnInspectorGUI()
@@ -52,13 +50,11 @@ namespace Unity.Labs.FacialRemote
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Location Identifier");
-                EditorGUILayout.LabelField("BlendShape Name");
                 EditorGUILayout.EndHorizontal();
                 for (var i = 0; i < m_Locations.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     EditorGUILayout.PropertyField(m_Locations.GetArrayElementAtIndex(i), new GUIContent());
-                    EditorGUILayout.PropertyField(m_Mappings.GetArrayElementAtIndex(i), new GUIContent());
                     EditorGUILayout.EndHorizontal();
                 }
 

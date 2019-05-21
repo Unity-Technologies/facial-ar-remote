@@ -9,7 +9,7 @@ namespace Unity.Labs.FacialRemote
     /// Asset for storing recorded sessions.
     /// </summary>
     [Serializable]
-    [CreateAssetMenu(fileName = "PlaybackData", menuName = "Facial Remote/Playback Data")]
+    [CreateAssetMenu(fileName = "PlaybackData", menuName = "AR Face Capture/Playback Data")]
     public class PlaybackData : ScriptableObject
     {
         const int k_MinBufferAmount = 32;

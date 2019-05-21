@@ -12,6 +12,9 @@ namespace Unity.Labs.FacialRemote
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
         [SerializeField]
+        BlendShapeMappings m_BlendShapeMappings;
+    
+        [SerializeField]
         [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
         SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
 
@@ -139,7 +142,7 @@ namespace Unity.Labs.FacialRemote
             m_BlendShapes = new float[blendShapeCount];
             blendShapesScaled = new float[blendShapeCount];
             m_Indices.Clear();
-            var streamSettings = streamReader.streamSource.streamSettings;
+            //var streamSettings = streamReader.streamSource.streamSettings;
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
                 var mesh = meshRenderer.sharedMesh;
@@ -149,9 +152,9 @@ namespace Unity.Labs.FacialRemote
                 {
                     var shapeName = mesh.GetBlendShapeName(i);
                     var index = -1;
-                    for (var j = 0; j < streamSettings.mappings.Length; j++)
+                    for (var j = 0; j < m_BlendShapeMappings.blendShapeNames.Length; j++)
                     {
-                        if (shapeName.Contains(streamSettings.mappings[j]))
+                        if (shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
                         {
                             index = j;
                             break;
@@ -212,8 +215,11 @@ namespace Unity.Labs.FacialRemote
             var streamSource = streamReader.streamSource;
             if (streamSource == null)
                 return;
-
+            
             var streamSettings = streamSource.streamSettings;
+            
+            if (m_BlendShapeMappings == null)
+                return;
             // if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
             //     return;
 
@@ -226,7 +232,8 @@ namespace Unity.Labs.FacialRemote
 
                 for (var i = 0; i < blendShapeCount; i++)
                 {
-                    var location = streamSettings.mappings[i];
+                    //var location = streamSettings.mappings[i];
+                    var location = m_BlendShapeMappings.blendShapeNames[i];
                     var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
                         ?? new BlendShapeOverride(location);
 

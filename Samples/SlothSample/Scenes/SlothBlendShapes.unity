@@ -258,6 +258,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_SkinnedMeshRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_BlendShapeMappings
+      value: 
+      objectReference: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42,
+        type: 2}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_DriveEyes
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_HeadBone
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_HeadFollowAmount
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_DriveNeck
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f52b9039400198449907ac105acc8616, type: 3}
 --- !u!1 &786562247 stripped
@@ -273,6 +304,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1301902957927422, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
+      propertyPath: m_Name
+      value: StreamReader
+      objectReference: {fileID: 0}
     - target: {fileID: 4795781088406236, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -305,9 +340,16 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
-        type: 3}
-      propertyPath: m_StreamSourceOverrides.Array.size
+    - target: {fileID: 4795781088406236, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4795781088406236, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4795781088406236, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
@@ -315,11 +357,6 @@ PrefabInstance:
       propertyPath: m_Character
       value: 
       objectReference: {fileID: 786562247}
-    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
-        type: 3}
-      propertyPath: m_VerboseLogging
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
 --- !u!1 &1845804764

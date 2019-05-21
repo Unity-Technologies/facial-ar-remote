@@ -75,7 +75,7 @@ namespace Unity.Labs.FacialRemote
         string[] m_Locations = {};
 
         [SerializeField]
-        [Tooltip("Rename mapping values to apply blend shape locations to a blend shape controller.")]
+        [Tooltip("The names of the blend shape values.")]
         string[] m_Mappings = {};
 
         IStreamSettings m_StreamSettings;
@@ -135,7 +135,7 @@ namespace Unity.Labs.FacialRemote
             m_FrameTimeSize = streamSettings.FrameTimeSize;
 
             m_Locations = streamSettings.locations;
-            m_Mappings = streamSettings.mappings;
+            //m_Mappings = streamSettings.mappings;
         }
 
         public void UseDefaultLocations()
@@ -148,7 +148,7 @@ namespace Unity.Labs.FacialRemote
 
             locs.Sort();
             m_Locations = locs.ToArray();*/
-            m_Locations = m_StreamSettings.locations;
+            //m_Locations = m_StreamSettings.mappings;
         }
     }
 }

@@ -57,10 +57,6 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_Locations;
 
-        [SerializeField]
-        [Tooltip("Rename mapping values to apply blend shape locations to a blend shape controller.")]
-        string[] m_Mappings;
-
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get { return m_BlendShapeSize; } }
@@ -80,8 +76,6 @@ namespace Unity.Labs.FacialRemote
         // 269-273 - Frame Time
         // 274 - Active state
         public int bufferSize { get { return m_BufferSize; } }
-
-        public string[] mappings { get { return m_Mappings; }}
 
         public string[] locations
         {
