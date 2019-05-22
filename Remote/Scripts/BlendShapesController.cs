@@ -154,7 +154,7 @@ namespace Unity.Labs.FacialRemote
                     var index = -1;
                     for (var j = 0; j < m_BlendShapeMappings.blendShapeNames.Length; j++)
                     {
-                        if (shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
+                        if (!string.IsNullOrEmpty(m_BlendShapeMappings.blendShapeNames[j]) && shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
                         {
                             index = j;
                             break;

@@ -41,6 +41,22 @@ namespace Unity.Labs.FacialRemote
 
                 m_LocationIdentifiers = locs.ToArray();
             }
+            
+            if (blendShapeNames.Length != m_LocationIdentifiers.Length)
+            {
+                var maps = new List<string>();
+                foreach (var bsn in blendShapeNames)
+                {
+                    maps.Add(bsn);
+                }
+
+                for (var i = maps.Count; i < m_LocationIdentifiers.Length; i++)
+                {
+                    maps.Add("");
+                }
+
+                m_BlendShapeNames = maps.ToArray();
+            }
         }
 #endif
     }

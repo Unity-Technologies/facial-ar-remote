@@ -32,7 +32,8 @@ namespace Unity.Labs.FacialRemote
                     GUI.enabled = false;
                     EditorGUILayout.PropertyField(m_LocationIdentifiers.GetArrayElementAtIndex(i), new GUIContent());
                     GUI.enabled = true;
-                    EditorGUILayout.PropertyField(m_BlendShapeNames.GetArrayElementAtIndex(i), new GUIContent());
+                    if (m_BlendShapeNames.arraySize > i)
+                        EditorGUILayout.PropertyField(m_BlendShapeNames.GetArrayElementAtIndex(i), new GUIContent());
                     EditorGUILayout.EndHorizontal();
                 }
 
