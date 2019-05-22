@@ -98,7 +98,7 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
-            m_FaceLostGUI.enabled = !FaceInView();
+            //m_FaceLostGUI.enabled = !FaceInView();
 
             var connected = m_Socket != null && m_Socket.Connected;
             if (m_MainGUI.enabled && connected)

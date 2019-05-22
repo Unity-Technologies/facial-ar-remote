@@ -74,11 +74,9 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_Locations = {};
 
-        [SerializeField]
-        [Tooltip("The names of the blend shape values.")]
-        string[] m_Mappings = {};
-
         IStreamSettings m_StreamSettings;
+
+        BlendShapeMappings m_BlendShapeMappings;
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
@@ -90,7 +88,6 @@ namespace Unity.Labs.FacialRemote
         public int FrameNumberOffset  { get { return m_FrameNumberOffset; } }
         public int FrameTimeOffset { get { return m_FrameTimeOffset; } }
         public int bufferSize { get { return m_BufferSize; } }
-        public string[] mappings { get { return m_Mappings; } }
 
         public string[] locations
         {
@@ -135,7 +132,6 @@ namespace Unity.Labs.FacialRemote
             m_FrameTimeSize = streamSettings.FrameTimeSize;
 
             m_Locations = streamSettings.locations;
-            //m_Mappings = streamSettings.mappings;
         }
 
         public void UseDefaultLocations()
@@ -148,7 +144,7 @@ namespace Unity.Labs.FacialRemote
 
             locs.Sort();
             m_Locations = locs.ToArray();*/
-            //m_Locations = m_StreamSettings.mappings;
+            m_Locations = m_StreamSettings.locations;
         }
     }
 }

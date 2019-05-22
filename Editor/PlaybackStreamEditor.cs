@@ -6,12 +6,10 @@ namespace Unity.Labs.FacialRemote
     public class PlaybackStreamEditor : Editor
     {
         SerializedProperty m_PlaybackData;
-        SerializedProperty m_BlendShapeMappings;
 
         void OnEnable()
         {
             m_PlaybackData = serializedObject.FindProperty("m_PlaybackData");
-            m_BlendShapeMappings = serializedObject.FindProperty("m_BlendShapeMappings");
 
             var playbackStream = (PlaybackStream)target;
             var streamReader = playbackStream.gameObject.GetComponent<StreamReader>();
@@ -26,7 +24,6 @@ namespace Unity.Labs.FacialRemote
             using (var check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(m_PlaybackData);
-                EditorGUILayout.PropertyField(m_BlendShapeMappings);
 
                 if (m_PlaybackData.objectReferenceValue == null)
                 {
