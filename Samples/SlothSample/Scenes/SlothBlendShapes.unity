@@ -258,67 +258,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_SkinnedMeshRenderers.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_BlendShapeMappings
-      value: 
-      objectReference: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42,
-        type: 2}
-    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_Overrides.Array.data[0].m_UseOverride
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_Overrides.Array.data[24].m_UseOverride
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114823813081300294, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_Overrides.Array.data[24].m_BlendShapeMax
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_DriveEyes
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_HeadBone
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_HeadFollowAmount
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_DriveNeck
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_DriveHead
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 137532649854878984, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_BlendShapeWeights.Array.size
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 137532649854878984, guid: f52b9039400198449907ac105acc8616,
-        type: 3}
-      propertyPath: m_BlendShapeWeights.Array.data[0]
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f52b9039400198449907ac105acc8616, type: 3}
 --- !u!1 &786562247 stripped
@@ -386,6 +325,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4795781088406236, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
+        type: 3}
+      propertyPath: m_StreamSourceOverrides.Array.size
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 114641533554280668, guid: 98f44cca61f34da4dbb00fe3ae4ca938,

@@ -74,7 +74,57 @@ SkinnedMeshRenderer:
   m_SkinnedMotionVectors: 1
   m_Mesh: {fileID: 4300000, guid: af968d843fbb7064799877e138be8e80, type: 3}
   m_Bones: []
-  m_BlendShapeWeights: []
+  m_BlendShapeWeights:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
   m_RootBone: {fileID: 0}
   m_AABB:
     m_Center: {x: 0, y: -0.015557218, z: 0}
@@ -176,6 +226,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db8052edd37c5da4ba56c08244eb648a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_BlendShapeMappings: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42,
+    type: 2}
   m_SkinnedMeshRenderers:
   - {fileID: 137532649854878984}
   m_BlendShapeSmoothing: 0.1
@@ -352,13 +404,13 @@ MonoBehaviour:
     m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
     m_BlendShapeMax: 100
-  - m_UseOverride: 0
+  - m_UseOverride: 1
     m_Name: jawOpen
     m_BlendShapeSmoothing: 0.1
     m_BlendShapeThreshold: 0.01
     m_BlendShapeOffset: 0
     m_BlendShapeCoefficient: 120
-    m_BlendShapeMax: 100
+    m_BlendShapeMax: 16
   - m_UseOverride: 0
     m_Name: jawRight
     m_BlendShapeSmoothing: 0.1
@@ -570,9 +622,9 @@ MonoBehaviour:
   m_LeftEyeNegZ: 0
   m_EyeAngleRange: {x: 30, y: 45}
   m_DriveHead: 0
-  m_HeadBone: {fileID: 4967094478328516}
+  m_HeadBone: {fileID: 0}
   m_HeadSmoothing: 0.1
-  m_HeadFollowAmount: 1
+  m_HeadFollowAmount: 0.6
   m_DriveNeck: 0
   m_NeckBone: {fileID: 0}
   m_NeckFollowAmount: 0.4
