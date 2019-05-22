@@ -60,6 +60,9 @@ namespace Unity.Labs.FacialRemote
                 EditorGUI.indentLevel++;
                 if (m_DriveHead.boolValue)
                 {
+                    if (m_HeadBone.objectReferenceValue == null)
+                        EditorGUILayout.HelpBox("Cannot drive head if no Head Bone is set.", MessageType.Warning);
+                    
                     EditorGUILayout.PropertyField(m_HeadFollowAmount);
                     EditorGUILayout.PropertyField(m_HeadSmoothing);
                 }
@@ -69,6 +72,9 @@ namespace Unity.Labs.FacialRemote
                 EditorGUI.indentLevel++;
                 if (m_DriveNeck.boolValue)
                 {
+                    if (m_NeckBone.objectReferenceValue == null)
+                        EditorGUILayout.HelpBox("Cannot drive neck if no Head Bone is set.", MessageType.Warning);
+                    
                     EditorGUILayout.PropertyField(m_NeckFollowAmount);
                 }
                 EditorGUI.indentLevel--;
@@ -77,6 +83,9 @@ namespace Unity.Labs.FacialRemote
                 EditorGUI.indentLevel++;
                 if (m_DriveEyes.boolValue)
                 {
+                    if (m_LeftEye.objectReferenceValue == null || m_RightEye.objectReferenceValue == null)
+                        EditorGUILayout.HelpBox("Cannot drive eyes if eye transforms are not set.", MessageType.Warning);
+                    
                     EditorGUILayout.PropertyField(m_EyeLookDistance);
                     EditorGUILayout.PropertyField(m_RightEyeNegZ);
                     EditorGUILayout.PropertyField(m_LeftEyeNegZ);
