@@ -118,7 +118,7 @@ namespace Unity.Labs.FacialRemote
             if (streamSettings != m_LastStreamSettings)
                 UpdateBlendShapeIndices(streamSettings);
 
-            InterpolateBlendShapes();
+            CalculateInterpolatedBlendShapes();
 
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
@@ -135,6 +135,10 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        /// <summary>
+        /// Update the blend shape indices based on the incoming data stream.
+        /// </summary>
+        /// <param name="settings">The stream settings used for this mapping.</param>
         public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
@@ -142,7 +146,7 @@ namespace Unity.Labs.FacialRemote
             m_BlendShapes = new float[blendShapeCount];
             blendShapesScaled = new float[blendShapeCount];
             m_Indices.Clear();
-            //var streamSettings = streamReader.streamSource.streamSettings;
+            
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
                 var mesh = meshRenderer.sharedMesh;
@@ -154,7 +158,10 @@ namespace Unity.Labs.FacialRemote
                     var index = -1;
                     for (var j = 0; j < m_BlendShapeMappings.blendShapeNames.Length; j++)
                     {
-                        if (!string.IsNullOrEmpty(m_BlendShapeMappings.blendShapeNames[j]) && shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
+                        // Check using 'contains' rather than a direct comparison so that multiple blend shapes can 
+                        // easily be driven by the same driver e.g. jaw and teeth
+                        if (!string.IsNullOrEmpty(m_BlendShapeMappings.blendShapeNames[j]) 
+                            && shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
                         {
                             index = j;
                             break;
@@ -171,7 +178,11 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void InterpolateBlendShapes(bool force = false)
+        /// <summary>
+        /// Calculate what the interpolated blend shape values should be before they are set to the rig.
+        /// </summary>
+        /// <param name="force">Force smoothing.</param>
+        public void CalculateInterpolatedBlendShapes(bool force = false)
         {
             var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; i++)
@@ -227,7 +238,6 @@ namespace Unity.Labs.FacialRemote
             var blendShapeCount = streamSettings.BlendShapeCount;
             if (m_Overrides.Length != blendShapeCount)
             {
-
                 var overridesCopy = new BlendShapeOverride[blendShapeCount];
 
                 for (var i = 0; i < blendShapeCount; i++)

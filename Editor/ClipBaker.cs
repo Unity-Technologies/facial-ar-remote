@@ -113,7 +113,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_CharacterRigController != null)
             {
-                m_CharacterRigController.UpdateBlendShapeIndices(playbackBuffer);
+                m_CharacterRigController.SetEyeBlendShapeIndices(playbackBuffer);
 
                 m_CharacterRigController.SetupCharacterRigController();
 
@@ -214,7 +214,7 @@ namespace Unity.Labs.FacialRemote
                 m_PlaybackStream.UpdateCurrentFrameBuffer(true);
 
                 if (m_BlendShapesController != null)
-                    m_BlendShapesController.InterpolateBlendShapes(true);
+                    m_BlendShapesController.CalculateInterpolatedBlendShapes(true);
 
                 if (m_CharacterRigController != null)
                     m_CharacterRigController.InterpolateBlendShapes(true);

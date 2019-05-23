@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    /// <summary>
+    /// Asset defining the mapping of blend shape locations and mappings for a specific rig
+    /// </summary>
     [Serializable]
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject
@@ -13,15 +16,18 @@ namespace Unity.Labs.FacialRemote
         StreamSettings m_StreamSettings;
         
         [SerializeField]
-        [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
+        [Tooltip("Names of the data streams with their index in the array being their relative location")]
         string[] m_LocationIdentifiers;
 
         [SerializeField]
-        [Tooltip("Rename mapping values to apply blend shape locations to a blend shape controller.")]
+        [Tooltip("Blend shape names from the rig. These must be row/index aligned with the location identifiers")]
         string[] m_BlendShapeNames;
 
+        /// <summary>
+        /// Blend shape names from the rig.
+        /// </summary>
         public string[] blendShapeNames { get { return m_BlendShapeNames; }}
-
+        
 #if UNITY_EDITOR
         void OnValidate()
         {

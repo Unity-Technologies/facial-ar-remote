@@ -14,6 +14,7 @@ namespace Unity.Labs.FacialRemote
     {
         const int k_MinBufferAmount = 32;
         const int k_BufferCreateAmount = 6;
+        const int k_ThreadSleepTime = 1;
 
         [SerializeField]
         [Tooltip("Individual recorded playback buffers from a streaming source.")]
@@ -27,27 +28,28 @@ namespace Unity.Labs.FacialRemote
 
         public PlaybackBuffer[] playbackBuffers { get { return m_PlaybackBuffers; } }
 
+#if UNITY_EDITOR
         void OnEnable()
         {
-#if UNITY_EDITOR
             UnityEditor.EditorApplication.playModeStateChanged += PlayModeStateChanged;
-#endif
         }
 
         void OnDisable()
         {
-#if UNITY_EDITOR
             UnityEditor.EditorApplication.playModeStateChanged -= PlayModeStateChanged;
-#endif
         }
 
-#if UNITY_EDITOR
         void PlayModeStateChanged(UnityEditor.PlayModeStateChange state)
         {
             FinishRecording();
         }
 #endif
 
+        /// <summary>
+        /// Start recording a session using data from the remote device.
+        /// </summary>
+        /// <param name="streamSettings">The stream settings used for this recording</param>
+        /// <param name="take">The take number</param>
         public void StartRecording(IStreamSettings streamSettings, int take)
         {
             var playbackBuffer = new PlaybackBuffer(streamSettings)
@@ -76,7 +78,7 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
 
-                    Thread.Sleep(1);
+                    Thread.Sleep(k_ThreadSleepTime);
                 }
             }).Start();
         }

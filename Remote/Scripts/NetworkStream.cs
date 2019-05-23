@@ -25,9 +25,11 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         const int k_MaxConnections = 64;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
         StreamSettings m_StreamSettings;
+#pragma warning restore CS0649
 
         [SerializeField]
         [Tooltip("Port number that the device will connect to, be sure to have this match the port set on the device.")]

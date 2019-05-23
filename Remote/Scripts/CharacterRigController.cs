@@ -35,6 +35,7 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Amount of smoothing to apply to eye movement")]
         float m_EyeSmoothing = 0.2f;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Corrects the right eye look direction if z is negative.")]
         bool m_RightEyeNegZ;
@@ -42,7 +43,8 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Corrects the left eye look direction if z is negative.")]
         bool m_LeftEyeNegZ;
-
+#pragma warning restore CS0649
+        
         [SerializeField]
         [Tooltip("Max amount of x and y movement for the eyes.")]
         Vector2 m_EyeAngleRange = new Vector2(30, 45);
@@ -51,9 +53,11 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Enable controller driving head bone pose.")]
         bool m_DriveHead = true;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Head bone transform")]
         Transform m_HeadBone;
+#pragma warning restore CS0649
 
         [Range(0f, 1f)]
         [SerializeField]
@@ -69,9 +73,12 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Enable controller driving neck bone pose.")]
         bool m_DriveNeck = true;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Neck bone transform")]
         Transform m_NeckBone;
+#pragma warning restore CS0649
+
 
         [Range(0f, 1f)]
         [SerializeField]
@@ -125,9 +132,42 @@ namespace Unity.Labs.FacialRemote
 
         public Transform headBone { get { return m_HeadBone != null ? m_HeadBone : transform; } }
 
-        public bool driveEyes { get { return m_DriveEyes; } }
-        public bool driveHead { get { return m_DriveHead; } }
-        public bool driveNeck { get { return m_DriveNeck; } }
+
+        public bool driveEyes
+        {
+            get { return m_DriveEyes; }
+            set { m_DriveEyes = value; }
+        }
+
+        public bool driveHead
+        {
+            get { return m_DriveHead; }
+            set { m_DriveHead = value; }
+        }
+
+        public bool driveNeck
+        {
+            get { return m_DriveNeck; }
+            set { m_DriveNeck = value; }
+        }
+
+        public float neckFollowAmount
+        {
+            get { return m_NeckFollowAmount; }
+            set { m_NeckFollowAmount = value; }
+        }
+
+        public float headSmoothing
+        {
+            get { return m_HeadSmoothing; }
+            set { m_HeadSmoothing = value; }
+        }
+
+        public Vector2 eyeAngleRange
+        {
+            get { return m_EyeAngleRange; }
+            set { m_EyeAngleRange = value; }
+        }
 
         [NonSerialized]
         [HideInInspector]
@@ -147,7 +187,7 @@ namespace Unity.Labs.FacialRemote
             
             var streamSettings = streamReader.streamSource.streamSettings;
             if (streamSettings != m_LastStreamSettings)
-                UpdateBlendShapeIndices(streamSettings);
+                SetEyeBlendShapeIndices(streamSettings);
             
 
             InterpolateBlendShapes();
@@ -162,7 +202,11 @@ namespace Unity.Labs.FacialRemote
             UpdateBoneTransforms();
         }
 
-        public void UpdateBlendShapeIndices(IStreamSettings settings)
+        /// <summary>
+        /// Set the indices of the eye blend shapes based on the their indices in the stream.
+        /// </summary>
+        /// <param name="settings">The stream settings for this session.</param>
+        public void SetEyeBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
             m_EyeLookDownLeftIndex = Array.IndexOf(settings.locations, "EyeLookDownLeft");
@@ -175,6 +219,9 @@ namespace Unity.Labs.FacialRemote
             m_EyeLookUpRightIndex = Array.IndexOf(settings.locations, "EyeLookUpRight");
         }
 
+        /// <summary>
+        /// Create the pose data and helper game objects for driving the values of the face rig.
+        /// </summary>
         public void SetupCharacterRigController()
         {
             Debug.Log("Start avatar Setup");
@@ -362,6 +409,9 @@ namespace Unity.Labs.FacialRemote
                 animatedBones[3] = m_RightEye;
         }
 
+        /// <summary>
+        /// Reset all bone poses to their starting positions.
+        /// </summary>
         public void ResetBonePoses()
         {
             if (m_DriveEyes)
@@ -407,12 +457,12 @@ namespace Unity.Labs.FacialRemote
                 m_EyeLookOutRight = Mathf.Lerp(buffer[m_EyeLookOutRightIndex], m_EyeLookOutRight, m_EyeSmoothing);
                 m_EyeLookUpRight = Mathf.Lerp(buffer[m_EyeLookUpRightIndex], m_EyeLookUpRight, m_EyeSmoothing);
 
-                var leftEyePitch = Quaternion.AngleAxis((m_EyeLookUpLeft - m_EyeLookDownLeft) * m_EyeAngleRange.x, Vector3.right);
-                var leftEyeYaw = Quaternion.AngleAxis((m_EyeLookInLeft - m_EyeLookOutLeft) * m_EyeAngleRange.y, Vector3.up);
+                var leftEyePitch = Quaternion.AngleAxis((m_EyeLookUpLeft - m_EyeLookDownLeft) * eyeAngleRange.x, Vector3.right);
+                var leftEyeYaw = Quaternion.AngleAxis((m_EyeLookInLeft - m_EyeLookOutLeft) * eyeAngleRange.y, Vector3.up);
                 var leftEyeRot = leftEyePitch * leftEyeYaw;
 
-                var rightEyePitch = Quaternion.AngleAxis((m_EyeLookUpRight - m_EyeLookDownRight) * m_EyeAngleRange.x, Vector3.right);
-                var rightEyeYaw = Quaternion.AngleAxis((m_EyeLookOutRight - m_EyeLookInRight) * m_EyeAngleRange.y, Vector3.up);
+                var rightEyePitch = Quaternion.AngleAxis((m_EyeLookUpRight - m_EyeLookDownRight) * eyeAngleRange.x, Vector3.right);
+                var rightEyeYaw = Quaternion.AngleAxis((m_EyeLookOutRight - m_EyeLookInRight) * eyeAngleRange.y, Vector3.up);
                 var rightEyeRot = rightEyePitch * rightEyeYaw;
 
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
@@ -421,11 +471,11 @@ namespace Unity.Labs.FacialRemote
                 var neckRot = headRot;
 
                 headRot = Quaternion.Slerp(m_HeadStartPose.rotation, headRot, m_HeadFollowAmount);
-                m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, m_HeadSmoothing);
+                m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, headSmoothing);
                 m_LastHeadRotation = m_ARHeadPose.localRotation;
 
-                neckRot = Quaternion.Slerp(m_NeckStartPose.rotation, neckRot, m_NeckFollowAmount);
-                m_ARNeckPose.localRotation = Quaternion.Slerp(neckRot, m_LastNeckRotation, m_HeadSmoothing);
+                neckRot = Quaternion.Slerp(m_NeckStartPose.rotation, neckRot, neckFollowAmount);
+                m_ARNeckPose.localRotation = Quaternion.Slerp(neckRot, m_LastNeckRotation, headSmoothing);
                 m_LastNeckRotation = m_ARNeckPose.localRotation;
             }
             else

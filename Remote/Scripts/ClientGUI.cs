@@ -45,11 +45,13 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         Button m_ConnectButton;
 
+#pragma warning disable CS0649
         [SerializeField]
         TMP_InputField m_PortTextField;
 
         [SerializeField]
         TMP_InputField m_IPTextField;
+#pragma warning restore CS0649
 
         Camera m_Camera;
 
@@ -102,7 +104,7 @@ namespace Unity.Labs.FacialRemote
 
             var connected = m_Socket != null && m_Socket.Connected;
             if (m_MainGUI.enabled && connected)
-                m_Client.StartCapture(m_Socket);
+                m_Client.StartStreamingData(m_Socket);
 
             m_MainGUI.enabled = !connected;
         }

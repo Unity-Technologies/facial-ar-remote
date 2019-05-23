@@ -337,6 +337,12 @@ PrefabInstance:
       propertyPath: m_Character
       value: 
       objectReference: {fileID: 786562247}
+    - target: {fileID: 114180405116318928, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
+        type: 3}
+      propertyPath: m_PlaybackData
+      value: 
+      objectReference: {fileID: 11400000, guid: 7c7c2409506a34680942e2758bdf78b4,
+        type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 98f44cca61f34da4dbb00fe3ae4ca938, type: 3}
 --- !u!1 &1616870495

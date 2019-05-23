@@ -13,6 +13,7 @@ namespace Unity.Labs.FacialRemote
     [CreateAssetMenu(fileName = "Stream Settings", menuName = "AR Face Capture/Stream Settings")]
     public class StreamSettings : ScriptableObject, IStreamSettings
     {
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Error check byte value.")]
         byte m_ErrorCheck = 42;
@@ -54,8 +55,9 @@ namespace Unity.Labs.FacialRemote
         int m_BufferSize;
 
         [SerializeField]
-        [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
+        [Tooltip("The identifying strings of the blend shape locations.")]
         string[] m_Locations;
+#pragma warning restore CS0649
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
@@ -77,24 +79,7 @@ namespace Unity.Labs.FacialRemote
         // 274 - Active state
         public int bufferSize { get { return m_BufferSize; } }
 
-        public string[] locations
-        {
-            get
-            {
-                /*if (m_Locations.Length != m_BlendShapeCount)
-                {
-                    var locs = new List<string>();
-                    foreach (var location in BlendShapeUtils.Locations)
-                    {
-                        locs.Add(location);
-                    }
-
-                    m_Locations = locs.ToArray();
-                }*/
-
-                return m_Locations;
-            }
-        }
+        public string[] locations { get { return m_Locations; } }
 
         void OnValidate()
         {
@@ -112,20 +97,6 @@ namespace Unity.Labs.FacialRemote
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
 #endif
-            
-//            if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
-            /*{
-                var locs = new List<string>();
-                foreach (var location in BlendShapeUtils.Locations)
-                {
-                    locs.Add(location);
-                }
-
-                //locs.Sort();
-                m_Locations = locs.ToArray();
-//                m_Mappings = m_Locations;
-            }*/
-            
         }
     }
 }

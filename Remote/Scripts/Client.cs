@@ -21,9 +21,11 @@ namespace Unity.Labs.FacialRemote
         const float k_Timeout = 5;
         const int k_SleepTime = 4;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
+#pragma warning restore CS0649
 
         [SerializeField]
         ARFaceManager m_ARFaceManager;
@@ -48,6 +50,7 @@ namespace Unity.Labs.FacialRemote
 #endif
 
         public ARFaceManager arFaceManager => m_ARFaceManager;
+        
 
         void Awake()
         {
@@ -85,10 +88,10 @@ namespace Unity.Labs.FacialRemote
         }
 
         /// <summary>
-        /// Starts stream thread using the provided socket.
+        /// Starts a thread to send streaming data using the provided socket.
         /// </summary>
         /// <param name="socket">The socket to use when streaming blend shape data.</param>
-        public void StartCapture(Socket socket)
+        public void StartStreamingData(Socket socket)
         {
             m_CameraTransform = Camera.main.transform;
             if (!m_CameraTransform)

@@ -1,5 +1,8 @@
 ﻿namespace Unity.Labs.FacialRemote
 {
+    /// <summary>
+    /// Struct associating a blend shape index with a blend shape name.
+    /// </summary>
     public struct BlendShapeIndexData
     {
         readonly int m_Index;
