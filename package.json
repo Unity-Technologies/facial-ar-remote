@@ -1,7 +1,7 @@
 {
     "name": "com.unity.facial-ar-remote",
     "displayName": "AR Face Capture",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "unity": "2018.3",
     "description": "A tool that allows you to capture blendshape animations an iPhone X into Unity.",
     "keywords": [
@@ -10,8 +10,5 @@
     ],
     "category": "Unity",
     "dependencies": {
-        "com.unity.textmeshpro": "1.3.0",
-        "com.unity.xr.arfoundation": "1.5.0-preview.2",
-        "com.unity.xr.arkit-face-tracking": "1.0.0-preview.4"
     }
 }
