@@ -29,7 +29,12 @@ namespace Unity.Labs.FacialRemote
         public bool active { get; private set; }
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
         public IStreamSettings streamSettings { get { return activePlaybackBuffer; } }
-        public PlaybackData playbackData { get { return m_PlaybackData; } }
+
+        public PlaybackData playbackData
+        {
+            get => m_PlaybackData;
+            set => m_PlaybackData = value;
+        }
 
         void Start()
         {

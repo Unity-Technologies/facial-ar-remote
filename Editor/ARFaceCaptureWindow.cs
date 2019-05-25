@@ -152,7 +152,14 @@ namespace Unity.Labs.FacialRemote
                 {
                     if (m_PlaybackStream == null || m_PlaybackStream.playbackData == null)
                     {
-                        GUILayout.Button("Play Stream: NULL!");
+                        if (GUILayout.Button("Create new Playback Data asset"))
+                        {
+                            var asset = CreateInstance<PlaybackData>();
+
+                            AssetDatabase.CreateAsset(asset, "Assets/New Playback Data.asset");
+                            AssetDatabase.SaveAssets();
+                            m_PlaybackStream.playbackData = asset;
+                        }
                     }
                     else
                     {
