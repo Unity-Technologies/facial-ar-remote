@@ -63,7 +63,10 @@ namespace Unity.Labs.FacialRemote
 
         public bool recording { get; private set; }
 
-        public IStreamReader streamReader { private get; set; }
+
+        List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
+
+        public List<IStreamReader> streamReaders => m_StreamReaders;
 
         public bool active
         {
@@ -168,11 +171,10 @@ namespace Unity.Labs.FacialRemote
 
                     while (m_Running)
                     {
-                        if (streamReader == null)
+                        if (streamReaders.Count == 0)
                             continue;
 
-                        var source = streamReader.streamSource;
-                        if (socket.Connected && source != null && source.Equals(this))
+                        if (socket.Connected && HasStreamReader())
                         {
                             try
                             {
@@ -203,8 +205,8 @@ namespace Unity.Labs.FacialRemote
                                         m_StreamSettings.FrameNumberSize);
 
                                     var frameNum = frameNumArray[0];
-                                    if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
-                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                    //if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
+                                      //  Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
                                 }
@@ -230,12 +232,28 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        bool HasStreamReader()
+        {
+            var hasStreamReader = false;
+
+            foreach (var sr in streamReaders)
+            {
+                if (sr.streamSource.Equals(this))
+                {
+                    hasStreamReader = true;
+                    break;
+                }
+            }
+
+            return hasStreamReader;
+        }
+
         public void StartRecording()
         {
             if (m_StreamRecorder == null)
                 return;
 
-            if (streamReader.streamSource.Equals(this) && !recording)
+            if (HasStreamReader() && !recording)
             {
                 m_StreamRecorder.StartRecording(m_StreamSettings, m_TakeNumber);
                 recording = true;
@@ -268,29 +286,31 @@ namespace Unity.Labs.FacialRemote
             }
 
             var buffer = m_BufferQueue.Dequeue();
-
-            if (streamReader.streamSource.Equals(this))
-                streamReader.UpdateStreamData(buffer);
+            
+            foreach (var sr in streamReaders)
+            {
+                if (sr.streamSource.Equals(this))
+                    sr.UpdateStreamData(buffer);
+            }
 
             m_UnusedBuffers.Enqueue(buffer);
         }
 
         public void StreamSourceUpdate()
         {
-            var source = streamReader.streamSource;
-            var notSource = source == null || !source.Equals(this);
+            var notSource = !HasStreamReader();
             if (notSource && recording)
                 StopRecording();
 
             if (notSource || !active)
                 return;
 
-            if (streamReader.verboseLogging)
-            {
-                if (m_BufferQueue.Count > m_CatchUpSize)
-                    Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
-                        m_BufferQueue.Count, m_CatchUpSize));
-            }
+            //if (streamReader.verboseLogging)
+            //{
+            //    if (m_BufferQueue.Count > m_CatchUpSize)
+            //        Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
+            //            m_BufferQueue.Count, m_CatchUpSize));
+            //}
 
             UpdateCurrentFrameBuffer();
         }

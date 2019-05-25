@@ -219,6 +219,12 @@ namespace Unity.Labs.FacialRemote
             var usesStreamReader = obj as IUsesStreamReader;
             if (usesStreamReader != null)
                 usesStreamReader.streamReader = this;
+
+            var ss = obj as IStreamSource;
+            if (ss != null && !ss.streamReaders.Contains(this))
+            {
+                ss.streamReaders.Add(this);
+            }
         }
     }
 }

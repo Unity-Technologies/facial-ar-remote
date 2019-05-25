@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -24,8 +25,11 @@ namespace Unity.Labs.FacialRemote
 
         [NonSerialized]
         PlaybackBuffer m_ActivePlaybackBuffer;
+        
+        List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
-        public IStreamReader streamReader { private get; set; }
+        public List<IStreamReader> streamReaders => m_StreamReaders;
+
         public bool active { get; private set; }
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
         public IStreamSettings streamSettings { get { return activePlaybackBuffer; } }
@@ -45,9 +49,16 @@ namespace Unity.Labs.FacialRemote
 
         public void StreamSourceUpdate()
         {
-            var source = streamReader.streamSource;
-            if (source != null && !source.Equals(this) && active)
-                active = false;
+            active = false;
+            foreach (var sr in streamReaders)
+            {
+                var source = sr.streamSource;
+                if (source != null && source.Equals(this))
+                {
+                    active = true;
+                    break;
+                }
+            }
 
             if (!active)
                 return;
@@ -119,8 +130,11 @@ namespace Unity.Labs.FacialRemote
 
         public void UpdateCurrentFrameBuffer(bool force = false)
         {
-            if (force || streamReader.streamSource.Equals(this) && active)
-                streamReader.UpdateStreamData(m_CurrentFrameBuffer);
+            foreach (var sr in streamReaders)
+            {
+                if (force || sr.streamSource.Equals(this) && active)
+                    sr.UpdateStreamData(m_CurrentFrameBuffer);
+            }
         }
 
         public void StartRecording(IStreamSettings settings, int take)
