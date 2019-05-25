@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 329ddaf6557774075a348fbc6a40eb14
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_PersistentViewDataDictionary: {instanceID: 0}
+  - m_StreamReaderPrefab: {fileID: 1301902957927422, guid: 98f44cca61f34da4dbb00fe3ae4ca938,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
