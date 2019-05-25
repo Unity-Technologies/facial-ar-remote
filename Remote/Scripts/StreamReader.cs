@@ -13,7 +13,8 @@ namespace Unity.Labs.FacialRemote
     public class StreamReader : MonoBehaviour, IStreamReader
     {
         [SerializeField]
-        List<FaceControllerData> m_FaceControllers = new List<FaceControllerData>();
+        [Tooltip("Root of character to be be driven.")]
+        GameObject m_Character;
 
         [SerializeField]
         [Tooltip("Shows extra logging information in the console.")]
@@ -23,6 +24,22 @@ namespace Unity.Labs.FacialRemote
         [Range(1, 512)]
         [Tooltip("Number of frames of same head tracking data before tracking is considered lost.")]
         int m_TrackingLossPadding = 64;
+
+        [SerializeField]
+        [Tooltip("(Optional) Manually override the blend shape controller found in the Character.")]
+        BlendShapesController m_BlendShapesControllerOverride;
+
+        [SerializeField]
+        [Tooltip("(Optional) Manually override the character rig controller found in the Character.")]
+        CharacterRigController m_CharacterRigControllerOverride;
+
+        [SerializeField]
+        [Tooltip("(Optional) Manually override the head bone set from the character rig controller. Used for determining the start pose of the character.")]
+        Transform m_HeadBoneOverride;
+
+        [SerializeField]
+        [Tooltip("(Optional) Manually override the main camera found by the stream reader. Used for determining the starting pose of the camera.")]
+        Camera m_CameraOverride;
 
         [SerializeField]
         [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its children.")]
@@ -114,39 +131,36 @@ namespace Unity.Labs.FacialRemote
                     streamSource = source;
             }
 
-            foreach (var fc in m_FaceControllers)
+            if (m_Character != null)
             {
-                if (fc.characterGameObject != null)
-                {
-                    blendShapesController = fc.blendShapesControllerOverride != null
-                        ? fc.blendShapesControllerOverride
-                        : fc.characterGameObject.GetComponentInChildren<BlendShapesController>();
+                blendShapesController = m_BlendShapesControllerOverride != null
+                    ? m_BlendShapesControllerOverride
+                    : m_Character.GetComponentInChildren<BlendShapesController>();
 
-                    characterRigController = fc.characterRigControllerOverride != null
-                        ? fc.characterRigControllerOverride
-                        : fc.characterGameObject.GetComponentInChildren<CharacterRigController>();
+                characterRigController = m_CharacterRigControllerOverride != null
+                    ? m_CharacterRigControllerOverride
+                    : m_Character.GetComponentInChildren<CharacterRigController>();
 
-                    headBone = fc.headBoneOverride != null
-                        ? fc.headBoneOverride
-                        : characterRigController != null
-                            ? characterRigController.headBone
-                            : null;
-                }
-                else
-                {
-                    blendShapesController = fc.blendShapesControllerOverride;
-                    characterRigController = fc.characterRigControllerOverride;
-                    headBone = fc.headBoneOverride;
-                }
-
-                cameraTransform = fc.cameraOverride == null ? Camera.main.transform : fc.cameraOverride.transform;
-
-                if (blendShapesController != null)
-                    ConnectInterfaces(blendShapesController);
-
-                if (characterRigController != null)
-                    ConnectInterfaces(characterRigController);
+                headBone = m_HeadBoneOverride != null
+                    ? m_HeadBoneOverride
+                    : characterRigController != null
+                        ? characterRigController.headBone
+                        : null;
             }
+            else
+            {
+                blendShapesController = m_BlendShapesControllerOverride;
+                characterRigController = m_CharacterRigControllerOverride;
+                headBone = m_HeadBoneOverride;
+            }
+
+            cameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
+
+            if (blendShapesController != null)
+                ConnectInterfaces(blendShapesController);
+
+            if (characterRigController != null)
+                ConnectInterfaces(characterRigController);
         }
 
         void Awake()
