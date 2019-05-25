@@ -136,14 +136,6 @@ namespace Unity.Labs.FacialRemote
 
         public void UseDefaultLocations()
         {
-            /*var locs = new List<string>();
-            foreach (var location in BlendShapeUtils.Locations)
-            {
-                locs.Add(location);
-            }
-
-            locs.Sort();
-            m_Locations = locs.ToArray();*/
             m_Locations = m_StreamSettings.locations;
         }
     }
