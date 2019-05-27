@@ -117,18 +117,30 @@ namespace Unity.Labs.FacialRemote
 
         public void ConnectDependencies()
         {
-            m_Sources.UnionWith(GetComponentsInChildren<IStreamSource>());
+            sources.UnionWith(GetComponentsInChildren<IStreamSource>());
             foreach (var go in m_StreamSourceOverrides)
             {
                 if (go != null)
-                    m_Sources.UnionWith(go.GetComponentsInChildren<IStreamSource>());
+                    sources.UnionWith(go.GetComponentsInChildren<IStreamSource>());
             }
 
-            foreach (var source in m_Sources)
+            var alreadyContainsNetworkStream = false;
+            foreach (var source in sources)
             {
                 ConnectInterfaces(source);
                 if (source is NetworkStream)
-                    streamSource = source;
+                {
+                    if (!alreadyContainsNetworkStream)
+                    {
+                        streamSource = source;
+                        alreadyContainsNetworkStream = true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Can only have one Network Source. Removing the last one.");
+                        sources.Remove(source);
+                    }
+                }
             }
 
             if (m_Character != null)
@@ -208,7 +220,7 @@ namespace Unity.Labs.FacialRemote
 
             m_LastHeadPosition = headPosition;
 
-            foreach (var source in m_Sources)
+            foreach (var source in sources)
             {
                 source.StreamSourceUpdate();
             }

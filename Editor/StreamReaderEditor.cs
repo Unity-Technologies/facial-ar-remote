@@ -40,12 +40,10 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_TrackingLossPadding);
                 EditorGUILayout.PropertyField(m_VerboseLogging);
                 EditorGUILayout.Space();
-
+                
                 if (streamReader.blendShapesController == null)
-                {
                     EditorGUILayout.HelpBox("No Blend Shape Controller has been set or found. Note this data can " +
                         "still be recorded in the stream.", MessageType.Warning);
-                }
 
                 if (streamReader.characterRigController == null)
                 {
