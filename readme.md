@@ -1,10 +1,10 @@
-# Facial AR Remote (Preview)
+# AR Face Capture
 
 ## About
 
 Facial AR Remote is a tool that allows you to capture blend shape animations directly from an iOS device with TrueDepth support (iPhone X or above) into Unity by use of an app built with the [remote package](https://github.com/Unity-Technologies/com.unity.xr.ar-face-capture-remote).
 
-### Experimental Status
+##### Experimental Status
 
 This repository is tested against the latest stable version of Unity and requires the user to build their own iOS app to use as a remote. It is presented on an experimental basis - there is no formal support.
 
@@ -12,13 +12,13 @@ This repository is tested against the latest stable version of Unity and require
 
 This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you have LFS installed to get all the files. Unfortunately this means that the large files are also not included in the "Download ZIP" option on Github, and the example head model, among other assets, will be missing.
 
-### Editor Animation Setup
+### Editor Setup
 
 #### Install and Connection Testing
 
-1. Download an install Unity 2018.4 and then open a project with a rig set up with the corrent blendshapes
+1. Download an install Unity 2018.4
 
-2. To test your connection to the remote, start by opening `../Examples/Scenes/SlothBlendShapes.scene`.
+2. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
 
 3. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
 
@@ -27,9 +27,8 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 5. Set the `IP` of the device to one listed in the console debug log.
 
 6. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
-*Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
-*Note* Our internal setup was using a dedicated wireless router attached to the editor computer or lighting port to ethernet adaptor.
 
+*Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
 
 ### Known Issues
 
