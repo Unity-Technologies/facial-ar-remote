@@ -20,13 +20,15 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 2. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
 
-3. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
+3. Open the AR Face Capture window in the editor. 
 
-4. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Stream Reader` game object.
+4. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
 
-5. Set the `IP` of the device to one listed in the console debug log.
+5. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Stream Reader` game object.
 
-6. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
+6. Set the `IP` of the device to one listed in the console debug log.
+
+7. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
 
 *Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
 
