@@ -18,7 +18,7 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 1. Download an install Unity 2018.4
 
-2. Open the AR Face Capture window from Window > AR Face Capture
+2. Open the AR Face Capture window from `Window > AR Face Capture` or by clicking the `Open AR Face Capture Window` on a `Stream Reader` component on a game object.
 
 3. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
 
@@ -30,14 +30,25 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 7. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
 
-*Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
+**Note** You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
 
-*Warning* Modifying or using a different version of the Stream Settings asset (Stream Settings ARKit2-0) will cause the remote app from the App Store to no longer function with your package. The Stream Settings used by the Network Stream component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
+**Warning** Modifying or using a different version of the Stream Settings asset (Stream Settings ARKit2-0) will cause the remote app from the App Store to no longer function with your package. The Stream Settings used by the Network Stream component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
+
+#### Driving multiple character rigs
+The StreamReader prefab is only designed for a single device/single character rig setup. To drive multiple characters from a single device or playback stream:
+
+Foreach character rig:
+1) Create a new game object and add a `Stream Reader` component
+2) On the `Stream Reader`, add the game object containing the `Blend Shape Controller` and `Character Rig Controller` components (the character rig) to the `Character` field
+3) Create a new game object and add a `Network Stream` and `Playback Stream` component
+4) In the `Stream Reader` component, add the game object containing the Network and Playback Stream components to `Stream Source Overrides` list
+
+**Note** You can place the `Network Stream` and `Playback Stream` components on separate game objects, but then you must add both of those game objects to the `Stream Source Overrides` list
 
 ### Building the remote app
 To build the remote app yourself, you will need to install the [AR Face Capture Remote](https://github.com/Unity-Technologies/com.unity.xr.ar-face-capture-remote) package. See the readme for instructions.
 
-# How the Facial AR Remote works
+# How it works
 ## Networking
 The remote is made up of a client/remote iOS app. The client is a lightweight app that’s able to make use of the latest additions to ARKit and send that data over the network to the `Network Stream` source. Using a simple TCP/IP socket and fixed-size byte stream, we send every frame of blendshape, camera and head pose data from the device to the editor. The editor then decodes the stream and to updates one or more rigged characters in real-time. 
 
@@ -48,7 +59,7 @@ To smooth out some jitter due to network latency, the Stream Reader keeps a tuna
 On the editor side, we use the stream data to drive the character for preview as well as baking animation clips. Since we save the raw stream from the phone to disk, we can continue to play back this data on a character as we refine the blend shapes. And since the save data is just a raw stream from the phone, **you can even re-target the motion to different characters**. 
 
 ## Baking streamed data to an Animation Clip
-Once you have a stream you’re happy with captured, you can bake the stream to an animation clip. This is great since they can use that clip that you have authored like any other animation in Unity to drive a character in Mecanim, Timeline or any of the other ways animation is used. **Note that the animation clip is specific to the particular character rig that was used when baking the clip.***
+Once you have a stream you’re happy with captured, you can bake the stream to an animation clip. This is great since they can use that clip that you have authored like any other animation in Unity to drive a character in Mecanim, Timeline or any of the other ways animation is used. **Note that the animation clip is specific to the particular character rig that was used when baking the clip.**
 
 # Components 
 Several key components act as the hub for using the **AR Face Capture** package in the editor. They are responsible for processing the stream data from the stream source(s) to be used by the connected controllers responsible for driving face movement on a character rig.
