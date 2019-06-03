@@ -18,17 +18,77 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 1. Download an install Unity 2018.4
 
-2. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
+2. Open the AR Face Capture window from Window > AR Face Capture
 
-3. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
+3. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
 
-4. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Stream Reader` game object.
+4. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
 
-5. Set the `IP` of the device to one listed in the console debug log.
+5. Set the `Port` number on the device to the same `Port` listed on the `Stream Reader` component of the `Stream Reader` game object.
 
-6. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
+6. Set the `IP` of the device to one listed in the console debug log.
+
+7. Press `Connect` on the device. If your face is in view you should now see your expressions driving the character on screen.
 
 *Note* You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
+
+*Warning* Modifying or using a different version of the Stream Settings asset (Stream Settings ARKit2-0) will cause the remote app from the App Store to no longer function with your package. The Stream Settings used by the Network Stream component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
+
+### Building the remote app
+To build the remote app yourself, you will need to install the [AR Face Capture Remote](https://github.com/Unity-Technologies/com.unity.xr.ar-face-capture-remote) package. See the readme for instructions.
+
+# How the Facial AR Remote works
+## Networking
+The remote is made up of a client/remote iOS app. The client is a lightweight app that’s able to make use of the latest additions to ARKit and send that data over the network to the `Network Stream` source. Using a simple TCP/IP socket and fixed-size byte stream, we send every frame of blendshape, camera and head pose data from the device to the editor. The editor then decodes the stream and to updates one or more rigged characters in real-time. 
+
+## Jitter Reduction
+To smooth out some jitter due to network latency, the Stream Reader keeps a tunable buffer of historic frames for when the editor inevitably lags behind the phone. We found this to be a crucial feature for preserving a smooth look on the preview character while staying as close as possible the real actor’s current pose. In poor network conditions, the preview will sometimes drop frames to catch up, but **all data is still recorded with the original timestamps from the device.**
+
+## How data is ingested from the remote app
+On the editor side, we use the stream data to drive the character for preview as well as baking animation clips. Since we save the raw stream from the phone to disk, we can continue to play back this data on a character as we refine the blend shapes. And since the save data is just a raw stream from the phone, **you can even re-target the motion to different characters**. 
+
+## Baking streamed data to an Animation Clip
+Once you have a stream you’re happy with captured, you can bake the stream to an animation clip. This is great since they can use that clip that you have authored like any other animation in Unity to drive a character in Mecanim, Timeline or any of the other ways animation is used. **Note that the animation clip is specific to the particular character rig that was used when baking the clip.***
+
+# Components 
+Several key components act as the hub for using the **AR Face Capture** package in the editor. They are responsible for processing the stream data from the stream source(s) to be used by the connected controllers responsible for driving face movement on a character rig.
+
+There is also a `AR Face Capture Window` that is used to control the device connection, and record & playback captured streams to a character. You are also able to “bake” a stream to a character by creating an animation clip that can be used in the animator or timeline.
+
+## Stream Sources
+
+Both the `Network Stream` and `Playback Stream` components are stream sources and responsible for feeding stream data to a `Stream Reader`.
+
+**Important notes:**
+* You can switch between recording and playback without needing to stop any of the internal stream updating
+* Streams can only be recorded in play mode and are not available for immediate playback. The recorded streams are processed and saved to the playback buffer when exiting play mode.
+
+### Network Stream
+A network-based stream source. Sets up a listen server on the given port to which `Client`s connect.
+
+### Playback Stream
+Reads tracking data from a `Playback Data` asset and updates a `Stream Reader`.
+
+## Stream Reader
+
+This is the core component responsible for processing the stream data from the stream source(s) to be used by connected controllers, such as the `Blend Shape Controller` and the `Character Rig Controller`.
+
+## Components for Driving Character Animation
+### Blend Shapes Controller
+Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
+
+### Character Rig Controller
+Applies pose values from the Stream Reader to transforms controlling the head, neck, and eyes.
+
+## Scriptable Objects
+### Stream Settings
+Holds the data needed to process facial data to and from a byte stream. This data needs to match on the server and client side.
+
+### Playback Data
+Asset for storing recorded sessions.
+
+*** 
+Why are these separate components? The core reason is to make all this more modular and separate out the functions more. Some of the idea was possibly needing wanting to switch network streams easier for implementing multiple devices. In having both the Network Stream and Playback Stream be providers of the stream data conceptually makes it a little cleaner to know what is going on. You are also able to switch between recording and playback without needing to stop any of the internal stream updating. I also was working on driving multiple characters from the same stream provider. This was to better test a control capture across several characters or versions of the same character all together. Also, the idea is that you could extend just the stream source or stream reader without having to reinvent/extend one master class
 
 ### Known Issues
 
