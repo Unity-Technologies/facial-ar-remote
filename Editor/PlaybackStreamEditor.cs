@@ -27,8 +27,8 @@ namespace Unity.Labs.FacialRemote
 
                 if (m_PlaybackData.objectReferenceValue == null)
                 {
-                    EditorGUILayout.HelpBox("No Playback Data has been set. You Will be unable to Record, Playback, " +
-                        "or Bake a Stream Data!", MessageType.Warning);
+                    EditorGUILayout.HelpBox("No Playback Data has been set. You Will be unable to record, playback, " +
+                        "or bake Stream Data.", MessageType.Warning);
                 }
 
                 if (check.changed)

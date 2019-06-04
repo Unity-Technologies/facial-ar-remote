@@ -71,6 +71,15 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_StreamSourceOverrides, true);
 
                 EditorGUILayout.Space();
+                
+                GUILayout.BeginHorizontal ();
+                GUILayout.FlexibleSpace();
+                if(GUILayout.Button("Open AR Face Capture Window", GUILayout.Width(200)))
+                {
+                    ARFaceCaptureWindow.ShowWindow();
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal ();
 
                 if (check.changed)
                 {

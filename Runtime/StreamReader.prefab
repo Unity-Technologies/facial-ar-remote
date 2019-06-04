@@ -62,9 +62,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44fb5c15f36a0ad43959c7c074f64b09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PlaybackData: {fileID: 11400000, guid: 6471208d98b8f5843bc5839ee125a490, type: 2}
-  m_BlendShapeMappings: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42,
-    type: 2}
+  m_PlaybackData: {fileID: 0}
 --- !u!114 &114641533554280668
 MonoBehaviour:
   m_ObjectHideFlags: 0
