@@ -20,7 +20,7 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 2. Open the AR Face Capture window from `Window > AR Face Capture` or by clicking the `Open AR Face Capture Window` on a `Stream Reader` component on a game object.
 
-3. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene into the hierarchy and unloading the previous scene.
+3. To test your connection to the remote, start by opening `../Samples/SlothSample/Scenes/SlothBlendShapes.scene` by dragging the scene from the package into the hierarchy and removing the previously loaded scene (currently this is the only way to open scenes from packages).
 
 4. Be sure your device and editor are on the same network. Launch the app on your device and press play in the editor.
 
@@ -32,7 +32,7 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 
 **Note** You need to be on the same network and you may have to disable any active VPNs and/or disable firewall(s) on the ports you are using. This may be necessary on your computer and/or on the network.
 
-**Warning** Modifying or using a different version of the Stream Settings asset (Stream Settings ARKit2-0) will cause the remote app from the App Store to no longer function with your package. The Stream Settings used by the Network Stream component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
+**Warning** Modifying or using a different version of the `Stream Settings` asset (**Stream Settings ARKit2-0**) will cause the remote app from the App Store to no longer function with your package. The `Stream Settings` used by the `Network Stream` component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
 
 #### Driving multiple character rigs
 The StreamReader prefab is only designed for a single device/single character rig setup. To drive multiple characters from a single device or playback stream:
@@ -53,7 +53,7 @@ To build the remote app yourself, you will need to install the [AR Face Capture 
 The remote is made up of a client/remote iOS app. The client is a lightweight app that’s able to make use of the latest additions to ARKit and send that data over the network to the `Network Stream` source. Using a simple TCP/IP socket and fixed-size byte stream, we send every frame of blendshape, camera and head pose data from the device to the editor. The editor then decodes the stream and to updates one or more rigged characters in real-time. 
 
 ## Jitter Reduction
-To smooth out some jitter due to network latency, the Stream Reader keeps a tunable buffer of historic frames for when the editor inevitably lags behind the phone. We found this to be a crucial feature for preserving a smooth look on the preview character while staying as close as possible the real actor’s current pose. In poor network conditions, the preview will sometimes drop frames to catch up, but **all data is still recorded with the original timestamps from the device.**
+To smooth out some jitter due to network latency, the `Stream Reader` keeps a tunable buffer of historic frames for when the editor inevitably lags behind the phone. We found this to be a crucial feature for preserving a smooth look on the preview character while staying as close as possible the real actor’s current pose. In poor network conditions, the preview will sometimes drop frames to catch up, but **all data is still recorded with the original timestamps from the device.**
 
 ## How data is ingested from the remote app
 On the editor side, we use the stream data to drive the character for preview as well as baking animation clips. Since we save the raw stream from the phone to disk, we can continue to play back this data on a character as we refine the blend shapes. And since the save data is just a raw stream from the phone, **you can even re-target the motion to different characters**. 
@@ -86,10 +86,10 @@ This is the core component responsible for processing the stream data from the s
 
 ## Components for Driving Character Animation
 ### Blend Shapes Controller
-Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
+Updates blend shape values from the `Stream Reader` to the skinned mesh renderers referenced in this script.
 
 ### Character Rig Controller
-Applies pose values from the Stream Reader to transforms controlling the head, neck, and eyes.
+Applies pose values from the `Stream Reader` to transforms controlling the head, neck, and eyes.
 
 ## Scriptable Objects
 ### Stream Settings
@@ -99,16 +99,14 @@ Holds the data needed to process facial data to and from a byte stream. This dat
 Asset for storing recorded sessions.
 
 *** 
-Why are these separate components? The core reason is to make all this more modular and separate out the functions more. Some of the idea was possibly needing wanting to switch network streams easier for implementing multiple devices. In having both the Network Stream and Playback Stream be providers of the stream data conceptually makes it a little cleaner to know what is going on. You are also able to switch between recording and playback without needing to stop any of the internal stream updating. I also was working on driving multiple characters from the same stream provider. This was to better test a control capture across several characters or versions of the same character all together. Also, the idea is that you could extend just the stream source or stream reader without having to reinvent/extend one master class
+Why are these separate components? The core reason is to make all this more modular and separate out the functions more. Some of the idea was possibly needing wanting to switch network streams easier for implementing multiple devices. In having both the `Network Stream` and `Playback Stream` be providers of the stream data conceptually makes it a little cleaner to know what is going on. You are also able to switch between recording and playback without needing to stop any of the internal stream updating. I also was working on driving multiple characters from the same stream provider. This was to better test a control capture across several characters or versions of the same character all together. Also, the idea is that you could extend just the stream source or stream reader without having to reinvent/extend one master class
 
 ### Known Issues
 
-1. Character Rig Controller does not support Humanoid Avatar for bone animation.
+1. `Character Rig Controller` does not support Humanoid Avatar for bone animation.
 
 2. Animation Baking does not support Humanoid Avatar for avatar bone animation.
 
-3. Stream source can only connect to a single stream reader.
-
-4. Some network setups cause an issue with DNS lookup for getting IP addresses of the server computer.
+3. Some network setups cause an issue with DNS lookup for getting IP addresses of the server computer.
 
 Note: History edits were made on 10/29/2018. If you cloned this repository before that date, please rebase before submitting a Pull Request.
