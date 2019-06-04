@@ -116,8 +116,13 @@ namespace Unity.Labs.FacialRemote
                 {
                     using (new GUILayout.HorizontalScope())
                     {
-                        EditorGUILayout.SelectableLabel(streamReader.name);
+                        EditorGUILayout.LabelField("Stream Reader");
+                        using (new EditorGUI.DisabledGroupScope(true))
+                        {
+                            EditorGUILayout.ObjectField(streamReader, typeof(StreamReader));
+                        }
                     }
+                    EditorGUILayout.Space();
 
                     using (new GUILayout.HorizontalScope())
                     {
@@ -201,11 +206,41 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
 
-
                     EditorGUILayout.Space();
 
-                    if (m_StreamReaderModes[streamReader] == StreamMode.StreamFromFile)
+                    if (m_StreamReaderModes[streamReader] == StreamMode.StreamFromDevice)
                     {
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            EditorGUILayout.LabelField("Source");
+                            using (new EditorGUI.DisabledGroupScope(true))
+                            {
+                                EditorGUILayout.ObjectField(networkStream, typeof(NetworkStream));
+                            }
+                        }
+                        
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            EditorGUILayout.LabelField("Recorder");
+                            using (new EditorGUI.DisabledGroupScope(true))
+                            {
+                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream));
+                            }
+                        }
+                    }
+                    else if (m_StreamReaderModes[streamReader] == StreamMode.StreamFromFile)
+                    {
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            EditorGUILayout.LabelField("Playback Stream");
+                            using (new EditorGUI.DisabledGroupScope(true))
+                            {
+                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream));
+                            }
+                        }
+                        
+                        EditorGUILayout.Space();
+                        
                         if (m_ClipBaker == null)
                         {
                             var clipName = playbackStream == null || playbackStream.activePlaybackBuffer == null
@@ -214,37 +249,43 @@ namespace Unity.Labs.FacialRemote
 
                             using (new EditorGUI.DisabledGroupScope(playbackStream == null))
                             {
-                                if (playbackStream == null)
+                                using (new GUILayout.HorizontalScope())
                                 {
-                                    if (GUILayout.Button("Create new Playback Data asset"))
-                                    {
-                                        if (GUILayout.Button("Create new Playback Data asset")) { }
-                                    }
+                                    EditorGUILayout.LabelField("Playback Buffer", GUILayout.Width(100));
                                     
+                                    if (playbackStream == null)
+                                    {
+                                        if (GUILayout.Button("Create new Playback Data asset"))
+                                        {
+                                            if (GUILayout.Button("Create new Playback Data asset")) { }
+                                        }
+                                    }
+                                    else if (playbackStream.playbackData == null)
+                                    {
+                                        if (GUILayout.Button("Create new Playback Data asset"))
+                                        {
+                                            var asset = CreateInstance<PlaybackData>();
+
+                                            AssetDatabase.CreateAsset(asset, "Assets/New Playback Data.asset");
+                                            AssetDatabase.SaveAssets();
+                                            playbackStream.playbackData = asset;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        using (new EditorGUI.DisabledGroupScope(playbackStream == null ||
+                                            playbackStream.playbackData == null ||
+                                            playbackStream.playbackData.playbackBuffers == null))
+                                        {
+                                            if (GUILayout.Button($"Play Stream: {clipName}"))
+                                                ShowRecordStreamMenu(playbackStream, playbackStream.playbackData.playbackBuffers);
+                                        }
+                                    }
+                                }
+                                
+                                if (playbackStream == null)
                                     EditorGUILayout.HelpBox("The Stream Reader does not have a Playback" +
                                         " Stream assigned.", MessageType.Warning);
-                                }
-                                else if (playbackStream.playbackData == null)
-                                {
-                                    if (GUILayout.Button("Create new Playback Data asset"))
-                                    {
-                                        var asset = CreateInstance<PlaybackData>();
-
-                                        AssetDatabase.CreateAsset(asset, "Assets/New Playback Data.asset");
-                                        AssetDatabase.SaveAssets();
-                                        playbackStream.playbackData = asset;
-                                    }
-                                }
-                                else
-                                {
-                                    using (new EditorGUI.DisabledGroupScope(playbackStream == null || 
-                                        playbackStream.playbackData == null || 
-                                        playbackStream.playbackData.playbackBuffers == null))
-                                    {
-                                        if (GUILayout.Button($"Play Stream: {clipName}"))
-                                            ShowRecordStreamMenu(playbackStream, playbackStream.playbackData.playbackBuffers);
-                                    }
-                                }
                             }
 
                             EditorGUILayout.Space();
