@@ -22,9 +22,11 @@ namespace Unity.Labs.FacialRemote
             using (var check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(m_StreamSettings);
+                EditorGUILayout.Space();
+                EditorGUILayout.BeginVertical("box");
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Location Identifier");
-                EditorGUILayout.LabelField("BlendShape Name");
+                EditorGUILayout.LabelField("Location Identifiers");
+                EditorGUILayout.LabelField("Blend Shape Names");
                 EditorGUILayout.EndHorizontal();
                 for (var i = 0; i < m_LocationIdentifiers.arraySize; i++)
                 {
@@ -36,6 +38,7 @@ namespace Unity.Labs.FacialRemote
                         EditorGUILayout.PropertyField(m_BlendShapeNames.GetArrayElementAtIndex(i), new GUIContent());
                     EditorGUILayout.EndHorizontal();
                 }
+                EditorGUILayout.EndVertical();
 
                 if (check.changed)
                     serializedObject.ApplyModifiedProperties();

@@ -49,8 +49,9 @@ namespace Unity.Labs.FacialRemote
                 EditorGUILayout.PropertyField(m_BufferSize);
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Location Identifier");
+                EditorGUILayout.LabelField("Location Identifiers");
                 EditorGUILayout.EndHorizontal();
+                
                 for (var i = 0; i < m_Locations.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();

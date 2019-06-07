@@ -15,8 +15,10 @@ namespace Unity.Labs.FacialRemote
         
         const int k_ProgressBarHeight = 22;
         
+#pragma warning disable CS0649
         [SerializeField]
         GameObject m_StreamReaderPrefab;
+#pragma warning restore CS0649
 
         Dictionary<StreamReader, StreamMode> m_StreamReaderModes = new Dictionary<StreamReader, StreamMode>();
         
@@ -59,17 +61,17 @@ namespace Unity.Labs.FacialRemote
                 
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                GUILayout.Space(16);
+                EditorGUILayout.Space();
                 GUILayout.Label("Add a game object to the scene with a StreamReader");
-                GUILayout.Space(16);
+                EditorGUILayout.Space();
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                GUILayout.Space(16);
+                EditorGUILayout.Space();
                 GUILayout.Label("component or click the button to add a Stream Reader prefab.");
-                GUILayout.Space(16);
+                EditorGUILayout.Space();
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 
@@ -119,7 +121,7 @@ namespace Unity.Labs.FacialRemote
                         EditorGUILayout.LabelField("Stream Reader");
                         using (new EditorGUI.DisabledGroupScope(true))
                         {
-                            EditorGUILayout.ObjectField(streamReader, typeof(StreamReader));
+                            EditorGUILayout.ObjectField(streamReader, typeof(StreamReader), true);
                         }
                     }
                     EditorGUILayout.Space();
@@ -215,7 +217,7 @@ namespace Unity.Labs.FacialRemote
                             EditorGUILayout.LabelField("Source");
                             using (new EditorGUI.DisabledGroupScope(true))
                             {
-                                EditorGUILayout.ObjectField(networkStream, typeof(NetworkStream));
+                                EditorGUILayout.ObjectField(networkStream, typeof(NetworkStream), true);
                             }
                         }
                         
@@ -224,7 +226,7 @@ namespace Unity.Labs.FacialRemote
                             EditorGUILayout.LabelField("Recorder");
                             using (new EditorGUI.DisabledGroupScope(true))
                             {
-                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream));
+                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream), true);
                             }
                         }
                     }
@@ -235,7 +237,7 @@ namespace Unity.Labs.FacialRemote
                             EditorGUILayout.LabelField("Playback Stream");
                             using (new EditorGUI.DisabledGroupScope(true))
                             {
-                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream));
+                                EditorGUILayout.ObjectField(playbackStream, typeof(PlaybackStream), true);
                             }
                         }
                         
