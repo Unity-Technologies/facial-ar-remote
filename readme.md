@@ -35,7 +35,7 @@ This repository uses [Git LFS](https://git-lfs.github.com/) so make sure you hav
 **Warning** Modifying or using a different version of the `Stream Settings` asset (**Stream Settings ARKit2-0**) will cause the remote app from the App Store to no longer function with your package. The `Stream Settings` used by the `Network Stream` component must be the same as the remote app. If you need to change the file, you must build the remote app yourself. See below for building the remote app.
 
 #### Driving multiple character rigs
-The StreamReader prefab is only designed for a single device/single character rig setup. To drive multiple characters from a single device or playback stream:
+The StreamReader prefab is only designed for a single device/single character rig setup. To drive multiple characters from a single device or playback stream you must manually add components to game objects:
 
 Foreach character rig:
 1) Create a new game object and add a `Stream Reader` component
@@ -44,6 +44,14 @@ Foreach character rig:
 4) In the `Stream Reader` component, add the game object containing the Network and Playback Stream components to `Stream Source Overrides` list
 
 **Note** You can place the `Network Stream` and `Playback Stream` components on separate game objects, but then you must add both of those game objects to the `Stream Source Overrides` list
+
+#### Connecting multiple devices
+To drive multiple characters from multiple devices at the same time:
+1) Assign a different `Network Stream` and `Playback Stream` component to each `Stream Reader`
+2) Ensure that the `Port` is unique for each `Network Stream` 
+3) On each device in the remote app, type the `Port` number of the `Network Stream`/`Stream Reader` combination linked to the character that you want that device to control
+
+**Note** Multiple `Network Streams`s cannot record to the same `Playback Data` asset at the same time.
 
 ### Building the remote app
 To build the remote app yourself, you will need to install the [AR Face Capture Remote](https://github.com/Unity-Technologies/com.unity.xr.ar-face-capture-remote) package. See the readme for instructions.
