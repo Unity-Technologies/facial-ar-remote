@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7542b0a8b93c044618b3d84f58b4bc3c, type: 3}
-  m_Name: BlendShape Mappings
+  m_Name: Sloth BlendShape Mappings
   m_EditorClassIdentifier: 
   m_StreamSettings: {fileID: 11400000, guid: a40a3380648a240bab934a19984df455, type: 2}
   m_LocationIdentifiers:
