@@ -30,7 +30,7 @@ namespace Unity.Labs.FacialRemote
 
         public List<IStreamReader> streamReaders => m_StreamReaders;
 
-        public bool active { get; private set; }
+        public bool isActive { get; private set; }
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
         public IStreamSettings streamSettings { get { return activePlaybackBuffer; } }
 
@@ -49,18 +49,18 @@ namespace Unity.Labs.FacialRemote
 
         public void StreamSourceUpdate()
         {
-            active = false;
+            isActive = false;
             foreach (var sr in streamReaders)
             {
                 var source = sr.streamSource;
                 if (source != null && source.Equals(this))
                 {
-                    active = true;
+                    isActive = true;
                     break;
                 }
             }
 
-            if (!active)
+            if (!isActive)
                 return;
 
             if (Time.time - m_PlaybackStartTime < m_NextFrameTime - m_FirstFrameTime)
@@ -74,7 +74,7 @@ namespace Unity.Labs.FacialRemote
 
         public void SetPlaybackBuffer(PlaybackBuffer buffer)
         {
-            if (active)
+            if (isActive)
                 StopPlayback();
 
             m_ActivePlaybackBuffer = buffer;
@@ -103,13 +103,13 @@ namespace Unity.Labs.FacialRemote
             m_NextFrameTime = m_FirstFrameTime;
             m_BufferPosition = 0;
 
-            active = true;
+            isActive = true;
         }
 
         public void StopPlayback()
         {
             m_PlaybackStartTime = float.PositiveInfinity;
-            active = false;
+            isActive = false;
         }
 
         public bool PlayBackLoop()
@@ -132,7 +132,7 @@ namespace Unity.Labs.FacialRemote
         {
             foreach (var sr in streamReaders)
             {
-                if (force || sr.streamSource.Equals(this) && active)
+                if (force || sr.streamSource.Equals(this) && isActive)
                     sr.UpdateStreamData(m_CurrentFrameBuffer);
             }
         }

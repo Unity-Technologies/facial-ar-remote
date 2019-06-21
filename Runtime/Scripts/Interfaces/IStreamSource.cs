@@ -18,7 +18,7 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// Whether this stream source is currently updating tracking data
         /// </summary>
-        bool active { get; }
+        bool isActive { get; }
 
         /// <summary>
         /// Called after the StreamReader updates

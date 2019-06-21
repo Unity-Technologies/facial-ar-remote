@@ -111,7 +111,7 @@ namespace Unity.Labs.FacialRemote
         void Update()
         {
             var streamSource = streamReader.streamSource;
-            if (streamSource == null || !streamSource.active)
+            if (streamSource == null || !streamSource.isActive)
                 return;
 
             var streamSettings = streamSource.streamSettings;

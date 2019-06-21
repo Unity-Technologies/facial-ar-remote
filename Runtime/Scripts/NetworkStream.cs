@@ -68,7 +68,7 @@ namespace Unity.Labs.FacialRemote
 
         public List<IStreamReader> streamReaders => m_StreamReaders;
 
-        public bool active
+        public bool isActive
         {
             get { return m_TransferSocket != null && m_TransferSocket.Connected; }
         }
@@ -234,18 +234,14 @@ namespace Unity.Labs.FacialRemote
 
         bool HasStreamReader()
         {
-            var hasStreamReader = false;
-
             foreach (var sr in streamReaders)
             {
-                if (sr.streamSource.Equals(this))
-                {
-                    hasStreamReader = true;
-                    break;
-                }
+                var ss = sr.streamSource;
+                if (ss != null && ss.Equals(this))
+                    return true;
             }
 
-            return hasStreamReader;
+            return false;
         }
 
         public void StartRecording()
@@ -302,7 +298,7 @@ namespace Unity.Labs.FacialRemote
             if (notSource && recording)
                 StopRecording();
 
-            if (notSource || !active)
+            if (notSource || !isActive)
                 return;
 
             //if (streamReader.verboseLogging)

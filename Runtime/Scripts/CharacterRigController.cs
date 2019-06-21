@@ -181,7 +181,7 @@ namespace Unity.Labs.FacialRemote
         void Update()
         {
             var streamSource = streamReader.streamSource;
-            if (streamSource == null || !streamSource.active)
+            if (streamSource == null || !streamSource.isActive)
                 return;
 
             
@@ -196,7 +196,7 @@ namespace Unity.Labs.FacialRemote
         void LateUpdate()
         {
             var streamSource = streamReader.streamSource;
-            if (streamSource == null || !streamSource.active)
+            if (streamSource == null || !streamSource.isActive)
                 return;
 
             UpdateBoneTransforms();
