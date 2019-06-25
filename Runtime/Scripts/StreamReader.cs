@@ -26,22 +26,6 @@ namespace Unity.Labs.FacialRemote
         int m_TrackingLossPadding = 64;
 
         [SerializeField]
-        [Tooltip("(Optional) Manually override the blend shape controller found in the Character.")]
-        BlendShapesController m_BlendShapesControllerOverride;
-
-        [SerializeField]
-        [Tooltip("(Optional) Manually override the character rig controller found in the Character.")]
-        CharacterRigController m_CharacterRigControllerOverride;
-
-        [SerializeField]
-        [Tooltip("(Optional) Manually override the head bone set from the character rig controller. Used for determining the start pose of the character.")]
-        Transform m_HeadBoneOverride;
-
-        [SerializeField]
-        [Tooltip("(Optional) Manually override the main camera found by the stream reader. Used for determining the starting pose of the camera.")]
-        Camera m_CameraOverride;
-
-        [SerializeField]
         [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its children.")]
         GameObject[] m_StreamSourceOverrides = { };
 
@@ -60,6 +44,7 @@ namespace Unity.Labs.FacialRemote
         float[] m_FrameTimeArray = new float[1];
 
         HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
+        HashSet<IUsesStreamReader> m_Consumers = new HashSet<IUsesStreamReader>();
 
         public float[] blendShapesBuffer { get; private set; }
         public bool trackingActive { get; private set; }
@@ -70,8 +55,8 @@ namespace Unity.Labs.FacialRemote
         public Transform headBone { get; private set; }
         public Transform cameraTransform { get; private set; }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
-        public BlendShapesController blendShapesController { get; private set; }
-        public CharacterRigController characterRigController { get; private set; }
+        public HashSet<IUsesStreamReader> consumers => m_Consumers;
+
 
         public IStreamSource streamSource
         {
@@ -92,6 +77,11 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        public GameObject character
+        {
+            get { return m_Character; }
+        }
+
         public void UpdateStreamData(byte[] buffer, int offset = 0)
         {
             var settings = streamSource.streamSettings;
@@ -99,13 +89,14 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
             m_FaceActive = buffer[offset + settings.bufferSize - 1] == 1;
 
-            if (m_VerboseLogging)
+            if (verboseLogging)
             {
                 Buffer.BlockCopy(buffer, offset + settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
                 Buffer.BlockCopy(buffer, offset + settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
-                Debug.Log(string.Format("{0} : {1}", m_FrameNumArray[0], m_FrameTimeArray[0]));
+                Debug.Log($"{m_FrameNumArray[0]} : {m_FrameTimeArray[0]}");
             }
 
+            m_FaceActive = true;
             if (m_FaceActive)
             {
                 Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
@@ -143,36 +134,12 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            if (m_Character != null)
+            if (character != null)
             {
-                blendShapesController = m_BlendShapesControllerOverride != null
-                    ? m_BlendShapesControllerOverride
-                    : m_Character.GetComponentInChildren<BlendShapesController>();
-
-                characterRigController = m_CharacterRigControllerOverride != null
-                    ? m_CharacterRigControllerOverride
-                    : m_Character.GetComponentInChildren<CharacterRigController>();
-
-                headBone = m_HeadBoneOverride != null
-                    ? m_HeadBoneOverride
-                    : characterRigController != null
-                        ? characterRigController.headBone
-                        : null;
+                consumers.UnionWith(character.GetComponentsInChildren<IUsesStreamReader>());
+                foreach (var consumer in consumers)
+                    ConnectInterfaces(consumer);
             }
-            else
-            {
-                blendShapesController = m_BlendShapesControllerOverride;
-                characterRigController = m_CharacterRigControllerOverride;
-                headBone = m_HeadBoneOverride;
-            }
-
-            cameraTransform = m_CameraOverride == null ? Camera.main.transform : m_CameraOverride.transform;
-
-            if (blendShapesController != null)
-                ConnectInterfaces(blendShapesController);
-
-            if (characterRigController != null)
-                ConnectInterfaces(characterRigController);
         }
 
         void Awake()

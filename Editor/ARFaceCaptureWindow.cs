@@ -287,6 +287,9 @@ namespace Unity.Labs.FacialRemote
 
                         EditorGUILayout.Space();
 
+                        var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
+                        var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
+                        
                         // Bake Clip Button
                         using (new EditorGUI.DisabledGroupScope(playbackStream == null || playbackStream.activePlaybackBuffer == null
                             || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
@@ -308,9 +311,7 @@ namespace Unity.Labs.FacialRemote
 
                                 if (path.Length != 0)
                                 {
-                                    var blendShapeController = streamReader.blendShapesController;
-
-                                    var avatarController = streamReader.characterRigController;
+                                    
 
                                     streamReader.streamSource = playbackStream;
                                     playbackStream.StartPlayback();
