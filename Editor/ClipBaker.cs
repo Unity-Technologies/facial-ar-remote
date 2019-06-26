@@ -37,6 +37,8 @@ namespace Unity.Labs.FacialRemote
         CharacterRigController m_CharacterRigController;
         BlendShapesController m_BlendShapesController;
         Transform m_TargetTransform;
+        Vector3 m_Position;
+        Quaternion m_Rotation;
 
         readonly Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
             new Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>>();
@@ -284,8 +286,8 @@ namespace Unity.Labs.FacialRemote
 
                 if (m_TargetTransform != null)
                 {
-                    m_TargetTransform.position = m_StreamReader.cameraPose.position;
-                    m_TargetTransform.rotation = m_StreamReader.cameraPose.rotation;
+                    m_Position = m_StreamReader.cameraPose.position;
+                    m_Rotation = m_StreamReader.cameraPose.rotation;
                 }
 
                 KeyFrame(m_FrameTime[0] - m_FirstFrameTime);
@@ -384,25 +386,25 @@ namespace Unity.Labs.FacialRemote
                         var curve = curveData.curve;
                         switch (prop) {
                             case k_RotationX:
-                                curve.AddKey(time, m_TargetTransform.rotation.x);
+                                curve.AddKey(time, m_Rotation.x);
                                 break;
                             case k_RotationY:
-                                curve.AddKey(time, m_TargetTransform.rotation.y);
+                                curve.AddKey(time, m_Rotation.y);
                                 break;
                             case k_RotationZ:
-                                curve.AddKey(time, m_TargetTransform.rotation.z);
+                                curve.AddKey(time, m_Rotation.z);
                                 break;
                             case k_RotationW:
-                                curve.AddKey(time, m_TargetTransform.rotation.w);
+                                curve.AddKey(time, m_Rotation.w);
                                 break;
                             case k_PositionX:
-                                curve.AddKey(time, m_TargetTransform.position.x);
+                                curve.AddKey(time, m_Position.x);
                                 break;
                             case k_PositionY:
-                                curve.AddKey(time, m_TargetTransform.position.y);
+                                curve.AddKey(time, m_Position.y);
                                 break;
                             case k_PositionZ:
-                                curve.AddKey(time, m_TargetTransform.position.z);
+                                curve.AddKey(time, m_Position.z);
                                 break;
                             default:
                                 Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
