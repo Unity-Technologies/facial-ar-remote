@@ -287,6 +287,9 @@ namespace Unity.Labs.FacialRemote
 
                         EditorGUILayout.Space();
 
+                        var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
+                        var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
+                        
                         // Bake Clip Button
                         using (new EditorGUI.DisabledGroupScope(playbackStream == null || playbackStream.activePlaybackBuffer == null
                             || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
@@ -295,30 +298,21 @@ namespace Unity.Labs.FacialRemote
                             GUILayout.FlexibleSpace();
                             if (GUILayout.Button("Bake Animation Clip", GUILayout.Width(150)))
                             {
-                                if (streamReader.character == null)
-                                    return;
-                                
-                                var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
-                                var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
-                                streamReader.streamSource = null;
+                                m_ClipBaker = CreateBacker(streamReader, clipName, playbackStream);
 
-                                // Used to initialize values if they were changed before baking.
-                                streamReader.ConnectDependencies();
-
-                                var assetPath = Application.dataPath;
-                                var path = EditorUtility.SaveFilePanel("Save stream as animation clip",
-                                    assetPath, clipName + ".anim", "anim");
-
-                                path = path.Replace(assetPath, "Assets");
-
-                                if (path.Length != 0)
+                                if (m_ClipBaker != null)
                                 {
-                                    streamReader.streamSource = playbackStream;
-                                    playbackStream.StartPlayback();
+                                    m_ClipBaker.Bake(blendShapeController, avatarController);
+                                }
+                            }
+                            if (GUILayout.Button("Bake Camera Pose", GUILayout.Width(150)))
+                            {
+                                m_ClipBaker = CreateBacker(streamReader, clipName, playbackStream);
 
-                                    var animClip = new AnimationClip();
-                                    m_ClipBaker = new ClipBaker(animClip, streamReader, playbackStream,
-                                        blendShapeController, avatarController, path);
+                                if (m_ClipBaker != null)
+                                {
+                                    var camera = streamReader.character.transform.GetChild(0);
+                                    m_ClipBaker.Bake(camera, camera);
                                 }
                             }
                             GUILayout.FlexibleSpace();
@@ -333,6 +327,31 @@ namespace Unity.Labs.FacialRemote
                     }
                 }
             }
+        }
+
+        ClipBaker CreateBacker(StreamReader streamReader, string clipName, PlaybackStream playbackStream)
+        {
+            streamReader.streamSource = null;
+
+            // Used to initialize values if they were changed before baking.
+            streamReader.ConnectDependencies();
+
+            var assetPath = Application.dataPath;
+            var path = EditorUtility.SaveFilePanel("Save stream as animation clip",
+                assetPath, clipName + ".anim", "anim");
+
+            path = path.Replace(assetPath, "Assets");
+
+            if (path.Length != 0)
+            {
+                streamReader.streamSource = playbackStream;
+                playbackStream.StartPlayback();
+
+                var animClip = new AnimationClip();
+                return new ClipBaker(animClip, streamReader, playbackStream, path);
+            }
+
+            return null;
         }
         
         void SetupGUIStyles()
