@@ -20,7 +20,7 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// True when currently getting valid pose tracking data
         /// </summary>
-        bool trackingActive { get; }
+        bool faceTrackingLost { get; }
 
         /// <summary>
         /// Current blendshape weight values
@@ -43,5 +43,9 @@ namespace Unity.Labs.FacialRemote
         /// <param name="buffer">Data for this frame</param>
         /// <param name="offset">Offset into this buffer where the data starts</param>
         void UpdateStreamData(byte[] buffer, int offset = 0);
+
+        TouchPhase touchPhase { get; }
+        
+        Vector2 touchPosition  { get; }
     }
 }

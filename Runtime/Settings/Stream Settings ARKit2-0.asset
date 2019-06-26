@@ -21,7 +21,7 @@ MonoBehaviour:
   m_CameraPoseOffset: 237
   m_FrameNumberOffset: 265
   m_FrameTimeOffset: 269
-  m_BufferSize: 274
+  m_BufferSize: 287
   m_Locations:
   - BrowDownLeft
   - BrowDownRight
@@ -75,3 +75,7 @@ MonoBehaviour:
   - NoseSneerLeft
   - NoseSneerRight
   - TongueOut
+  m_InputStateOffset: 273
+  m_InputScreenPositionSize: 8
+  m_InputStateSize: 4
+  m_InputScreenPositionOffset: 277

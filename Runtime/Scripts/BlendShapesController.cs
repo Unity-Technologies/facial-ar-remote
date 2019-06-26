@@ -195,7 +195,7 @@ namespace Unity.Labs.FacialRemote
                 var offset = useOverride ? blendShapeOverride.blendShapeOffset : 0f;
                 var smoothing = useOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                if (force || streamReader.trackingActive)
+                if (force || streamReader.faceTrackingLost)
                 {
                     if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
                         m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);

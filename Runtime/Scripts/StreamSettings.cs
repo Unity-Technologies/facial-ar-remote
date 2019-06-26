@@ -57,6 +57,18 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("The identifying strings of the blend shape locations.")]
         string[] m_Locations;
+
+        [SerializeField]
+        int m_InputStateOffset;
+        
+        [SerializeField]
+        int m_InputScreenPositionSize;
+        
+        [SerializeField]
+        int m_InputStateSize;
+        
+        [SerializeField]
+        int m_InputScreenPositionOffset;
 #pragma warning restore CS0649
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
@@ -76,10 +88,20 @@ namespace Unity.Labs.FacialRemote
         // 237-264 - Camera Pose
         // 265-268 - Frame Number
         // 269-273 - Frame Time
-        // 274 - Active state
+        // Input
+        // n - 2 - Face tracking active state
+        // n - 1 - Camera tracking active state
         public int bufferSize { get { return m_BufferSize; } }
 
         public string[] locations { get { return m_Locations; } }
+
+        public int inputStateOffset => m_InputStateOffset;
+
+        public int inputStateSize => m_InputStateSize;
+
+        public int inputScreenPositionOffset => m_InputScreenPositionOffset;
+
+        public int inputScreenPositionSize => m_InputScreenPositionSize;
 
         void OnValidate()
         {
@@ -91,8 +113,16 @@ namespace Unity.Labs.FacialRemote
             m_CameraPoseOffset = HeadPoseOffset + poseSize;
             m_FrameNumberOffset = CameraPoseOffset + poseSize;
             m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
-            // Error check + Blend Shapes + HeadPose + CameraPose + FrameNumber + FrameTime + Active
-            m_BufferSize = 1 + BlendShapeSize + poseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
+
+            m_InputStateSize = sizeof(int);
+            m_InputStateOffset = m_FrameTimeOffset + m_FrameTimeSize;
+
+            m_InputScreenPositionSize = sizeof(float) * 2;
+            m_InputScreenPositionOffset = m_InputStateOffset + m_InputStateSize;
+            
+            // Error check + Blend Shapes + HeadPose + CameraPose + FrameNumber + FrameTime + <INPUT> + Face Active + Camera Active
+            m_BufferSize = 1 + BlendShapeSize + poseSize * 2 + FrameNumberSize + FrameTimeSize + m_InputStateSize 
+                + m_InputScreenPositionSize + 1 + 1;
 
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);

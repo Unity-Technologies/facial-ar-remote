@@ -442,7 +442,7 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null)
                 return;
 
-            if (force || streamReader.trackingActive)
+            if (force || streamReader.faceTrackingLost)
             {
                 LocalizeFacePose();
 

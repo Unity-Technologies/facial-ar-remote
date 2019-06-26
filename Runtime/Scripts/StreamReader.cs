@@ -33,7 +33,8 @@ namespace Unity.Labs.FacialRemote
 
         int m_TrackingLossCount;
 
-        bool m_FaceActive;
+        bool m_FaceTrackingActive;
+        bool m_CameraTrackingActive;
         Pose m_CameraPose;
         Pose m_HeadPose;
         Vector3 m_LastHeadPosition;
@@ -42,12 +43,16 @@ namespace Unity.Labs.FacialRemote
         float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
         int[] m_FrameNumArray = new int[1];
         float[] m_FrameTimeArray = new float[1];
+        int[] m_TouchPhaseArray = new int[1];
+        float[] m_TouchPositionArray = new float[2];
 
         HashSet<IStreamSource> m_Sources = new HashSet<IStreamSource>();
         HashSet<IUsesStreamReader> m_Consumers = new HashSet<IUsesStreamReader>();
+        TouchPhase m_TouchPhase;
+        Vector2 m_TouchPosition;
 
         public float[] blendShapesBuffer { get; private set; }
-        public bool trackingActive { get; private set; }
+        public bool faceTrackingLost { get; private set; }
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
@@ -56,7 +61,10 @@ namespace Unity.Labs.FacialRemote
         public Transform cameraTransform { get; private set; }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
         public HashSet<IUsesStreamReader> consumers => m_Consumers;
+        
+        public TouchPhase touchPhase => m_TouchPhase;
 
+        public Vector2 touchPosition => m_TouchPosition;
 
         public IStreamSource streamSource
         {
@@ -87,7 +95,8 @@ namespace Unity.Labs.FacialRemote
             var settings = streamSource.streamSettings;
 
             Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-            m_FaceActive = buffer[offset + settings.bufferSize - 1] == 1;
+            m_FaceTrackingActive = buffer[offset + settings.bufferSize - 2] == 1;
+            m_CameraTrackingActive = buffer[offset + settings.bufferSize - 1] == 1;
 
             if (verboseLogging)
             {
@@ -96,14 +105,26 @@ namespace Unity.Labs.FacialRemote
                 Debug.Log($"{m_FrameNumArray[0]} : {m_FrameTimeArray[0]}");
             }
 
-            m_FaceActive = true;
-            if (m_FaceActive)
+            if (m_FaceTrackingActive)
             {
                 Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
-                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
+            }
+
+            if (m_CameraTrackingActive)
+            {
+                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, settings.inputStateSize);
                 BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
+            
+            Buffer.BlockCopy(buffer, offset + settings.inputStateOffset, m_TouchPhaseArray, 0, settings.inputStateSize);
+            m_TouchPhase = (TouchPhase)m_TouchPhaseArray[0];
+            
+            Buffer.BlockCopy(buffer, offset + settings.inputScreenPositionOffset, m_TouchPositionArray, 0, settings.inputScreenPositionSize);
+            m_TouchPosition.x = m_TouchPositionArray[0];
+            m_TouchPosition.y = m_TouchPositionArray[1];
+            
+            Debug.Log(m_TouchPhase + " " + m_TouchPosition);
         }
 
         public void ConnectDependencies()
@@ -175,10 +196,10 @@ namespace Unity.Labs.FacialRemote
             if (headPosition == m_LastHeadPosition)
             {
                 m_TrackingLossCount++;
-                if (!m_FaceActive && m_TrackingLossCount > m_TrackingLossPadding)
-                    trackingActive = false;
+                if (!m_FaceTrackingActive && m_TrackingLossCount > m_TrackingLossPadding)
+                    faceTrackingLost = true;
                 else
-                    trackingActive = true;
+                    faceTrackingLost = false;
             }
             else
             {

@@ -77,6 +77,12 @@ namespace Unity.Labs.FacialRemote
         IStreamSettings m_StreamSettings;
 
         BlendShapeMappings m_BlendShapeMappings;
+        int m_TouchInputCount;
+        int m_InputStateCount;
+        int m_InputStateSize;
+        int m_InputScreenPositionSize;
+        int m_InputStateOffset;
+        int m_InputScreenPositionOffset;
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
@@ -100,6 +106,14 @@ namespace Unity.Labs.FacialRemote
                 return m_Locations;
             }
         }
+
+        public int inputStateOffset => m_InputStateOffset;
+
+        public int inputStateSize => m_InputStateSize;
+
+        public int inputScreenPositionOffset => m_InputScreenPositionOffset;
+
+        public int inputScreenPositionSize => m_InputScreenPositionSize;
 
         public string name
         {

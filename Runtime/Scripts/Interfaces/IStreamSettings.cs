@@ -59,5 +59,13 @@
         /// String names of the blend shapes in the stream with their index in the array being their relative location.
         /// </summary>
         string[] locations { get; }
+        
+        int inputStateOffset { get; }
+        
+        int inputStateSize { get; }
+        
+        int inputScreenPositionOffset { get; }
+        
+        int inputScreenPositionSize { get; }
     }
 }
