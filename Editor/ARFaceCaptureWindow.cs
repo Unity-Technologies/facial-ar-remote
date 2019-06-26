@@ -287,9 +287,6 @@ namespace Unity.Labs.FacialRemote
 
                         EditorGUILayout.Space();
 
-                        var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
-                        var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
-                        
                         // Bake Clip Button
                         using (new EditorGUI.DisabledGroupScope(playbackStream == null || playbackStream.activePlaybackBuffer == null
                             || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
@@ -298,6 +295,11 @@ namespace Unity.Labs.FacialRemote
                             GUILayout.FlexibleSpace();
                             if (GUILayout.Button("Bake Animation Clip", GUILayout.Width(150)))
                             {
+                                if (streamReader.character == null)
+                                    return;
+                                
+                                var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
+                                var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
                                 streamReader.streamSource = null;
 
                                 // Used to initialize values if they were changed before baking.
@@ -311,8 +313,6 @@ namespace Unity.Labs.FacialRemote
 
                                 if (path.Length != 0)
                                 {
-                                    
-
                                     streamReader.streamSource = playbackStream;
                                     playbackStream.StartPlayback();
 
