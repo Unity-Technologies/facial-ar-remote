@@ -113,7 +113,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_CameraTrackingActive)
             {
-                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, settings.inputStateSize);
+                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
             
@@ -123,8 +123,6 @@ namespace Unity.Labs.FacialRemote
             Buffer.BlockCopy(buffer, offset + settings.inputScreenPositionOffset, m_TouchPositionArray, 0, settings.inputScreenPositionSize);
             m_TouchPosition.x = m_TouchPositionArray[0];
             m_TouchPosition.y = m_TouchPositionArray[1];
-            
-            Debug.Log(m_TouchPhase + " " + m_TouchPosition);
         }
 
         public void ConnectDependencies()
