@@ -14,6 +14,9 @@ namespace Unity.Labs.FacialRemote
         const string k_RotationY = "localRotation.y";
         const string k_RotationZ = "localRotation.z";
         const string k_RotationW = "localRotation.w";
+        const string k_PositionX = "localPosition.x";
+        const string k_PositionY = "localPosition.y";
+        const string k_PositionZ = "localPosition.z";
         static readonly string[] k_RotParams =
         {
             k_RotationX,
@@ -21,12 +24,19 @@ namespace Unity.Labs.FacialRemote
             k_RotationZ,
             k_RotationW
         };
+        static readonly string[] k_PosParams =
+        {
+            k_PositionX,
+            k_PositionY,
+            k_PositionZ,
+        };
 
         AnimationClip m_Clip;
         StreamReader m_StreamReader;
         PlaybackStream m_PlaybackStream;
         CharacterRigController m_CharacterRigController;
         BlendShapesController m_BlendShapesController;
+        Transform m_TargetTransform;
 
         readonly Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
             new Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>>();
@@ -42,22 +52,37 @@ namespace Unity.Labs.FacialRemote
         public int frameCount { get; private set; }
         public bool baking { get; private set; }
 
-        public ClipBaker(AnimationClip clip, StreamReader streamReader, PlaybackStream playbackStream,
-            BlendShapesController blendShapesController, CharacterRigController characterRigController, string filePath)
+        public ClipBaker(AnimationClip clip, StreamReader streamReader, PlaybackStream playbackStream, string filePath)
         {
             m_Clip = clip;
             m_StreamReader = streamReader;
             m_PlaybackStream = playbackStream;
-            m_BlendShapesController = blendShapesController;
-            m_CharacterRigController = characterRigController;
             m_FilePath = filePath;
-
-            StartClipBaker(m_BlendShapesController != null
-                ? m_BlendShapesController.transform
-                : m_CharacterRigController.transform);
         }
 
-        void StartClipBaker(Transform transform)
+        public void Bake(BlendShapesController blendShapesController, CharacterRigController characterRigController)
+        {
+            m_BlendShapesController = blendShapesController;
+            m_CharacterRigController = characterRigController;
+            m_TargetTransform = null;
+
+            if (m_BlendShapesController != null)
+                StartClipBaker(m_BlendShapesController.transform);
+            else if (m_CharacterRigController != null)
+                StartClipBaker(m_CharacterRigController.transform);
+        }
+
+        public void Bake(Transform rootTransform, Transform targetTransform)
+        {
+            m_BlendShapesController = null;
+            m_CharacterRigController = null;
+            m_TargetTransform = targetTransform;
+
+            if (m_TargetTransform != null)
+                StartClipBaker(rootTransform);
+        }
+
+        void StartClipBaker(Transform rootTransform)
         {
             var playbackBuffer = m_PlaybackStream.activePlaybackBuffer;
             if (playbackBuffer == null)
@@ -83,7 +108,7 @@ namespace Unity.Labs.FacialRemote
                     if (skinnedMeshRenderer == null || m_AnimationCurves.ContainsKey(skinnedMeshRenderer)) // Skip duplicates
                         continue;
 
-                    var path = AnimationUtility.CalculateTransformPath(skinnedMeshRenderer.transform, transform);
+                    var path = AnimationUtility.CalculateTransformPath(skinnedMeshRenderer.transform, rootTransform);
                     path = path.Replace(string.Format("{0}/", skinnedMeshRenderer.transform), "");
 
                     var mesh = skinnedMeshRenderer.sharedMesh;
@@ -124,7 +149,7 @@ namespace Unity.Labs.FacialRemote
                     if (bone == null || m_AnimationCurves.ContainsKey(bone)) // Skip duplicates
                         continue;
 
-                    var path = AnimationUtility.CalculateTransformPath(bone, transform);
+                    var path = AnimationUtility.CalculateTransformPath(bone, rootTransform);
                     var animationCurves = new Dictionary<string, AnimationClipCurveData>();
                     foreach (var prop in k_RotParams)
                     {
@@ -145,6 +170,43 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
+            if (m_TargetTransform != null)
+            {
+                var transformType = typeof(Transform);
+                var path = AnimationUtility.CalculateTransformPath(m_TargetTransform, rootTransform);
+                var animationCurves = new Dictionary<string, AnimationClipCurveData>();
+                foreach (var prop in k_RotParams)
+                {
+                    var curve = new AnimationCurve();
+                    var curveData = new AnimationClipCurveData
+                    {
+                        path = path,
+                        curve = curve,
+                        propertyName = prop,
+                        type = transformType
+                    };
+
+                    m_AnimationClipCurveData.Add(curveData);
+                    animationCurves.Add(prop, curveData);
+                }
+                foreach (var prop in k_PosParams)
+                {
+                    var curve = new AnimationCurve();
+                    var curveData = new AnimationClipCurveData
+                    {
+                        path = path,
+                        curve = curve,
+                        propertyName = prop,
+                        type = transformType
+                    };
+
+                    m_AnimationClipCurveData.Add(curveData);
+                    animationCurves.Add(prop, curveData);
+                }
+
+                m_AnimationCurves.Add(m_TargetTransform, animationCurves);
+            }
+
             currentFrame = 0;
             var recordStream = playbackBuffer.recordStream;
             frameCount = recordStream.Length / playbackBuffer.bufferSize;
@@ -156,7 +218,9 @@ namespace Unity.Labs.FacialRemote
         public void StopBake()
         {
             baking = false;
-            m_CharacterRigController.ResetBonePoses();
+
+            if (m_CharacterRigController != null)
+                m_CharacterRigController.ResetBonePoses();
         }
 
         public void ApplyAnimationCurves()
@@ -168,7 +232,6 @@ namespace Unity.Labs.FacialRemote
                 var type = curveData.type;
                 var curve = curveData.curve;
                 m_Clip.SetCurve(path, type, propertyName, curve);
-                AnimationUtility.SetEditorCurve(m_Clip, EditorCurveBinding.FloatCurve(path, type, propertyName), curve);
             }
 
             var fileClip = AssetDatabase.LoadAssetAtPath(m_FilePath, typeof(AnimationClip));
@@ -180,7 +243,7 @@ namespace Unity.Labs.FacialRemote
             {
                 // This overrides the reference in the asset file
                 // ReSharper disable once RedundantAssignment
-                fileClip = m_Clip;
+                EditorUtility.CopySerialized(m_Clip, fileClip);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.ImportAsset(m_FilePath);
             }
@@ -218,6 +281,12 @@ namespace Unity.Labs.FacialRemote
 
                 if (m_CharacterRigController != null)
                     m_CharacterRigController.InterpolateBlendShapes(true);
+
+                if (m_TargetTransform != null)
+                {
+                    m_TargetTransform.position = m_StreamReader.cameraPose.position;
+                    m_TargetTransform.rotation = m_StreamReader.cameraPose.rotation;
+                }
 
                 KeyFrame(m_FrameTime[0] - m_FirstFrameTime);
             }
@@ -298,6 +367,46 @@ namespace Unity.Labs.FacialRemote
                                     Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
                                     break;
                             }
+                        }
+                    }
+                }
+            }
+
+            if (m_TargetTransform != null)
+            {
+                Dictionary<string, AnimationClipCurveData> animationCurves;
+                if (m_AnimationCurves.TryGetValue(m_TargetTransform, out animationCurves))
+                {
+                    foreach (var datum in animationCurves)
+                    {
+                        var curveData = datum.Value;
+                        var prop = curveData.propertyName;
+                        var curve = curveData.curve;
+                        switch (prop) {
+                            case k_RotationX:
+                                curve.AddKey(time, m_TargetTransform.rotation.x);
+                                break;
+                            case k_RotationY:
+                                curve.AddKey(time, m_TargetTransform.rotation.y);
+                                break;
+                            case k_RotationZ:
+                                curve.AddKey(time, m_TargetTransform.rotation.z);
+                                break;
+                            case k_RotationW:
+                                curve.AddKey(time, m_TargetTransform.rotation.w);
+                                break;
+                            case k_PositionX:
+                                curve.AddKey(time, m_TargetTransform.position.x);
+                                break;
+                            case k_PositionY:
+                                curve.AddKey(time, m_TargetTransform.position.y);
+                                break;
+                            case k_PositionZ:
+                                curve.AddKey(time, m_TargetTransform.position.z);
+                                break;
+                            default:
+                                Debug.LogErrorFormat("Fell through on {0} : {1}", datum.Key, prop);
+                                break;
                         }
                     }
                 }
