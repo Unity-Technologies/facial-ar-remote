@@ -9,6 +9,10 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class CharacterRigController : MonoBehaviour, IUsesStreamReader
     {
+        [SerializeField]
+        [Tooltip("The camera being used to capture the character.")]
+        Camera m_SceneCamera;
+        
         [Range(0f, 1f)]
         [SerializeField]
         [Tooltip("Amount to smoothing when returning to the start pose for the character when AR tracking is lost.")]
@@ -79,7 +83,6 @@ namespace Unity.Labs.FacialRemote
         Transform m_NeckBone;
 #pragma warning restore CS0649
 
-
         [Range(0f, 1f)]
         [SerializeField]
         [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
@@ -130,8 +133,21 @@ namespace Unity.Labs.FacialRemote
 
         public IStreamReader streamReader { private get; set; }
 
-        public Transform headBone { get { return m_HeadBone != null ? m_HeadBone : transform; } }
+        public Transform headBone
+        {
+            get
+            {
+                return m_HeadBone != null ? m_HeadBone : transform;
+            }
+            set
+            {
+                if (m_HeadBone == value)
+                    return;
 
+                m_HeadBone = value;
+                streamReader.SetInitialHeadPose(new Pose(m_HeadBone.position, m_HeadBone.rotation));
+            }
+        }
 
         public bool driveEyes
         {
@@ -169,12 +185,28 @@ namespace Unity.Labs.FacialRemote
             set { m_EyeAngleRange = value; }
         }
 
+        public Camera sceneCamera
+        {
+            get { return m_SceneCamera; }
+            set
+            {
+                if (m_SceneCamera == value)
+                    return;
+                
+                m_SceneCamera = value;
+                streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
+            }
+        }
+
         [NonSerialized]
         [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
 
         void Start()
         {
+            streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
+            streamReader.SetInitialHeadPose(new Pose(m_HeadBone.position, m_HeadBone.rotation));
+            
             SetupCharacterRigController();
         }
 
@@ -184,11 +216,9 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null || !streamSource.isActive)
                 return;
 
-            
             var streamSettings = streamReader.streamSource.streamSettings;
             if (streamSettings != m_LastStreamSettings)
                 SetEyeBlendShapeIndices(streamSettings);
-            
 
             InterpolateBlendShapes();
         }
@@ -442,7 +472,7 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null)
                 return;
 
-            if (force || streamReader.faceTrackingLost)
+            if (force || !streamReader.faceTrackingLost)
             {
                 LocalizeFacePose();
 

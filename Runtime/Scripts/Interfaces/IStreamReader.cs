@@ -23,7 +23,7 @@ namespace Unity.Labs.FacialRemote
         bool faceTrackingLost { get; }
 
         /// <summary>
-        /// Current blendshape weight values
+        /// Current blend shape weight values
         /// </summary>
         float[] blendShapesBuffer { get; }
 
@@ -38,14 +38,32 @@ namespace Unity.Labs.FacialRemote
         Pose cameraPose { get; }
 
         /// <summary>
-        /// Called by a StreamSource to when new data is available
+        /// Called by a StreamSource when new data is available
         /// </summary>
         /// <param name="buffer">Data for this frame</param>
         /// <param name="offset">Offset into this buffer where the data starts</param>
         void UpdateStreamData(byte[] buffer, int offset = 0);
 
+        /// <summary>
+        /// The current touch phase 
+        /// </summary>
         TouchPhase touchPhase { get; }
         
+        /// <summary>
+        /// The current touch position. Be sure to read the touch phase first.
+        /// </summary>
         Vector2 touchPosition  { get; }
+
+        /// <summary>
+        /// Called from an actor to set the initial head pose
+        /// </summary>
+        /// <param name="pose">The initial pose</param>
+        void SetInitialHeadPose(Pose pose);
+        
+        /// <summary>
+        /// Called from an actor to set the initial camera pose
+        /// </summary>
+        /// <param name="pose">The initial pose</param>
+        void SetInitialCameraPose(Pose pose);
     }
 }

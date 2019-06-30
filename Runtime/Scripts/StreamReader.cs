@@ -33,8 +33,8 @@ namespace Unity.Labs.FacialRemote
 
         int m_TrackingLossCount;
 
-        bool m_FaceTrackingActive;
-        bool m_CameraTrackingActive;
+        bool m_FaceTrackingEnabled;
+        bool m_CameraTrackingEnabled;
         Pose m_CameraPose;
         Pose m_HeadPose;
         Vector3 m_LastHeadPosition;
@@ -57,14 +57,22 @@ namespace Unity.Labs.FacialRemote
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
         public bool verboseLogging { get { return m_VerboseLogging; } }
-        public Transform headBone { get; private set; }
-        public Transform cameraTransform { get; private set; }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
         public HashSet<IUsesStreamReader> consumers => m_Consumers;
         
         public TouchPhase touchPhase => m_TouchPhase;
 
         public Vector2 touchPosition => m_TouchPosition;
+        
+        public void SetInitialHeadPose(Pose pose)
+        {
+            m_HeadPose = pose;
+        }
+
+        public void SetInitialCameraPose(Pose pose)
+        {
+            m_CameraPose = pose;
+        }
 
         public IStreamSource streamSource
         {
@@ -95,8 +103,8 @@ namespace Unity.Labs.FacialRemote
             var settings = streamSource.streamSettings;
 
             Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-            m_FaceTrackingActive = buffer[offset + settings.bufferSize - 2] == 1;
-            m_CameraTrackingActive = buffer[offset + settings.bufferSize - 1] == 1;
+            m_FaceTrackingEnabled = buffer[offset + settings.bufferSize - 2] == 1;
+            m_CameraTrackingEnabled = buffer[offset + settings.bufferSize - 1] == 1;
 
             if (verboseLogging)
             {
@@ -105,13 +113,13 @@ namespace Unity.Labs.FacialRemote
                 Debug.Log($"{m_FrameNumArray[0]} : {m_FrameTimeArray[0]}");
             }
 
-            if (m_FaceTrackingActive)
+            if (m_FaceTrackingEnabled)
             {
                 Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
             }
 
-            if (m_CameraTrackingActive)
+            if (m_CameraTrackingEnabled)
             {
                 Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
@@ -165,36 +173,26 @@ namespace Unity.Labs.FacialRemote
         {
             Application.targetFrameRate = 60;
 
-            if (headBone == null)
-            {
-                m_HeadPose = new Pose(Vector3.zero, Quaternion.identity);
-                Debug.LogWarning("No Character head bone set. Using default pose.");
-            }
-            else
-            {
-                m_HeadPose = new Pose(headBone.position, headBone.rotation);
-            }
-
-            if (cameraTransform == null)
-            {
-                m_CameraPose = new Pose(Vector3.zero, Quaternion.identity);
-                Debug.LogWarning("No Camera set. Using default pose.");
-            }
-            else
-            {
-                m_CameraPose = new Pose(cameraTransform.position, cameraTransform.rotation);
-            }
-
             ConnectDependencies();
         }
 
         void Update()
         {
+            UpdateHeadTrackingState();
+
+            foreach (var source in sources)
+            {
+                source.StreamSourceUpdate();
+            }
+        }
+
+        void UpdateHeadTrackingState()
+        {
             var headPosition = m_HeadPose.position;
             if (headPosition == m_LastHeadPosition)
             {
                 m_TrackingLossCount++;
-                if (!m_FaceTrackingActive && m_TrackingLossCount > m_TrackingLossPadding)
+                if (!m_FaceTrackingEnabled || m_TrackingLossCount > m_TrackingLossPadding)
                     faceTrackingLost = true;
                 else
                     faceTrackingLost = false;
@@ -205,11 +203,6 @@ namespace Unity.Labs.FacialRemote
             }
 
             m_LastHeadPosition = headPosition;
-
-            foreach (var source in sources)
-            {
-                source.StreamSourceUpdate();
-            }
         }
 
         void ConnectInterfaces(object obj)
