@@ -204,6 +204,22 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
+            var streamSource = streamReader.streamSource;
+            if (streamSource == null)
+            {
+                Debug.LogError("Disabling Character Rig Controller. No stream source set.", this);
+                enabled = false;
+                return;
+            }
+
+            var streamSettings = streamSource.streamSettings;
+            if (streamSettings == null)
+            {
+                Debug.LogError("Disabling Character Rig Controller. No stream settings", this);
+                enabled = false;
+                return;
+            }
+            
             streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
             streamReader.SetInitialHeadPose(new Pose(m_HeadBone.position, m_HeadBone.rotation));
             
