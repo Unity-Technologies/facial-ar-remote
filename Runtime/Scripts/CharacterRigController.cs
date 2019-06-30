@@ -554,5 +554,13 @@ namespace Unity.Labs.FacialRemote
             if (m_DriveNeck )
                 m_NeckBone.rotation = m_ARNeckPose.rotation;
         }
+
+        void OnValidate()
+        {
+            if (sceneCamera == null)
+            {
+                m_SceneCamera = Camera.main;
+            }
+        }
     }
 }

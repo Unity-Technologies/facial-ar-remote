@@ -5,6 +5,7 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(CharacterRigController))]
     public class CharacterRigControllerEditor : Editor
     {
+        SerializedProperty m_SceneCamera;
         SerializedProperty m_EyeSmoothing;
         SerializedProperty m_HeadSmoothing;
         SerializedProperty m_TrackingLossSmoothing;
@@ -24,6 +25,7 @@ namespace Unity.Labs.FacialRemote
 
         void OnEnable()
         {
+            m_SceneCamera = serializedObject.FindProperty("m_SceneCamera");
             m_HeadBone = serializedObject.FindProperty("m_HeadBone");
             m_NeckBone = serializedObject.FindProperty("m_NeckBone");
             m_LeftEye = serializedObject.FindProperty("m_LeftEye");
@@ -49,6 +51,10 @@ namespace Unity.Labs.FacialRemote
         {
             using (var check = new EditorGUI.ChangeCheckScope())
             {
+                EditorGUILayout.PropertyField(m_SceneCamera);
+                if (m_SceneCamera.objectReferenceValue == null)
+                    EditorGUILayout.HelpBox("Need a camera to reference head translations.", MessageType.Warning);
+                
                 EditorGUILayout.PropertyField(m_TrackingLossSmoothing);
                 
                 EditorGUILayout.PropertyField(m_HeadBone);
