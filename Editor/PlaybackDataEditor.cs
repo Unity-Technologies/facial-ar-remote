@@ -27,29 +27,38 @@ namespace Unity.Labs.FacialRemote
             m_BufferIndex = EditorGUILayout.Popup(new GUIContent("Playback Buffer"), m_BufferIndex, names);
             m_SampleRateIndex = EditorGUILayout.Popup(new GUIContent("Sample Rate"), m_SampleRateIndex, s_SampleRateNames);
 
-            if (GUILayout.Button("Bake Animation Clip"))
+            EditorGUILayout.Space();
+
+            using (new EditorGUILayout.HorizontalScope())
             {
-                var playbackBuffer = m_PlaybackData.playbackBuffers[m_BufferIndex];
-                var path = default(string);
+                GUILayout.FlexibleSpace();
 
-                if (SaveFilePanel(playbackBuffer.name, out path))
+                if (GUILayout.Button("Bake Animation Clip"))
                 {
-                    var clip = new AnimationClip();
+                    var playbackBuffer = m_PlaybackData.playbackBuffers[m_BufferIndex];
+                    var path = default(string);
 
-                    Bake(playbackBuffer, s_SampleRates[m_SampleRateIndex], clip);
-
-                    var fileClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-                    if (fileClip == null)
-                        AssetDatabase.CreateAsset(clip, path);
-                    else
+                    if (SaveFilePanel(playbackBuffer.name, out path))
                     {
-                        EditorUtility.CopySerialized(clip, fileClip);
-                        DestroyImmediate(clip);
-                    }
+                        var clip = new AnimationClip();
 
-                    AssetDatabase.ImportAsset(path);
-                    AssetDatabase.SaveAssets();
+                        Bake(playbackBuffer, s_SampleRates[m_SampleRateIndex], clip);
+
+                        var fileClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                        if (fileClip == null)
+                            AssetDatabase.CreateAsset(clip, path);
+                        else
+                        {
+                            EditorUtility.CopySerialized(clip, fileClip);
+                            DestroyImmediate(clip);
+                        }
+
+                        AssetDatabase.ImportAsset(path);
+                        AssetDatabase.SaveAssets();
+                    }
                 }
+
+                GUILayout.FlexibleSpace();
             }
         }
 
@@ -64,17 +73,13 @@ namespace Unity.Labs.FacialRemote
         void Bake(PlaybackBuffer playbackBuffer, int sampleRate, AnimationClip clip)
         {
             var stream = playbackBuffer.recordStream;
-
-            if (stream.Length == 0)
-                return;
-            
             var bufferSize = playbackBuffer.bufferSize;
 
-            if (stream.Length % bufferSize != 0)
-                throw new Exception("PlaybackBuffer not compatible");
+            if (stream.Length < bufferSize || stream.Length % bufferSize != 0)
+                throw new Exception("Invalid PlaybackBuffer");
 
             if (Array.IndexOf(s_SampleRates, sampleRate) == -1)
-                throw new Exception("Invalid sample rate");
+                throw new Exception("Invalid SampleRate");
 
             var positionCurves = new Vector3CurveBinding("", typeof(Transform), "localPosition");
             var rotationCurves = new QuaternionCurveBinding("", typeof(Transform), "localRotation");

@@ -137,6 +137,9 @@ namespace Unity.Labs.FacialRemote
 
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
             {
+                if (!m_Indices.ContainsKey(meshRenderer))
+                    continue;
+                
                 var indices = m_Indices[meshRenderer];
                 var length = indices.Length;
                 for (var i = 0; i < length; i++)
