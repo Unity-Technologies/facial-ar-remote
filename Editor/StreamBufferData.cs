@@ -1,11 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Threading;
+﻿using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote

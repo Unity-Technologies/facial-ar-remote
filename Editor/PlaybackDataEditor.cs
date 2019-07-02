@@ -104,6 +104,7 @@ namespace Unity.Labs.FacialRemote
             var timeAcc = 0.0;
             var lastData = StreamBufferData.Create(buffer);
             var startTime = lastData.FrameTime;
+            var lastFrameTime = 0.0;
 
             for (var i = 0; i < stream.Length; i+=bufferSize)
             {
@@ -133,31 +134,31 @@ namespace Unity.Labs.FacialRemote
                     var deltaTime = time - lastTime;
                     timeAcc += deltaTime;
 
-                    if (timeAcc >= timeStep)
+                    while (timeAcc >= timeStep)
                     {
-                        while (timeAcc >= timeStep)
-                            timeAcc -= timeStep;
-
-                        var frameTime = (float)(lastTime + deltaTime - timeAcc);
-                        var t = 1f - (float)(timeAcc / deltaTime);
+                        var frameTime = lastFrameTime + timeStep;
+                        var t = (float)((frameTime -  lastTime) / deltaTime);
                         var headPosition = Vector3.Lerp(lastData.HeadPosition, data.HeadPosition, t);
                         var headRotation = Quaternion.Slerp(lastData.HeadRotation, data.HeadRotation, t);
                         var cameraPosition = Vector3.Lerp(lastData.CameraPosition, data.CameraPosition, t);
                         var cameraRotation = Quaternion.Slerp(lastData.CameraRotation, data.CameraRotation, t);
                         var blendShapeValues = BlendShapeValues.Lerp(ref lastData.BlendshapeValues, ref data.BlendshapeValues, t);
+                        
+                        timeAcc -= timeStep;
+                        lastFrameTime = frameTime;
 
                         if (captureType == CaptureType.CameraPose)
                         {
-                            positionCurves.AddKey(frameTime, cameraPosition);
-                            rotationCurves.AddKey(frameTime, cameraRotation);
+                            positionCurves.AddKey((float)frameTime, cameraPosition);
+                            rotationCurves.AddKey((float)frameTime, cameraRotation);
                         }
                         else
                         {
-                            blendShapeCurves.AddKey(frameTime, ref blendShapeValues);
-                            headBonePositionCurves.AddKey(frameTime, headPosition);
-                            headBoneRotationCurves.AddKey(frameTime, headRotation);
-                            cameraPositionCurves.AddKey(frameTime, cameraPosition);
-                            cameraRotationCurves.AddKey(frameTime, cameraRotation);
+                            blendShapeCurves.AddKey((float)frameTime, ref blendShapeValues);
+                            headBonePositionCurves.AddKey((float)frameTime, headPosition);
+                            headBoneRotationCurves.AddKey((float)frameTime, headRotation);
+                            cameraPositionCurves.AddKey((float)frameTime, cameraPosition);
+                            cameraRotationCurves.AddKey((float)frameTime, cameraRotation);
                         }
                     }
                 }
