@@ -14,9 +14,11 @@ namespace Unity.Labs.FacialRemote
     public struct StreamBufferData
     {
         [FieldOffset(0)] public byte ErrorCheck;
-        [FieldOffset(1)] public BlendShapeValues blendshapeValues;
-        [FieldOffset(209)] public Pose HeadPose;
-        [FieldOffset(237)] public Pose CameraPose;
+        [FieldOffset(1)] public BlendShapeValues BlendshapeValues;
+        [FieldOffset(209)] public Vector3 HeadPosition;
+        [FieldOffset(221)] public Quaternion HeadRotation;
+        [FieldOffset(237)] public Vector3 CameraPosition;
+        [FieldOffset(249)] public Quaternion CameraRotation;
         [FieldOffset(265)] public int FrameNumber;
         [FieldOffset(269)] public float FrameTime;
         [FieldOffset(273)] public int InputState;

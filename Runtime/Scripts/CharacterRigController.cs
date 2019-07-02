@@ -12,6 +12,10 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("The camera being used to capture the character.")]
         Camera m_SceneCamera;
+        [SerializeField]
+        Pose m_HeadPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
+        [SerializeField]
+        Pose m_CameraPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
         
         [Range(0f, 1f)]
         [SerializeField]

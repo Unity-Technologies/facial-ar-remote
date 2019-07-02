@@ -9,8 +9,11 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
+    [ExecuteAlways]
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
+        [SerializeField]
+        BlendShapeValues m_BlendShapeValues;
         [SerializeField]
         BlendShapeMappings m_BlendShapeMappings;
     
@@ -47,10 +50,10 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Overrides settings for individual blend shapes.")]
         BlendShapeOverride[] m_Overrides;
 
-        readonly Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
+        Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         float[] m_BlendShapes;
 
-        IStreamSettings m_LastStreamSettings;
+        //IStreamSettings m_LastStreamSettings;
 
         public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
         public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
@@ -61,26 +64,16 @@ namespace Unity.Labs.FacialRemote
 
         void Start()
         {
-            var streamSource = streamReader.streamSource;
-            if (streamSource == null)
-            {
-                Debug.LogError("Disabling BlendShapesController. No stream source set.", this);
-                enabled = false;
-                return;
-            }
+            ValidateSkinMeshes();
+            UpdateBlendShapeIndices();
 
-            var streamSettings = streamSource.streamSettings;
-            if (streamSettings == null)
-            {
-                Debug.LogError("Disabling BlendShapesController. No stream settings", this);
-                enabled = false;
-                return;
-            }
-
-            var blendShapesCount = streamSettings.BlendShapeCount;
+            var blendShapesCount = 52;
             if (m_Overrides.Length != blendShapesCount)
                 Array.Resize(ref m_Overrides, blendShapesCount);
+        }
 
+        void ValidateSkinMeshes()
+        {
             var filteredList = new List<SkinnedMeshRenderer>();
             foreach (var renderer in m_SkinnedMeshRenderers)
             {
@@ -110,14 +103,36 @@ namespace Unity.Labs.FacialRemote
 
         void Update()
         {
+            if (streamReader == null)
+                return;
+            
             var streamSource = streamReader.streamSource;
             if (streamSource == null || !streamSource.isActive)
                 return;
+            
+            var streamSettings = streamReader.streamSource.streamSettings;
+            for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
+            {
+                if (i >= m_BlendShapeValues.Count)
+                    break;
+                
+                m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
+                /*
+                if (!streamReader.faceTrackingLost)
+                {
+                    if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
+                        m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
+                }
+                else
+                {
+                    m_BlendShapes[i] =  Mathf.Lerp(0f, blendShape, m_TrackingLossSmoothing);
+                }
+                */
+            }
+        }
 
-            var streamSettings = streamSource.streamSettings;
-            if (streamSettings != m_LastStreamSettings)
-                UpdateBlendShapeIndices(streamSettings);
-
+        void LateUpdate()
+        {
             CalculateInterpolatedBlendShapes();
 
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
@@ -139,12 +154,10 @@ namespace Unity.Labs.FacialRemote
         /// Update the blend shape indices based on the incoming data stream.
         /// </summary>
         /// <param name="settings">The stream settings used for this mapping.</param>
-        public void UpdateBlendShapeIndices(IStreamSettings settings)
+        public void UpdateBlendShapeIndices()
         {
-            m_LastStreamSettings = settings;
-            var blendShapeCount = settings.BlendShapeCount;
-            m_BlendShapes = new float[blendShapeCount];
-            blendShapesScaled = new float[blendShapeCount];
+            m_BlendShapes = new float[m_BlendShapeValues.Count];
+            blendShapesScaled = new float[m_BlendShapeValues.Count];
             m_Indices.Clear();
             
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
@@ -184,26 +197,18 @@ namespace Unity.Labs.FacialRemote
         /// <param name="force">Force smoothing.</param>
         public void CalculateInterpolatedBlendShapes(bool force = false)
         {
-            var streamSettings = streamReader.streamSource.streamSettings;
-            for (var i = 0; i < streamSettings.BlendShapeCount; i++)
+            for (var i = 0; i < m_BlendShapeValues.Count; i++)
             {
                 var blendShape = m_BlendShapes[i];
-                var blendShapeTarget = streamReader.blendShapesBuffer[i];
+                var blendShapeTarget = m_BlendShapeValues[i];
                 var useOverride = UseOverride(i);
                 var blendShapeOverride = m_Overrides[i];
                 var threshold = useOverride ? blendShapeOverride.blendShapeThreshold : m_BlendShapeThreshold;
                 var offset = useOverride ? blendShapeOverride.blendShapeOffset : 0f;
                 var smoothing = useOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
 
-                if (force || !streamReader.faceTrackingLost)
-                {
-                    if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
-                        m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
-                }
-                else
-                {
-                    m_BlendShapes[i] =  Mathf.Lerp(0f, blendShape, m_TrackingLossSmoothing);
-                }
+                if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
+                    m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
 
                 if (useOverride)
                 {

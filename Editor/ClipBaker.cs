@@ -102,7 +102,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_BlendShapesController != null)
             {
-                m_BlendShapesController.UpdateBlendShapeIndices(playbackBuffer);
+                m_BlendShapesController.UpdateBlendShapeIndices();
 
                 // Get curve data for blend shapes
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)

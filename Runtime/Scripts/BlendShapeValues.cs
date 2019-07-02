@@ -120,6 +120,11 @@ namespace Unity.Labs.FacialRemote
         [FieldOffset(200)] public float NoseSneerRight;
         [FieldOffset(204)] public float TongueOut;
 
+        public int Count
+        {
+            get { return 52; }
+        }
+
         public float this[int index]
         {
             get { return GetValue(index); }
@@ -246,6 +251,16 @@ namespace Unity.Labs.FacialRemote
                 default:
                     throw new IndexOutOfRangeException("Invalid index!");
             }
+        }
+
+        public static BlendShapeValues Lerp(ref BlendShapeValues values1, ref BlendShapeValues values2, float t)
+        {
+            var values = new BlendShapeValues();
+
+            for (var i = 0; i < values.Count; ++i)
+                values[i] = Mathf.Lerp(values1[i], values2[i], t);
+            
+            return values;
         }
     }
 }
