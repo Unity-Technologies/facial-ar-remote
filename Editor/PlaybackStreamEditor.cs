@@ -5,11 +5,11 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(PlaybackStream))]
     public class PlaybackStreamEditor : Editor
     {
-        SerializedProperty m_PlaybackData;
+        SerializedProperty m_PlaybackDataProp;
 
         void OnEnable()
         {
-            m_PlaybackData = serializedObject.FindProperty("m_PlaybackData");
+            m_PlaybackDataProp = serializedObject.FindProperty("m_PlaybackData");
 
             var playbackStream = (PlaybackStream)target;
             var streamReader = playbackStream.gameObject.GetComponent<StreamReader>();
@@ -23,9 +23,9 @@ namespace Unity.Labs.FacialRemote
         {
             using (var check = new EditorGUI.ChangeCheckScope())
             {
-                EditorGUILayout.PropertyField(m_PlaybackData);
+                EditorGUILayout.PropertyField(m_PlaybackDataProp);
 
-                if (m_PlaybackData.objectReferenceValue == null)
+                if (m_PlaybackDataProp.objectReferenceValue == null)
                 {
                     EditorGUILayout.HelpBox("No Playback Data has been set. You Will be unable to record, playback, " +
                         "or bake Stream Data.", MessageType.Warning);

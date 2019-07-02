@@ -49,6 +49,8 @@ namespace Unity.Labs.FacialRemote
             m_PlayIcon = EditorGUIUtility.IconContent("d_Animation.Play");
             m_RecordIcon = EditorGUIUtility.IconContent("d_Animation.Record");
             m_ConnectIcon = EditorGUIUtility.IconContent("d_BuildSettings.iPhone.Small");
+            
+            autoRepaintOnSceneChange = true;
         }
 
         void OnGUI()
@@ -129,207 +131,119 @@ namespace Unity.Labs.FacialRemote
 
             using (new GUILayout.VerticalScope("box"))
             {
-                using (new EditorGUI.DisabledGroupScope(true))
-                {
-                    EditorGUILayout.ObjectField("Stream Reader", streamReader, typeof(StreamReader), true);
-                }
-                EditorGUILayout.Space();
+                m_StreamReaderModes[streamReader] = (StreamSource)EditorGUILayout.EnumPopup(streamReader.name, m_StreamReaderModes[streamReader]);
 
-                using (new GUILayout.HorizontalScope())
+                if (m_StreamReaderModes[streamReader] == StreamSource.File)
                 {
-                    m_StreamReaderModes[streamReader] = (StreamSource)EditorGUILayout.EnumPopup("Stream Source", m_StreamReaderModes[streamReader]);
+                    var clipName = playbackStream == null || playbackStream.activePlaybackBuffer == null
+                    ? kNone
+                    : playbackStream.activePlaybackBuffer.name;
 
-                    if (m_StreamReaderModes[streamReader] == StreamSource.Device)
+                    using (new EditorGUI.DisabledGroupScope(playbackStream == null))
+                    using (new GUILayout.HorizontalScope())
                     {
-                        if (GUILayout.Button(m_ConnectIcon, m_ButtonStyle))
+                        if (playbackStream == null)
                         {
-                            using (new EditorGUI.DisabledGroupScope(networkStream == null || !networkStream.isActive))
+                            EditorGUILayout.HelpBox("Playback Stream Componenet not found", MessageType.Warning);
+                        }
+                        else if (playbackStream.playbackData == null)
+                        {
+                            EditorGUILayout.LabelField("Playback Buffer", GUILayout.Width(100));
+                            if (GUILayout.Button("Create new Playback Data asset"))
                             {
-                                var streamSource = streamReader.streamSource;
-                                if (streamSource != null && streamSource.Equals(networkStream)
-                                    && networkStream != null && networkStream.isActive)
-                                {
-                                    if (GUILayout.Button(m_ConnectIcon, m_ButtonPressStyle))
-                                        streamReader.streamSource = null;
-                                }
-                                else
-                                {
-                                    if (GUILayout.Button(m_ConnectIcon, m_ButtonStyle))
-                                        streamReader.streamSource = networkStream;
-                                }
+                                var asset = CreateInstance<PlaybackData>();
+
+                                AssetDatabase.CreateAsset(asset, "Assets/New Playback Data.asset");
+                                AssetDatabase.SaveAssets();
+                                playbackStream.playbackData = asset;
                             }
                         }
-
-                        var useRecorder = Application.isEditor && Application.isPlaying
-                            && playbackStream != null && playbackStream.playbackData != null;
-                        using (new EditorGUI.DisabledGroupScope(networkStream == null || !(networkStream.isActive && useRecorder)))
+                        else
                         {
-                            if (networkStream == null)
+                            using (new EditorGUI.DisabledGroupScope(playbackStream == null ||
+                                playbackStream.playbackData == null ||
+                                playbackStream.playbackData.playbackBuffers == null))
                             {
-                                GUILayout.Button(m_RecordIcon, m_ButtonStyle);
-                            }
-                            else if (networkStream.recording)
-                            {
-                                if (GUILayout.Button(m_RecordIcon, m_ButtonPressStyle))
-                                    networkStream.StopRecording();
-                            }
-                            else
-                            {
-                                if (GUILayout.Button(m_RecordIcon, m_ButtonStyle))
-                                    networkStream.StartRecording();
-                            }
-                        }
-                    }
-                    else if (m_StreamReaderModes[streamReader] == StreamSource.File)
-                    {
-                        using (new EditorGUI.DisabledGroupScope(networkStream == null || playbackStream == null
-                            || !(networkStream.isActive || playbackStream.activePlaybackBuffer != null)))
-                        {
-                            if (playbackStream == null)
-                            {
-                                GUILayout.Button(m_PlayIcon, m_ButtonStyle);
-                            }
-                            else if (playbackStream.isActive)
-                            {
-                                if (GUILayout.Button(m_PlayIcon, m_ButtonPressStyle))
+                                var bufferNames = new List<string>() { kNone };
+                                bufferNames.AddRange(Array.ConvertAll(playbackStream.playbackData.playbackBuffers, b => b.name ));
+                                var clipIndex = bufferNames.IndexOf(clipName);
+
+                                using (var change = new EditorGUI.ChangeCheckScope())
                                 {
-                                    streamReader.streamSource = null;
-                                    playbackStream.StopPlayback();
-                                }
-                            }
-                            else
-                            {
-                                if (GUILayout.Button(m_PlayIcon, m_ButtonStyle))
-                                {
-                                    streamReader.streamSource = playbackStream;
-                                    playbackStream.StartPlayback();
-                                }
-                            }
-                        }
-                    }
-                }
+                                    clipIndex = EditorGUILayout.Popup("Playback Buffer", clipIndex, bufferNames.ToArray());
 
-                EditorGUILayout.Space();
-
-                if (m_StreamReaderModes[streamReader] == StreamSource.Device)
-                {
-                    using (new EditorGUI.DisabledGroupScope(true))
-                    {
-                        EditorGUILayout.ObjectField("Source", networkStream, typeof(NetworkStream), true);
-                        EditorGUILayout.ObjectField("Recorder", playbackStream, typeof(PlaybackStream), true);
-                    }
-                }
-                else if (m_StreamReaderModes[streamReader] == StreamSource.File)
-                {
-                    using (new EditorGUI.DisabledGroupScope(true))
-                    {
-                        EditorGUILayout.ObjectField("Playback Stream", playbackStream, typeof(PlaybackStream), true);
-                    }
-                    
-                    EditorGUILayout.Space();
-                    
-                    if (m_ClipBaker == null)
-                    {
-                        var clipName = playbackStream == null || playbackStream.activePlaybackBuffer == null
-                            ? kNone
-                            : playbackStream.activePlaybackBuffer.name;
-
-                        using (new EditorGUI.DisabledGroupScope(playbackStream == null))
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            if (playbackStream == null)
-                            {
-                                EditorGUILayout.HelpBox("Playback Stream Componenet not found", MessageType.Warning);
-                            }
-                            else if (playbackStream.playbackData == null)
-                            {
-                                EditorGUILayout.LabelField("Playback Buffer", GUILayout.Width(100));
-                                if (GUILayout.Button("Create new Playback Data asset"))
-                                {
-                                    var asset = CreateInstance<PlaybackData>();
-
-                                    AssetDatabase.CreateAsset(asset, "Assets/New Playback Data.asset");
-                                    AssetDatabase.SaveAssets();
-                                    playbackStream.playbackData = asset;
-                                }
-                            }
-                            else
-                            {
-                                using (new EditorGUI.DisabledGroupScope(playbackStream == null ||
-                                    playbackStream.playbackData == null ||
-                                    playbackStream.playbackData.playbackBuffers == null))
-                                {
-                                    var bufferNames = new List<string>() { kNone };
-                                    bufferNames.AddRange(Array.ConvertAll(playbackStream.playbackData.playbackBuffers, b => b.name ));
-                                    var clipIndex = bufferNames.IndexOf(clipName);
-
-                                    using (var change = new EditorGUI.ChangeCheckScope())
+                                    if (change.changed)
                                     {
-                                        clipIndex = EditorGUILayout.Popup("Playback Buffer", clipIndex, bufferNames.ToArray());
+                                        var playbackBuffer = default(PlaybackBuffer);
 
-                                        if (change.changed)
-                                        {
-                                            var playbackBuffer = default(PlaybackBuffer);
-
-                                            if (clipIndex > 0)
-                                                playbackBuffer = playbackStream.playbackData.playbackBuffers[clipIndex - 1];
-                                            
-                                            playbackStream.SetPlaybackBuffer(playbackBuffer);
-                                        }
+                                        if (clipIndex > 0)
+                                            playbackBuffer = playbackStream.playbackData.playbackBuffers[clipIndex - 1];
+                                        
+                                        playbackStream.SetPlaybackBuffer(playbackBuffer);
                                     }
                                 }
                             }
                         }
-                            
-                        if (playbackStream == null)
-                            EditorGUILayout.HelpBox("The Stream Reader does not have a Playback" +
-                                " Stream assigned.", MessageType.Warning);
+                    }
 
-                        EditorGUILayout.Space();
-
-                        var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
-                        var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
-                        
-                        // Bake Clip Button
-                        using (new EditorGUI.DisabledGroupScope(playbackStream == null || playbackStream.activePlaybackBuffer == null
-                            || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
-                        {
-                            GUILayout.BeginHorizontal ();
-                            GUILayout.FlexibleSpace();
-                            if (GUILayout.Button("Bake Animation Clip", GUILayout.Width(150)))
-                            {
-                                m_ClipBaker = CreateBacker(streamReader, clipName, playbackStream);
-
-                                if (m_ClipBaker != null)
-                                {
-                                    m_ClipBaker.Bake(blendShapeController, avatarController);
-                                }
-                            }
-                            if (GUILayout.Button("Bake Camera Pose", GUILayout.Width(150)))
-                            {
-                                m_ClipBaker = CreateBacker(streamReader, clipName, playbackStream);
-
-                                if (m_ClipBaker != null)
-                                {
-                                    var camera = streamReader.character.transform.GetChild(0);
-                                    m_ClipBaker.Bake(camera, camera);
-                                }
-                            }
-                            GUILayout.FlexibleSpace();
-                            GUILayout.EndHorizontal ();
-                        }
-                        
-                        EditorGUILayout.Space();
+                    if (playbackStream == null)
+                    {
+                        EditorGUILayout.HelpBox("The Stream Reader does not have a Playback" +
+                            " Stream assigned.", MessageType.Warning);
                     }
                     else
                     {
-                        BakeClipLoop();
+                        DoBakeGUI(streamReader, playbackStream, clipName);
                     }
                 }
+
+                DoButtonsGUI(streamReader, networkStream, playbackStream);
             }
         }
 
-        ClipBaker CreateBacker(StreamReader streamReader, string clipName, PlaybackStream playbackStream)
+        void DoBakeGUI(StreamReader streamReader, PlaybackStream playbackStream, string clipName)
+        {
+            Debug.Assert (m_StreamReaderModes[streamReader] == StreamSource.File);
+            
+            if (m_ClipBaker == null)
+            {
+                var blendShapeController = streamReader.character.GetComponentInChildren<BlendShapesController>();
+                var avatarController = streamReader.character.GetComponentInChildren<CharacterRigController>();
+                
+                // Bake Clip Button
+                using (new EditorGUI.DisabledGroupScope(playbackStream == null || playbackStream.activePlaybackBuffer == null
+                    || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode))
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Bake Animation Clip"))
+                    {
+                        m_ClipBaker = CreateBaker(streamReader, clipName, playbackStream);
+
+                        if (m_ClipBaker != null)
+                        {
+                            m_ClipBaker.Bake(blendShapeController, avatarController);
+                        }
+                    }
+                    if (GUILayout.Button("Bake Camera Pose"))
+                    {
+                        m_ClipBaker = CreateBaker(streamReader, clipName, playbackStream);
+
+                        if (m_ClipBaker != null)
+                        {
+                            var camera = streamReader.character.transform.GetChild(0);
+                            m_ClipBaker.Bake(camera, camera);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                BakeClipLoop();
+            }
+        }
+
+        ClipBaker CreateBaker(StreamReader streamReader, string clipName, PlaybackStream playbackStream)
         {
             streamReader.streamSource = null;
 
@@ -352,6 +266,83 @@ namespace Unity.Labs.FacialRemote
             }
 
             return null;
+        }
+
+        void DoButtonsGUI(StreamReader streamReader, NetworkStream networkStream, PlaybackStream playbackStream)
+        {
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+
+                if (m_StreamReaderModes[streamReader] == StreamSource.Device)
+                {
+                    if (GUILayout.Button(m_ConnectIcon, m_ButtonStyle))
+                    {
+                        using (new EditorGUI.DisabledGroupScope(networkStream == null || !networkStream.isActive))
+                        {
+                            var streamSource = streamReader.streamSource;
+                            if (streamSource != null && streamSource.Equals(networkStream)
+                                && networkStream != null && networkStream.isActive)
+                            {
+                                if (GUILayout.Button(m_ConnectIcon, m_ButtonPressStyle))
+                                    streamReader.streamSource = null;
+                            }
+                            else
+                            {
+                                if (GUILayout.Button(m_ConnectIcon, m_ButtonStyle))
+                                    streamReader.streamSource = networkStream;
+                            }
+                        }
+                    }
+
+                    var useRecorder = Application.isEditor && Application.isPlaying
+                        && playbackStream != null && playbackStream.playbackData != null;
+                    using (new EditorGUI.DisabledGroupScope(networkStream == null || !(networkStream.isActive && useRecorder)))
+                    {
+                        if (networkStream == null)
+                        {
+                            GUILayout.Button(m_RecordIcon, m_ButtonStyle);
+                        }
+                        else if (networkStream.recording)
+                        {
+                            if (GUILayout.Button(m_RecordIcon, m_ButtonPressStyle))
+                                networkStream.StopRecording();
+                        }
+                        else
+                        {
+                            if (GUILayout.Button(m_RecordIcon, m_ButtonStyle))
+                                networkStream.StartRecording();
+                        }
+                    }
+                }
+                else if (m_StreamReaderModes[streamReader] == StreamSource.File)
+                {
+                    using (new EditorGUI.DisabledGroupScope(networkStream == null || playbackStream == null
+                        || !(networkStream.isActive || playbackStream.activePlaybackBuffer != null)))
+                    {
+                        if (playbackStream == null)
+                        {
+                            GUILayout.Button(m_PlayIcon, m_ButtonStyle);
+                        }
+                        else if (playbackStream.isActive)
+                        {
+                            if (GUILayout.Button(m_PlayIcon, m_ButtonPressStyle))
+                            {
+                                streamReader.streamSource = null;
+                                playbackStream.StopPlayback();
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button(m_PlayIcon, m_ButtonStyle))
+                            {
+                                streamReader.streamSource = playbackStream;
+                                playbackStream.StartPlayback();
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         void SetupGUIStyles()
