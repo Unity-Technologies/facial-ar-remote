@@ -7,6 +7,12 @@ namespace Unity.Labs.FacialRemote
     [CustomEditor(typeof(PlaybackData))]
     public class PlaybackDataEditor : Editor
     {
+        public enum CaptureType
+        {
+            CameraPose,
+            FacialRig
+        }
+
         PlaybackData m_PlaybackData;
         static readonly string[] s_Empty = { "None" };
         static readonly int[] s_SampleRates = { 24, 25, 30, 50, 60 };
@@ -14,6 +20,7 @@ namespace Unity.Labs.FacialRemote
         string[] m_BufferNames = {};
         int m_BufferIndex = 0;
         int m_SampleRateIndex = 0;
+        CaptureType m_CaptureType;
 
         void OnEnable()
         {
@@ -25,6 +32,7 @@ namespace Unity.Labs.FacialRemote
         {
             var names = m_BufferNames.Length == 0 ? s_Empty : m_BufferNames;
             m_BufferIndex = EditorGUILayout.Popup(new GUIContent("Playback Buffer"), m_BufferIndex, names);
+            m_CaptureType = (CaptureType)EditorGUILayout.EnumPopup(new GUIContent("Capture Type"), m_CaptureType);
             m_SampleRateIndex = EditorGUILayout.Popup(new GUIContent("Sample Rate"), m_SampleRateIndex, s_SampleRateNames);
 
             EditorGUILayout.Space();
@@ -42,7 +50,7 @@ namespace Unity.Labs.FacialRemote
                     {
                         var clip = new AnimationClip();
 
-                        Bake(playbackBuffer, s_SampleRates[m_SampleRateIndex], clip);
+                        Bake(playbackBuffer, m_CaptureType, s_SampleRates[m_SampleRateIndex], clip);
 
                         var fileClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
                         if (fileClip == null)
@@ -70,7 +78,7 @@ namespace Unity.Labs.FacialRemote
             return path.Length > 0;
         }
 
-        void Bake(PlaybackBuffer playbackBuffer, int sampleRate, AnimationClip clip)
+        void Bake(PlaybackBuffer playbackBuffer, CaptureType captureType, int sampleRate, AnimationClip clip)
         {
             var stream = playbackBuffer.recordStream;
             var bufferSize = playbackBuffer.bufferSize;
@@ -106,13 +114,19 @@ namespace Unity.Labs.FacialRemote
 
                 if (i == 0)
                 {
-                    positionCurves.AddKey(time, data.CameraPosition);
-                    rotationCurves.AddKey(time, data.CameraRotation);
-                    blendShapeCurves.AddKey(time, ref data.BlendshapeValues);
-                    headBonePositionCurves.AddKey(time, data.HeadPosition);
-                    headBoneRotationCurves.AddKey(time, data.HeadRotation);
-                    cameraPositionCurves.AddKey(time, data.CameraPosition);
-                    cameraRotationCurves.AddKey(time, data.CameraRotation);
+                    if (captureType == CaptureType.CameraPose)
+                    {
+                        positionCurves.AddKey(time, data.CameraPosition);
+                        rotationCurves.AddKey(time, data.CameraRotation);
+                    }
+                    else
+                    {
+                        blendShapeCurves.AddKey(time, ref data.BlendshapeValues);
+                        headBonePositionCurves.AddKey(time, data.HeadPosition);
+                        headBoneRotationCurves.AddKey(time, data.HeadRotation);
+                        cameraPositionCurves.AddKey(time, data.CameraPosition);
+                        cameraRotationCurves.AddKey(time, data.CameraRotation);
+                    }
                 }
                 else
                 {
@@ -132,26 +146,38 @@ namespace Unity.Labs.FacialRemote
                         var cameraRotation = Quaternion.Slerp(lastData.CameraRotation, data.CameraRotation, t);
                         var blendShapeValues = BlendShapeValues.Lerp(ref lastData.BlendshapeValues, ref data.BlendshapeValues, t);
 
-                        positionCurves.AddKey(frameTime, cameraPosition);
-                        rotationCurves.AddKey(frameTime, cameraRotation);
-                        blendShapeCurves.AddKey(frameTime, ref blendShapeValues);
-                        headBonePositionCurves.AddKey(frameTime, headPosition);
-                        headBoneRotationCurves.AddKey(frameTime, headRotation);
-                        cameraPositionCurves.AddKey(frameTime, cameraPosition);
-                        cameraRotationCurves.AddKey(frameTime, cameraRotation);
+                        if (captureType == CaptureType.CameraPose)
+                        {
+                            positionCurves.AddKey(frameTime, cameraPosition);
+                            rotationCurves.AddKey(frameTime, cameraRotation);
+                        }
+                        else
+                        {
+                            blendShapeCurves.AddKey(frameTime, ref blendShapeValues);
+                            headBonePositionCurves.AddKey(frameTime, headPosition);
+                            headBoneRotationCurves.AddKey(frameTime, headRotation);
+                            cameraPositionCurves.AddKey(frameTime, cameraPosition);
+                            cameraRotationCurves.AddKey(frameTime, cameraRotation);
+                        }
                     }
                 }
 
                 lastData = data;
             }
 
-            positionCurves.SetCurves(clip);
-            rotationCurves.SetCurves(clip);
-            blendShapeCurves.SetCurves(clip);
-            headBonePositionCurves.SetCurves(clip);
-            headBoneRotationCurves.SetCurves(clip);
-            cameraPositionCurves.SetCurves(clip);
-            cameraRotationCurves.SetCurves(clip);
+            if (captureType == CaptureType.CameraPose)
+            {
+                positionCurves.SetCurves(clip);
+                rotationCurves.SetCurves(clip);
+            }
+            else
+            {
+                blendShapeCurves.SetCurves(clip);
+                headBonePositionCurves.SetCurves(clip);
+                headBoneRotationCurves.SetCurves(clip);
+                cameraPositionCurves.SetCurves(clip);
+                cameraRotationCurves.SetCurves(clip);
+            }
             
             clip.frameRate = sampleRate;
         }
