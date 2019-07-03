@@ -87,7 +87,6 @@ namespace Unity.Labs.FacialRemote
             m_SmoothedBlendShapes = new Vector2[m_BlendShapeValues.Count];
             m_BlendShapes = new float[m_BlendShapeValues.Count];
 
-            ValidateSkinMeshes();
             UpdateBlendShapeIndices();
 
             if (m_Overrides.Length != m_BlendShapeValues.Count)
@@ -96,35 +95,6 @@ namespace Unity.Labs.FacialRemote
 #if UNITY_EDITOR
             m_LastTime = Time.realtimeSinceStartup;
 #endif
-        }
-
-        void ValidateSkinMeshes()
-        {
-            var filteredList = new List<SkinnedMeshRenderer>();
-            foreach (var renderer in m_SkinnedMeshRenderers)
-            {
-                if (renderer == null)
-                {
-                    Debug.LogWarning("Null element in SkinnedMeshRenderer list in " + this);
-                    continue;
-                }
-
-                if (renderer.sharedMesh == null)
-                {
-                    Debug.LogWarning("Missing mesh in " + renderer);
-                    continue;
-                }
-
-                filteredList.Add(renderer);
-            }
-
-            m_SkinnedMeshRenderers = filteredList.ToArray();
-
-            if (m_SkinnedMeshRenderers.Length < 1)
-            {
-                Debug.LogWarning("Blend Shape Controller has no valid Skinned Mesh Renderers.");
-                enabled = false;
-            }
         }
 
         void LateUpdate()
@@ -179,7 +149,7 @@ namespace Unity.Labs.FacialRemote
         {
             m_Indices.Clear();
             
-            foreach (var meshRenderer in m_SkinnedMeshRenderers)
+            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
             {
                 var mesh = meshRenderer.sharedMesh;
                 var count = mesh.blendShapeCount;
@@ -207,7 +177,7 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 m_Indices.Add(meshRenderer, indices);
-            }
+            });
         }
 
         void PostProcessValues(float deltaTime)
@@ -241,21 +211,38 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateSkinnedMeshRenderers()
         {
-            foreach (var meshRenderer in m_SkinnedMeshRenderers)
+            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
             {
-                if (!m_Indices.ContainsKey(meshRenderer))
+                var blendShapeIndexData = default(BlendShapeIndexData[]);
+
+                if (m_Indices.TryGetValue(meshRenderer, out blendShapeIndexData))
+                {
+                    var indices = m_Indices[meshRenderer];
+                    var length = indices.Length;
+                    for (var i = 0; i < length; i++)
+                    {
+                        var datum = indices[i];
+                        if (datum.index < 0)
+                            continue;
+
+                        meshRenderer.SetBlendShapeWeight(i, m_BlendShapes[datum.index]);
+                    }
+                }
+            });
+        }
+
+        void ForeachRenderer(Action<SkinnedMeshRenderer> action)
+        {
+            foreach (var skinnedMeshRenderer in m_SkinnedMeshRenderers)
+            {
+                if (skinnedMeshRenderer == null)
                     continue;
 
-                var indices = m_Indices[meshRenderer];
-                var length = indices.Length;
-                for (var i = 0; i < length; i++)
-                {
-                    var datum = indices[i];
-                    if (datum.index < 0)
-                        continue;
+                if (skinnedMeshRenderer.sharedMesh == null)
+                    continue;
 
-                    meshRenderer.SetBlendShapeWeight(i, m_BlendShapes[datum.index]);
-                }
+                if (action != null)
+                    action.Invoke(skinnedMeshRenderer);
             }
         }
 
