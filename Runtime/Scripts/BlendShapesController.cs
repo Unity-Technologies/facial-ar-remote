@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -9,7 +10,9 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
+    [Preserve]
     [ExecuteAlways]
+    [DisallowMultipleComponent]
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
         [SerializeField]
@@ -17,7 +20,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         bool m_TrackingActive = true;
         [SerializeField]
-        BlendShapeMappings m_BlendShapeMappings;
+        BlendShapeMappings m_Mappings;
     
         [SerializeField]
         [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
@@ -26,22 +29,22 @@ namespace Unity.Labs.FacialRemote
         [Range(0f, 1)]
         [SerializeField]
         [Tooltip("Smoothing to apply to blend shape values coming from the stream reader.")]
-        float m_BlendShapeSmoothing = 0.1f;
+        float m_Smoothing = 0.1f;
 
         [Range(0, 0.1f)]
         [SerializeField]
         [Tooltip("Min threshold of change to register as a new blend shape value.")]
-        float m_BlendShapeThreshold = 0.01f;
+        float m_Threshold = 0.01f;
 
         [Range(0, 200f)]
         [SerializeField]
         [Tooltip("Scaling coefficient applied to the blend shape values from the stream reader.")]
-        float m_BlendShapeCoefficient = 120f;
+        float m_Multiplier = 120f;
 
         [Range(0, 100)]
         [SerializeField]
         [Tooltip("Max value a scaled blend shape can reach.")]
-        float m_BlendShapeMax = 100f;
+        float m_Maximum = 100f;
 
         [SerializeField]
         [Range(0f, 1f)]
@@ -81,7 +84,25 @@ namespace Unity.Labs.FacialRemote
 
 #if UNITY_EDITOR
         float m_LastTime;
+
+        void OnEnable()
+        {
+            //Temp fix
+            UnityEditor.AssemblyReloadEvents.afterAssemblyReload -= OnAssemblyReload;
+            UnityEditor.AssemblyReloadEvents.afterAssemblyReload += OnAssemblyReload;
+        }
+
+        void OnDisable()
+        {
+            UnityEditor.AssemblyReloadEvents.afterAssemblyReload -= OnAssemblyReload;
+        }
+
+        void OnAssemblyReload()
+        {
+            UpdateBlendShapeIndices();
+        }
 #endif
+
         void Awake()
         {
             m_SmoothedBlendShapes = new Vector2[m_BlendShapeValues.Count];
@@ -147,6 +168,9 @@ namespace Unity.Labs.FacialRemote
         /// <param name="settings">The stream settings used for this mapping.</param>
         public void UpdateBlendShapeIndices()
         {
+            if (m_Mappings == null)
+                return;
+            
             m_Indices.Clear();
             
             ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
@@ -158,12 +182,12 @@ namespace Unity.Labs.FacialRemote
                 {
                     var shapeName = mesh.GetBlendShapeName(i);
                     var index = -1;
-                    for (var j = 0; j < m_BlendShapeMappings.blendShapeNames.Length; j++)
+                    for (var j = 0; j < m_Mappings.blendShapeNames.Length; j++)
                     {
                         // Check using 'contains' rather than a direct comparison so that multiple blend shapes can 
                         // easily be driven by the same driver e.g. jaw and teeth
-                        if (!string.IsNullOrEmpty(m_BlendShapeMappings.blendShapeNames[j]) 
-                            && shapeName.Contains(m_BlendShapeMappings.blendShapeNames[j]))
+                        if (!string.IsNullOrEmpty(m_Mappings.blendShapeNames[j]) 
+                            && shapeName.Contains(m_Mappings.blendShapeNames[j]))
                         {
                             index = j;
                             break;
@@ -187,11 +211,11 @@ namespace Unity.Labs.FacialRemote
                 var targetValue = m_BlendShapeValues[i];
                 var hasOverride = HasOverride(i);
                 var blendShapeOverride = m_Overrides[i]; //TODO: this might crash
-                var threshold = hasOverride ? blendShapeOverride.blendShapeThreshold : m_BlendShapeThreshold;
+                var threshold = hasOverride ? blendShapeOverride.blendShapeThreshold : m_Threshold;
                 var offset = hasOverride ? blendShapeOverride.blendShapeOffset : 0f;
-                var smoothing = hasOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
-                var scale = hasOverride ? blendShapeOverride.blendShapeCoefficient : m_BlendShapeCoefficient;
-                var maxValue = hasOverride ? blendShapeOverride.blendShapeMax : m_BlendShapeMax;
+                var smoothing = hasOverride ? blendShapeOverride.blendShapeSmoothing : m_Smoothing;
+                var scale = hasOverride ? blendShapeOverride.blendShapeCoefficient : m_Multiplier;
+                var maxValue = hasOverride ? blendShapeOverride.blendShapeMax : m_Maximum;
                 var currentValue = m_SmoothedBlendShapes[i].x;
                 var currentSpeed = m_SmoothedBlendShapes[i].y;
 
@@ -258,7 +282,7 @@ namespace Unity.Labs.FacialRemote
             
             var streamSettings = streamSource.streamSettings;
             
-            if (m_BlendShapeMappings == null)
+            if (m_Mappings == null)
                 return;
             // if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
             //     return;
@@ -272,7 +296,7 @@ namespace Unity.Labs.FacialRemote
                 for (var i = 0; i < blendShapeCount; i++)
                 {
                     //var location = streamSettings.mappings[i];
-                    var location = m_BlendShapeMappings.blendShapeNames[i];
+                    var location = m_Mappings.blendShapeNames[i];
                     var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
                         ?? new BlendShapeOverride(location);
 
