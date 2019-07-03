@@ -137,15 +137,12 @@ namespace Unity.Labs.FacialRemote
                     while (timeAcc >= timeStep)
                     {
                         var frameTime = lastFrameTime + timeStep;
-                        var t = (float)((frameTime -  lastTime) / deltaTime);
+                        var t = (float)((frameTime - lastTime) / deltaTime);
                         var headPosition = Vector3.Lerp(lastData.HeadPosition, data.HeadPosition, t);
                         var headRotation = Quaternion.Slerp(lastData.HeadRotation, data.HeadRotation, t);
                         var cameraPosition = Vector3.Lerp(lastData.CameraPosition, data.CameraPosition, t);
                         var cameraRotation = Quaternion.Slerp(lastData.CameraRotation, data.CameraRotation, t);
                         var blendShapeValues = BlendShapeValues.Lerp(ref lastData.BlendshapeValues, ref data.BlendshapeValues, t);
-                        
-                        timeAcc -= timeStep;
-                        lastFrameTime = frameTime;
 
                         if (captureType == CaptureType.CameraPose)
                         {
@@ -160,11 +157,17 @@ namespace Unity.Labs.FacialRemote
                             cameraPositionCurves.AddKey((float)frameTime, cameraPosition);
                             cameraRotationCurves.AddKey((float)frameTime, cameraRotation);
                         }
+
+                        timeAcc -= timeStep;
+                        lastFrameTime = frameTime;
                     }
                 }
 
                 lastData = data;
             }
+
+            clip.ClearCurves();
+            clip.frameRate = sampleRate;
 
             if (captureType == CaptureType.CameraPose)
             {
@@ -179,8 +182,6 @@ namespace Unity.Labs.FacialRemote
                 cameraPositionCurves.SetCurves(clip);
                 cameraRotationCurves.SetCurves(clip);
             }
-            
-            clip.frameRate = sampleRate;
         }
     }
 }

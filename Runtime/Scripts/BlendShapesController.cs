@@ -15,6 +15,8 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         BlendShapeValues m_BlendShapeValues;
         [SerializeField]
+        bool m_TrackingActive = true;
+        [SerializeField]
         BlendShapeMappings m_BlendShapeMappings;
     
         [SerializeField]
@@ -51,25 +53,49 @@ namespace Unity.Labs.FacialRemote
         BlendShapeOverride[] m_Overrides;
 
         Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
+        Vector2[] m_SmoothedBlendShapes;
         float[] m_BlendShapes;
 
-        //IStreamSettings m_LastStreamSettings;
+        public SkinnedMeshRenderer[] skinnedMeshRenderers
+        {
+            get { return m_SkinnedMeshRenderers; }
+        }
 
-        public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
-        public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
+        public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices
+        {
+            get { return m_Indices; }
+        }
 
-        public float[] blendShapesScaled { get; private set; }
+        public float[] blendShapes
+        {
+            get { return m_BlendShapes; }
+        }
+
+        public bool isTrackingActive
+        {
+            get { return m_TrackingActive; }
+            set { m_TrackingActive = value; }
+        }
 
         public IStreamReader streamReader { private get; set; }
 
-        void Start()
+#if UNITY_EDITOR
+        float m_LastTime;
+#endif
+        void Awake()
         {
+            m_SmoothedBlendShapes = new Vector2[m_BlendShapeValues.Count];
+            m_BlendShapes = new float[m_BlendShapeValues.Count];
+
             ValidateSkinMeshes();
             UpdateBlendShapeIndices();
 
-            var blendShapesCount = 52;
-            if (m_Overrides.Length != blendShapesCount)
-                Array.Resize(ref m_Overrides, blendShapesCount);
+            if (m_Overrides.Length != m_BlendShapeValues.Count)
+                Array.Resize(ref m_Overrides, m_BlendShapeValues.Count);
+
+#if UNITY_EDITOR
+            m_LastTime = Time.realtimeSinceStartup;
+#endif
         }
 
         void ValidateSkinMeshes()
@@ -101,7 +127,30 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void Update()
+        void LateUpdate()
+        {
+            var deltaTime = Time.deltaTime;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                var currentTime = Time.realtimeSinceStartup;
+                deltaTime = currentTime - m_LastTime;
+                m_LastTime = currentTime;
+            }
+#endif
+
+            UpdateBlendShapes(deltaTime);
+        }
+
+        public void UpdateBlendShapes(float deltaTime)
+        {
+            UpdateFromStreamReader(deltaTime);
+            PostProcessValues(deltaTime);
+            UpdateSkinnedMeshRenderers();
+        }
+
+        void UpdateFromStreamReader(float deltaTime)
         {
             if (streamReader == null)
                 return;
@@ -110,6 +159,8 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null || !streamSource.isActive)
                 return;
             
+            isTrackingActive = !streamReader.faceTrackingLost;
+
             var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
             {
@@ -117,39 +168,6 @@ namespace Unity.Labs.FacialRemote
                     break;
                 
                 m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
-                /*
-                if (!streamReader.faceTrackingLost)
-                {
-                    if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
-                        m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
-                }
-                else
-                {
-                    m_BlendShapes[i] =  Mathf.Lerp(0f, blendShape, m_TrackingLossSmoothing);
-                }
-                */
-            }
-        }
-
-        void LateUpdate()
-        {
-            CalculateInterpolatedBlendShapes();
-
-            foreach (var meshRenderer in m_SkinnedMeshRenderers)
-            {
-                if (!m_Indices.ContainsKey(meshRenderer))
-                    continue;
-                
-                var indices = m_Indices[meshRenderer];
-                var length = indices.Length;
-                for (var i = 0; i < length; i++)
-                {
-                    var datum = indices[i];
-                    if (datum.index < 0)
-                        continue;
-
-                    meshRenderer.SetBlendShapeWeight(i, blendShapesScaled[datum.index]);
-                }
             }
         }
 
@@ -159,8 +177,6 @@ namespace Unity.Labs.FacialRemote
         /// <param name="settings">The stream settings used for this mapping.</param>
         public void UpdateBlendShapeIndices()
         {
-            m_BlendShapes = new float[m_BlendShapeValues.Count];
-            blendShapesScaled = new float[m_BlendShapeValues.Count];
             m_Indices.Clear();
             
             foreach (var meshRenderer in m_SkinnedMeshRenderers)
@@ -194,33 +210,51 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        /// <summary>
-        /// Calculate what the interpolated blend shape values should be before they are set to the rig.
-        /// </summary>
-        /// <param name="force">Force smoothing.</param>
-        public void CalculateInterpolatedBlendShapes(bool force = false)
+        void PostProcessValues(float deltaTime)
         {
             for (var i = 0; i < m_BlendShapeValues.Count; i++)
             {
-                var blendShape = m_BlendShapes[i];
-                var blendShapeTarget = m_BlendShapeValues[i];
-                var useOverride = UseOverride(i);
-                var blendShapeOverride = m_Overrides[i];
-                var threshold = useOverride ? blendShapeOverride.blendShapeThreshold : m_BlendShapeThreshold;
-                var offset = useOverride ? blendShapeOverride.blendShapeOffset : 0f;
-                var smoothing = useOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
+                var targetValue = m_BlendShapeValues[i];
+                var hasOverride = HasOverride(i);
+                var blendShapeOverride = m_Overrides[i]; //TODO: this might crash
+                var threshold = hasOverride ? blendShapeOverride.blendShapeThreshold : m_BlendShapeThreshold;
+                var offset = hasOverride ? blendShapeOverride.blendShapeOffset : 0f;
+                var smoothing = hasOverride ? blendShapeOverride.blendShapeSmoothing : m_BlendShapeSmoothing;
+                var scale = hasOverride ? blendShapeOverride.blendShapeCoefficient : m_BlendShapeCoefficient;
+                var maxValue = hasOverride ? blendShapeOverride.blendShapeMax : m_BlendShapeMax;
+                var currentValue = m_SmoothedBlendShapes[i].x;
+                var currentSpeed = m_SmoothedBlendShapes[i].y;
 
-                if (Mathf.Abs(blendShapeTarget - blendShape) > threshold)
-                    m_BlendShapes[i] = Mathf.Lerp(blendShapeTarget, blendShape, smoothing);
-
-                if (useOverride)
+                if (isTrackingActive)
                 {
-                    blendShapesScaled[i] = Mathf.Min(blendShape * blendShapeOverride.blendShapeCoefficient + offset,
-                        blendShapeOverride.blendShapeMax);
+                    if (Mathf.Abs(targetValue - currentValue) > threshold)
+                        currentValue = Mathf.SmoothDamp(currentValue, targetValue, ref currentSpeed, smoothing, Mathf.Infinity, deltaTime);
                 }
                 else
+                    currentValue = Mathf.SmoothDamp(currentValue, 0f, ref currentSpeed, m_TrackingLossSmoothing, Mathf.Infinity, deltaTime);
+
+                m_SmoothedBlendShapes[i] = new Vector2(currentValue, currentSpeed);
+
+                m_BlendShapes[i] = Mathf.Min(currentValue * scale + offset, maxValue);
+            }
+        }
+
+        void UpdateSkinnedMeshRenderers()
+        {
+            foreach (var meshRenderer in m_SkinnedMeshRenderers)
+            {
+                if (!m_Indices.ContainsKey(meshRenderer))
+                    continue;
+
+                var indices = m_Indices[meshRenderer];
+                var length = indices.Length;
+                for (var i = 0; i < length; i++)
                 {
-                    blendShapesScaled[i] = Mathf.Min(blendShape * m_BlendShapeCoefficient, m_BlendShapeMax);
+                    var datum = indices[i];
+                    if (datum.index < 0)
+                        continue;
+
+                    meshRenderer.SetBlendShapeWeight(i, m_BlendShapes[datum.index]);
                 }
             }
         }
@@ -263,7 +297,7 @@ namespace Unity.Labs.FacialRemote
         }
 #endif
 
-        bool UseOverride(int index)
+        bool HasOverride(int index)
         {
             return m_Overrides != null && index < m_Overrides.Length
                 && m_Overrides[index] != null && m_Overrides[index].useOverride;
