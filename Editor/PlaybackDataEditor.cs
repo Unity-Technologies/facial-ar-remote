@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
         public enum CaptureType
         {
             CameraPose,
-            FacialRig
+            FaceRig
         }
 
         PlaybackData m_PlaybackData;
@@ -96,6 +96,7 @@ namespace Unity.Labs.FacialRemote
             var headBoneRotationCurves = new QuaternionCurveBinding("", typeof(CharacterRigController), "m_HeadPose.rotation");
             var cameraPositionCurves = new Vector3CurveBinding("", typeof(CharacterRigController), "m_CameraPose.position");
             var cameraRotationCurves = new QuaternionCurveBinding("", typeof(CharacterRigController), "m_CameraPose.rotation");
+            var faceTrackingStateCurves = new BoolCurveBinding("", typeof(BlendShapesController), "m_TrackingActive");
             var buffer = new byte[bufferSize];
             
             Buffer.BlockCopy(stream, 0, buffer, 0, bufferSize);
@@ -127,6 +128,8 @@ namespace Unity.Labs.FacialRemote
                         headBoneRotationCurves.AddKey(time, data.HeadRotation);
                         cameraPositionCurves.AddKey(time, data.CameraPosition);
                         cameraRotationCurves.AddKey(time, data.CameraRotation);
+                        //faceTrackingStateCurves.AddKey(time, data.FaceTrackingActiveState != 0);
+                        faceTrackingStateCurves.AddKey(time, true);
                     }
                 }
                 else
@@ -156,6 +159,8 @@ namespace Unity.Labs.FacialRemote
                             headBoneRotationCurves.AddKey((float)frameTime, headRotation);
                             cameraPositionCurves.AddKey((float)frameTime, cameraPosition);
                             cameraRotationCurves.AddKey((float)frameTime, cameraRotation);
+                            //faceTrackingStateCurves.AddKey((float)frameTime, lastData.FaceTrackingActiveState != 0);
+                            faceTrackingStateCurves.AddKey((float)frameTime, true);
                         }
 
                         timeAcc -= timeStep;
@@ -181,6 +186,7 @@ namespace Unity.Labs.FacialRemote
                 headBoneRotationCurves.SetCurves(clip);
                 cameraPositionCurves.SetCurves(clip);
                 cameraRotationCurves.SetCurves(clip);
+                faceTrackingStateCurves.SetCurves(clip);
             }
         }
     }
