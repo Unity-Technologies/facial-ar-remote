@@ -135,6 +135,7 @@ namespace Unity.Labs.FacialRemote
 
         public void ConnectDependencies()
         {
+            sources.Clear();
             sources.UnionWith(GetComponentsInChildren<IStreamSource>());
             foreach (var go in m_StreamSourceOverrides)
             {
@@ -160,6 +161,8 @@ namespace Unity.Labs.FacialRemote
                     }
                 }
             }
+
+            consumers.Clear();
 
             if (character != null)
             {
@@ -215,6 +218,7 @@ namespace Unity.Labs.FacialRemote
             if (ss != null && !ss.streamReaders.Contains(this))
             {
                 ss.streamReaders.Add(this);
+                ss.streamReaders.RemoveAll(sr => sr == null);
             }
         }
     }
