@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Scripting;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -10,7 +8,6 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
-    [Preserve]
     [ExecuteAlways]
     [DisallowMultipleComponent]
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
@@ -57,7 +54,24 @@ namespace Unity.Labs.FacialRemote
 
         Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
         Vector2[] m_SmoothedBlendShapes;
-        float[] m_BlendShapes;
+        BlendShapeValues m_BlendShapeOutput;
+
+        public BlendShapeValues blendShapeInput
+        {
+            get { return m_BlendShapeValues; }
+            set { m_BlendShapeValues = value; }
+        }
+
+        public BlendShapeValues blendShapeOutput
+        {
+            get { return m_BlendShapeOutput; }
+        }
+
+        public bool isTrackingActive
+        {
+            get { return m_TrackingActive; }
+            set { m_TrackingActive = value; }
+        }
 
         public SkinnedMeshRenderer[] skinnedMeshRenderers
         {
@@ -67,17 +81,6 @@ namespace Unity.Labs.FacialRemote
         public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices
         {
             get { return m_Indices; }
-        }
-
-        public float[] blendShapes
-        {
-            get { return m_BlendShapes; }
-        }
-
-        public bool isTrackingActive
-        {
-            get { return m_TrackingActive; }
-            set { m_TrackingActive = value; }
         }
 
         public IStreamReader streamReader { private get; set; }
@@ -106,7 +109,6 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_SmoothedBlendShapes = new Vector2[m_BlendShapeValues.Count];
-            m_BlendShapes = new float[m_BlendShapeValues.Count];
 
             UpdateBlendShapeIndices();
 
@@ -168,10 +170,10 @@ namespace Unity.Labs.FacialRemote
         /// <param name="settings">The stream settings used for this mapping.</param>
         public void UpdateBlendShapeIndices()
         {
+            m_Indices.Clear();
+
             if (m_Mappings == null)
                 return;
-            
-            m_Indices.Clear();
             
             ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
             {
@@ -229,7 +231,7 @@ namespace Unity.Labs.FacialRemote
 
                 m_SmoothedBlendShapes[i] = new Vector2(currentValue, currentSpeed);
 
-                m_BlendShapes[i] = Mathf.Min(currentValue * scale + offset, maxValue);
+                m_BlendShapeOutput[i] = Mathf.Min(currentValue * scale + offset, maxValue);
             }
         }
 
@@ -249,7 +251,7 @@ namespace Unity.Labs.FacialRemote
                         if (datum.index < 0)
                             continue;
 
-                        meshRenderer.SetBlendShapeWeight(i, m_BlendShapes[datum.index]);
+                        meshRenderer.SetBlendShapeWeight(i, m_BlendShapeOutput[datum.index]);
                     }
                 }
             });
@@ -270,43 +272,29 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-#if UNITY_EDITOR
         void OnValidate()
         {
-            if (streamReader == null)
-                return;
+            UpdateBlendShapeIndices();
 
-            var streamSource = streamReader.streamSource;
-            if (streamSource == null)
-                return;
-            
-            var streamSettings = streamSource.streamSettings;
-            
             if (m_Mappings == null)
                 return;
-            // if (streamSettings == null || streamSettings.locations == null || streamSettings.locations.Length == 0)
-            //     return;
-
-            // We do our best to keep the overrides up-to-date with current settings, but it's possible to get out of sync
-            var blendShapeCount = streamSettings.BlendShapeCount;
+            
+            var blendShapeCount = m_BlendShapeValues.Count;
             if (m_Overrides.Length != blendShapeCount)
             {
                 var overridesCopy = new BlendShapeOverride[blendShapeCount];
 
                 for (var i = 0; i < blendShapeCount; i++)
                 {
-                    //var location = streamSettings.mappings[i];
                     var location = m_Mappings.blendShapeNames[i];
-                    var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
-                        ?? new BlendShapeOverride(location);
-
+                    var blendShapeOverride = Array.Find(m_Overrides, f => f.name == location)
+                                            ?? new BlendShapeOverride(location);
                     overridesCopy[i] = blendShapeOverride;
                 }
 
                 m_Overrides = overridesCopy;
             }
         }
-#endif
 
         bool HasOverride(int index)
         {

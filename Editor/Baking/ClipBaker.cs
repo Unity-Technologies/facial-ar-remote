@@ -306,6 +306,8 @@ namespace Unity.Labs.FacialRemote
             // Key blend shapes
             if (m_BlendShapesController != null)
             {
+                var blendShapes = m_BlendShapesController.blendShapeOutput;
+
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
                 {
                     if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out var animationCurves))
@@ -321,7 +323,7 @@ namespace Unity.Labs.FacialRemote
                                     continue;
 
                                 var curve = animationCurves[string.Format(k_BlendShapeProp, datum.name)].curve;
-                                curve.AddKey(time, m_BlendShapesController.blendShapes[index]);
+                                curve.AddKey(time, blendShapes[index]);
                             }
                         }
                     }
