@@ -30,7 +30,6 @@ namespace Unity.Labs.FacialRemote
         GUIContent m_PlayIcon;
         GUIContent m_RecordIcon;
         GUIContent m_ConnectIcon;
-        [SerializeField]
         StreamReader[] m_StreamReaders = {};
 
         [MenuItem("Window/AR Face Capture")]
@@ -88,7 +87,10 @@ namespace Unity.Labs.FacialRemote
             else
             {
                 foreach (var streamReader in m_StreamReaders)
-                    DoStreamReaderGUI(streamReader);
+                {
+                    if (streamReader != null)
+                        DoStreamReaderGUI(streamReader);
+                }
             }
         }
 
@@ -132,6 +134,8 @@ namespace Unity.Labs.FacialRemote
 
         void DoStreamReaderGUI(StreamReader streamReader)
         {
+            Debug.Assert(streamReader != null);
+
             NetworkStream networkStream = null;
             PlaybackStream playbackStream = null;
             
