@@ -166,10 +166,7 @@ namespace Unity.Labs.FacialRemote
                     }
                     else
                     {
-                        using (new EditorGUI.DisabledGroupScope(playbackStream == null))
-                        {
-                            DoPlaybackStreamGUI(playbackStream);
-                        }
+                        DoPlaybackStreamGUI(playbackStream);
                     }
                 }
 
@@ -231,7 +228,11 @@ namespace Unity.Labs.FacialRemote
 
                         if (change.changed)
                         {
-                            var playbackBuffer = playbackStream.playbackData.playbackBuffers[clipIndex];
+                            var playbackBuffer = default(PlaybackBuffer);
+
+                            if (bufferCount > 0 && clipIndex < bufferCount)
+                                playbackBuffer = playbackStream.playbackData.playbackBuffers[clipIndex];
+                            
                             playbackStream.SetPlaybackBuffer(playbackBuffer);
                         }
                     }

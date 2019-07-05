@@ -138,12 +138,12 @@ namespace Unity.Labs.FacialRemote
 
         public void UpdateBlendShapes(float deltaTime)
         {
-            UpdateFromStreamReader(deltaTime);
+            UpdateFromStreamReader();
             PostProcessValues(deltaTime);
             UpdateSkinnedMeshRenderers();
         }
 
-        void UpdateFromStreamReader(float deltaTime)
+        void UpdateFromStreamReader()
         {
             if (streamReader == null)
                 return;
