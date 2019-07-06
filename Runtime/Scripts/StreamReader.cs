@@ -29,6 +29,8 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its children.")]
         GameObject[] m_StreamSourceOverrides = { };
 
+        bool m_FaceTrackingLost;
+
         IStreamSource m_ActiveStreamSource;
 
         int m_TrackingLossCount;
@@ -52,7 +54,6 @@ namespace Unity.Labs.FacialRemote
         Vector2 m_TouchPosition;
 
         public float[] blendShapesBuffer { get; private set; }
-        public bool faceTrackingLost { get; private set; }
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
@@ -96,6 +97,12 @@ namespace Unity.Labs.FacialRemote
         public GameObject character
         {
             get { return m_Character; }
+        }
+
+        public bool faceTrackingLost
+        {
+            get { return m_FaceTrackingLost; }
+            set { m_FaceTrackingLost = value; }
         }
 
         public void UpdateStreamData(byte[] buffer, int offset = 0)
@@ -192,10 +199,7 @@ namespace Unity.Labs.FacialRemote
             if (headPosition == m_LastHeadPosition)
             {
                 m_TrackingLossCount++;
-                if (!m_FaceTrackingEnabled || m_TrackingLossCount > m_TrackingLossPadding)
-                    faceTrackingLost = true;
-                else
-                    faceTrackingLost = false;
+                faceTrackingLost = m_TrackingLossCount >= m_TrackingLossPadding;
             }
             else
             {
