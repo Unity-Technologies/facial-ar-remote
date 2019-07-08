@@ -197,14 +197,11 @@ namespace Unity.Labs.FacialRemote
         {
             var headPosition = m_HeadPose.position;
             if (headPosition == m_LastHeadPosition)
-            {
                 m_TrackingLossCount++;
-                faceTrackingLost = m_TrackingLossCount >= m_TrackingLossPadding;
-            }
             else
-            {
                 m_TrackingLossCount = 0;
-            }
+            
+            faceTrackingLost = m_TrackingLossCount >= m_TrackingLossPadding;
 
             m_LastHeadPosition = headPosition;
         }
