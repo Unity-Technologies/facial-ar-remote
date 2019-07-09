@@ -109,7 +109,6 @@ namespace Unity.Labs.FacialRemote
         {
             var settings = streamSource.streamSettings;
 
-            Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
             m_FaceTrackingEnabled = buffer[offset + settings.bufferSize - 2] == 1;
             m_CameraTrackingEnabled = buffer[offset + settings.bufferSize - 1] == 1;
 
@@ -122,6 +121,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_FaceTrackingEnabled)
             {
+                Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
                 Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
                 BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
             }
