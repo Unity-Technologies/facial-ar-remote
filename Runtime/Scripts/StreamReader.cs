@@ -39,8 +39,8 @@ namespace Unity.Labs.FacialRemote
         Pose m_HeadPose;
         Vector3 m_LastHeadPosition;
 
-        float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
-        float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
+        float[] m_CameraPoseArray = new float[PoseArrayUtils.PoseFloatCount];
+        float[] m_HeadPoseArray = new float[PoseArrayUtils.PoseFloatCount];
         int[] m_FrameNumArray = new int[1];
         float[] m_FrameTimeArray = new float[1];
         int[] m_TouchPhaseArray = new int[1];
@@ -116,14 +116,14 @@ namespace Unity.Labs.FacialRemote
 
             if (m_FaceTrackingEnabled)
             {
-                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
-                BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
+                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, PoseArrayUtils.PoseSize);
+                PoseArrayUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
             }
 
             if (m_CameraTrackingEnabled)
             {
-                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
-                BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
+                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, PoseArrayUtils.PoseSize);
+                PoseArrayUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
             
             Buffer.BlockCopy(buffer, offset + settings.inputStateOffset, m_TouchPhaseArray, 0, settings.inputStateSize);
