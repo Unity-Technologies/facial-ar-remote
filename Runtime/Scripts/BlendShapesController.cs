@@ -95,23 +95,6 @@ namespace Unity.Labs.FacialRemote
 
 #if UNITY_EDITOR
         float m_LastTime;
-
-        void OnEnable()
-        {
-            //Temp fix
-            UnityEditor.AssemblyReloadEvents.afterAssemblyReload -= OnAssemblyReload;
-            UnityEditor.AssemblyReloadEvents.afterAssemblyReload += OnAssemblyReload;
-        }
-
-        void OnDisable()
-        {
-            UnityEditor.AssemblyReloadEvents.afterAssemblyReload -= OnAssemblyReload;
-        }
-
-        void OnAssemblyReload()
-        {
-            UpdateBlendShapeIndices();
-        }
 #endif
 
         void Awake()
