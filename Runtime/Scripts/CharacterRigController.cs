@@ -13,8 +13,10 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("The camera being used to capture the character.")]
         Camera m_SceneCamera;
         [SerializeField]
+        [Tooltip("Head pose input values. Can be driven by an AnimationClip or a StreamReader.")]
         Pose m_HeadPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
         [SerializeField]
+        [Tooltip("Camera pose input values. Can be driven by an AnimationClip or a StreamReader.")]
         Pose m_CameraPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
         
         [Range(0f, 1f)]

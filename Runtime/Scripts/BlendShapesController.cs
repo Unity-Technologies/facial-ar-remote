@@ -13,8 +13,10 @@ namespace Unity.Labs.FacialRemote
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
         [SerializeField]
+        [Tooltip("BlendShape input values. Can be driven by an AnimationClip or a StreamReader.")]
         BlendShapeValues m_BlendShapeValues;
         [SerializeField]
+        [Tooltip("BlendShape tracking state input value. Can be driven by an AnimationClip or a StreamReader.")]
         bool m_TrackingActive = true;
         [SerializeField]
         BlendShapeMappings m_Mappings;
@@ -71,6 +73,12 @@ namespace Unity.Labs.FacialRemote
         {
             get { return m_TrackingActive; }
             set { m_TrackingActive = value; }
+        }
+
+        public BlendShapeMappings mappings
+        {
+            get { return m_Mappings; }
+            private set { m_Mappings = value; }
         }
 
         public SkinnedMeshRenderer[] skinnedMeshRenderers
@@ -136,6 +144,10 @@ namespace Unity.Labs.FacialRemote
             UpdateBlendShapes(deltaTime);
         }
 
+        /// <summary>
+        /// Updates BlendShape calculations by a time step and sets the values to the renderers.
+        /// </summary>
+        /// <param name="deltaTime">Time step to advance.</param>
         public void UpdateBlendShapes(float deltaTime)
         {
             UpdateFromStreamReader();
@@ -167,7 +179,6 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// Update the blend shape indices based on the incoming data stream.
         /// </summary>
-        /// <param name="settings">The stream settings used for this mapping.</param>
         public void UpdateBlendShapeIndices()
         {
             m_Indices.Clear();

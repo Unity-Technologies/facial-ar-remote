@@ -56,7 +56,7 @@ namespace Unity.Labs.FacialRemote
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public bool verboseLogging { get { return m_VerboseLogging; } }
+        public bool verboseLogging { get { return m_VerboseLogging; } private set { m_VerboseLogging = value; } }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
         public HashSet<IUsesStreamReader> consumers => m_Consumers;
         
@@ -96,6 +96,7 @@ namespace Unity.Labs.FacialRemote
         public GameObject character
         {
             get { return m_Character; }
+            private set { m_Character = value; }
         }
 
         public void UpdateStreamData(byte[] buffer, int offset = 0)
