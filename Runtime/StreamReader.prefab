@@ -62,7 +62,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44fb5c15f36a0ad43959c7c074f64b09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PlaybackData: {fileID: 0}
+  m_PlaybackData: {fileID: 11400000, guid: 523017d93b81c4bb8b2b28f909ba1938, type: 2}
 --- !u!114 &114641533554280668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,8 +78,4 @@ MonoBehaviour:
   m_Character: {fileID: 0}
   m_VerboseLogging: 0
   m_TrackingLossPadding: 64
-  m_BlendShapesControllerOverride: {fileID: 0}
-  m_CharacterRigControllerOverride: {fileID: 0}
-  m_HeadBoneOverride: {fileID: 0}
-  m_CameraOverride: {fileID: 0}
   m_StreamSourceOverrides: []
