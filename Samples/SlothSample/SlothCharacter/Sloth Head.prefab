@@ -173,7 +173,7 @@ GameObject:
   - component: {fileID: 114823813081300294}
   - component: {fileID: 114591291899225592}
   m_Layer: 0
-  m_Name: sloth_head_blendshapes
+  m_Name: Sloth Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -612,6 +612,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 601c475b43c9a4e46b969b376a0d7d1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SceneCamera: {fileID: 0}
   m_TrackingLossSmoothing: 0.1
   m_DriveEyes: 0
   m_LeftEye: {fileID: 0}
@@ -621,8 +622,8 @@ MonoBehaviour:
   m_RightEyeNegZ: 0
   m_LeftEyeNegZ: 0
   m_EyeAngleRange: {x: 30, y: 45}
-  m_DriveHead: 0
-  m_HeadBone: {fileID: 0}
+  m_DriveHead: 1
+  m_HeadBone: {fileID: 4967094478328516}
   m_HeadSmoothing: 0.1
   m_HeadFollowAmount: 0.6
   m_DriveNeck: 0
