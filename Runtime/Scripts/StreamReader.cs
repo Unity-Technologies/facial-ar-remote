@@ -123,7 +123,7 @@ namespace Unity.Labs.FacialRemote
             if (m_FaceTrackingEnabled)
             {
                 Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
+                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, PoseArrayUtils.PoseSize);
                 PoseArrayUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
             }
 
