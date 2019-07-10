@@ -183,7 +183,7 @@ namespace Unity.Labs.FacialRemote
         {
             m_Indices.Clear();
 
-            if (m_Mappings == null)
+            if (mappings == null)
                 return;
             
             ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
@@ -195,12 +195,12 @@ namespace Unity.Labs.FacialRemote
                 {
                     var shapeName = mesh.GetBlendShapeName(i);
                     var index = -1;
-                    for (var j = 0; j < m_Mappings.blendShapeNames.Length; j++)
+                    for (var j = 0; j < mappings.blendShapeNames.Length; j++)
                     {
                         // Check using 'contains' rather than a direct comparison so that multiple blend shapes can 
                         // easily be driven by the same driver e.g. jaw and teeth
-                        if (!string.IsNullOrEmpty(m_Mappings.blendShapeNames[j]) 
-                            && shapeName.Contains(m_Mappings.blendShapeNames[j]))
+                        if (!string.IsNullOrEmpty(mappings.blendShapeNames[j]) 
+                            && shapeName.Contains(mappings.blendShapeNames[j]))
                         {
                             index = j;
                             break;
@@ -287,7 +287,7 @@ namespace Unity.Labs.FacialRemote
         {
             UpdateBlendShapeIndices();
 
-            if (m_Mappings == null)
+            if (mappings == null)
                 return;
             
             var blendShapeCount = m_BlendShapeValues.Count;
@@ -297,7 +297,7 @@ namespace Unity.Labs.FacialRemote
 
                 for (var i = 0; i < blendShapeCount; i++)
                 {
-                    var location = m_Mappings.blendShapeNames[i];
+                    var location = mappings.blendShapeNames[i];
                     var blendShapeOverride = Array.Find(m_Overrides, f => f.name == location)
                                             ?? new BlendShapeOverride(location);
                     overridesCopy[i] = blendShapeOverride;
