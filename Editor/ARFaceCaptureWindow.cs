@@ -7,7 +7,67 @@ namespace Unity.Labs.FacialRemote
 {
     public class ARFaceCaptureWindow : EditorWindow
     {
-        static readonly string[] s_Empty = { "None" };
+        private class Contents
+        {
+            public static string none = "None";
+            public static GUIContent titleContent = new GUIContent("AR Face Capture");
+            public static GUIContent addGameObject = new GUIContent("Add a GameObject to the scene with a StreamReader Component or click the button to add a StreamReader prefab.");
+            public static string playbackStreamMissing = "The StreamReader does not have a PlaybackStream assigned.";
+            public static GUIContent playbackBuffer = new GUIContent("Playback Buffer");
+            public static GUIContent createPlaybackData = new GUIContent("Create new PlaybackData Asset");
+            public static GUIContent connect = new GUIContent("Connect");
+            public static GUIContent play = new GUIContent("Play");
+            public static GUIContent record = new GUIContent("Record");
+        }
+
+        private class Styles
+        {
+            public GUIContent playIcon;
+            public GUIContent recordIcon;
+            public GUIContent connectIcon;
+            public GUIStyle button;
+            public GUIStyle buttonPress;
+            public GUIStyle centeredLabel;
+
+            public Styles()
+            {
+                playIcon = EditorGUIUtility.IconContent("d_Animation.Play");
+                recordIcon = EditorGUIUtility.IconContent("d_Animation.Record");
+                connectIcon = EditorGUIUtility.IconContent("d_BuildSettings.iPhone.Small");
+
+                button = new GUIStyle("Button")
+                {
+                    fixedHeight = 24,
+                    fixedWidth = 24
+                };
+
+                buttonPress = new GUIStyle("Button")
+                {
+                    active = button.normal,
+                    normal = button.active,
+                    fixedHeight = 24,
+                    fixedWidth = 24
+                };
+
+                centeredLabel = GUI.skin.GetStyle("Label");
+                centeredLabel.alignment = TextAnchor.UpperCenter;
+                centeredLabel.wordWrap = true;
+            }
+        }
+
+        Styles m_Styles;
+        Styles styles 
+        {
+            get
+            {
+                if (m_Styles == null)
+                    m_Styles = new Styles();
+
+                return m_Styles;
+            }
+        }
+
+        static readonly string[] s_Empty = { Contents.none };
 
         enum StreamSource
         {
@@ -24,12 +84,6 @@ namespace Unity.Labs.FacialRemote
 
         Dictionary<StreamReader, StreamSource> m_StreamReaderModes = new Dictionary<StreamReader, StreamSource>();
         
-        GUIStyle m_ButtonStyle;
-        GUIStyle m_ButtonPressStyle;
-        
-        GUIContent m_PlayIcon;
-        GUIContent m_RecordIcon;
-        GUIContent m_ConnectIcon;
         StreamReader[] m_StreamReaders = {};
 
         [MenuItem("Window/AR Face Capture")]
@@ -37,17 +91,12 @@ namespace Unity.Labs.FacialRemote
         {
             //Show existing window instance. If one doesn't exist, make one.
             var window = GetWindow(typeof(ARFaceCaptureWindow));
-            window.titleContent = new GUIContent("AR Face Capture");
+            window.titleContent = Contents.titleContent;
             window.minSize = new Vector2(300, 100);
         }
 
         void OnEnable()
         {
-            m_PlayIcon = EditorGUIUtility.IconContent("d_Animation.Play");
-            m_RecordIcon = EditorGUIUtility.IconContent("d_Animation.Record");
-            m_ConnectIcon = EditorGUIUtility.IconContent("d_BuildSettings.iPhone.Small");
-
-            SetupGUIStyles();
             Initialize();
             
             autoRepaintOnSceneChange = true;
@@ -98,28 +147,19 @@ namespace Unity.Labs.FacialRemote
         {
             Debug.Assert(streamReaders.Length == 0);
 
-            GUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
             
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            EditorGUILayout.Space();
-            GUILayout.Label("Add a game object to the scene with a StreamReader");
-            EditorGUILayout.Space();
+            GUILayout.Label(Contents.addGameObject, styles.centeredLabel, GUILayout.MaxWidth(350));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             
+            EditorGUILayout.Space();
+
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            EditorGUILayout.Space();
-            GUILayout.Label("component or click the button to add a Stream Reader prefab.");
-            EditorGUILayout.Space();
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Create", GUILayout.Width(100)))
+            if (GUILayout.Button("Add StreamReader Prefab"))
             {
                 PrefabUtility.InstantiatePrefab(m_StreamReaderPrefab);
                 streamReaders = new[] { FindObjectOfType<StreamReader>() };
@@ -129,7 +169,6 @@ namespace Unity.Labs.FacialRemote
             GUILayout.EndHorizontal();
             
             GUILayout.FlexibleSpace();
-            GUILayout.EndVertical();
         }
 
         void DoStreamReaderGUI(StreamReader streamReader)
@@ -162,7 +201,7 @@ namespace Unity.Labs.FacialRemote
                 {
                     if (playbackStream == null)
                     {
-                        EditorGUILayout.HelpBox("The Stream Reader does not have a Playback Stream assigned.", MessageType.Warning);
+                        EditorGUILayout.HelpBox(Contents.playbackStreamMissing, MessageType.Warning);
                     }
                     else
                     {
@@ -182,11 +221,11 @@ namespace Unity.Labs.FacialRemote
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Playback Buffer", GUILayout.Width(100));
+                    EditorGUILayout.LabelField(Contents.playbackBuffer, GUILayout.Width(100));
                     
                     GUILayout.FlexibleSpace();
                     
-                    if (GUILayout.Button("Create new PlaybackData Asset"))
+                    if (GUILayout.Button(Contents.createPlaybackData))
                     {
                         var asset = CreateInstance<PlaybackData>();
 
@@ -224,7 +263,7 @@ namespace Unity.Labs.FacialRemote
                     
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        clipIndex = EditorGUILayout.Popup("Playback Buffer", clipIndex, bufferNames);
+                        clipIndex = EditorGUILayout.Popup(Contents.playbackBuffer, clipIndex, bufferNames);
 
                         if (change.changed)
                         {
@@ -254,12 +293,12 @@ namespace Unity.Labs.FacialRemote
                         if (streamSource != null && streamSource.Equals(networkStream)
                             && networkStream != null && networkStream.isActive)
                         {
-                            if (GUILayout.Button("Connect"))
+                            if (GUILayout.Button(Contents.connect))
                                 streamReader.streamSource = null;
                         }
                         else
                         {
-                            if (GUILayout.Button("Connect"))
+                            if (GUILayout.Button(Contents.connect))
                                 streamReader.streamSource = networkStream;
                         }
                     }
@@ -274,12 +313,12 @@ namespace Unity.Labs.FacialRemote
                         }
                         else if (networkStream.recording)
                         {
-                            if (GUILayout.Button("Record"))
+                            if (GUILayout.Button(Contents.record))
                                 networkStream.StopRecording();
                         }
                         else
                         {
-                            if (GUILayout.Button("Record"))
+                            if (GUILayout.Button(Contents.record))
                                 networkStream.StartRecording();
                         }
                     }
@@ -291,11 +330,11 @@ namespace Unity.Labs.FacialRemote
                     {
                         if (playbackStream == null)
                         {
-                            GUILayout.Button(m_PlayIcon, m_ButtonStyle);
+                            GUILayout.Button(styles.playIcon, styles.button);
                         }
                         else if (playbackStream.isActive)
                         {
-                            if (GUILayout.Button(m_PlayIcon, m_ButtonPressStyle))
+                            if (GUILayout.Button(styles.playIcon, styles.buttonPress))
                             {
                                 streamReader.streamSource = null;
                                 playbackStream.StopPlayback();
@@ -303,7 +342,7 @@ namespace Unity.Labs.FacialRemote
                         }
                         else
                         {
-                            if (GUILayout.Button("Play"))
+                            if (GUILayout.Button(Contents.play))
                             {
                                 streamReader.streamSource = playbackStream;
                                 playbackStream.StartPlayback();
@@ -311,26 +350,6 @@ namespace Unity.Labs.FacialRemote
                         }
                     }
                 }
-            }
-        }
-        
-        void SetupGUIStyles()
-        {
-            if (m_ButtonStyle == null || m_ButtonPressStyle == null)
-            {
-                m_ButtonStyle = new GUIStyle("Button")
-                {
-                    fixedHeight = 24,
-                    fixedWidth = 24
-                };
-
-                m_ButtonPressStyle = new GUIStyle("Button")
-                {
-                    active = m_ButtonStyle.normal,
-                    normal = m_ButtonStyle.active,
-                    fixedHeight = 24,
-                    fixedWidth = 24
-                };
             }
         }
     }
