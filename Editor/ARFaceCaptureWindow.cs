@@ -11,12 +11,13 @@ namespace Unity.Labs.FacialRemote
         {
             public static string none = "None";
             public static GUIContent titleContent = new GUIContent("AR Face Capture");
-            public static GUIContent addGameObject = new GUIContent("Add a GameObject to the scene with a StreamReader Component or click the button to add a StreamReader prefab.");
+            public static GUIContent addStreamReader = new GUIContent("Add a GameObject to the scene with a StreamReader Component or click the button to add a StreamReader prefab.");
             public static string playbackStreamMissing = "The StreamReader does not have a PlaybackStream assigned.";
             public static GUIContent playbackBuffer = new GUIContent("Playback Buffer");
             public static GUIContent createPlaybackData = new GUIContent("Create new PlaybackData Asset");
             public static GUIContent connect = new GUIContent("Connect");
             public static GUIContent play = new GUIContent("Play");
+            public static GUIContent stop = new GUIContent("Stop");
             public static GUIContent record = new GUIContent("Record");
         }
 
@@ -151,7 +152,7 @@ namespace Unity.Labs.FacialRemote
             
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Contents.addGameObject, styles.centeredLabel, GUILayout.MaxWidth(350));
+            GUILayout.Label(Contents.addStreamReader, styles.centeredLabel, GUILayout.MaxWidth(350));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             
@@ -244,7 +245,7 @@ namespace Unity.Labs.FacialRemote
                     var clipName = playbackStream == null || playbackStream.activePlaybackBuffer == null
                                     ? s_Empty[0]
                                     : playbackStream.activePlaybackBuffer.name;
-                    var bufferCount = playbackStream.playbackData.playbackBuffers.Length;
+                    var bufferCount = playbackStream.playbackData.Count;
                     var bufferNames = s_Empty;
                     var clipIndex = 0;
 
@@ -330,11 +331,11 @@ namespace Unity.Labs.FacialRemote
                     {
                         if (playbackStream == null)
                         {
-                            GUILayout.Button(styles.playIcon, styles.button);
+                            GUILayout.Button(Contents.play);
                         }
                         else if (playbackStream.isActive)
                         {
-                            if (GUILayout.Button(styles.playIcon, styles.buttonPress))
+                            if (GUILayout.Button(Contents.stop))
                             {
                                 streamReader.streamSource = null;
                                 playbackStream.StopPlayback();

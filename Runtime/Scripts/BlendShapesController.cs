@@ -12,13 +12,14 @@ namespace Unity.Labs.FacialRemote
     [DisallowMultipleComponent]
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
-        [SerializeField]
-        [Tooltip("BlendShape input values. Can be driven by an AnimationClip or a StreamReader.")]
+        [SerializeField, HideInInspector]
         BlendShapeValues m_BlendShapeValues;
-        [SerializeField]
-        [Tooltip("BlendShape tracking state input value. Can be driven by an AnimationClip or a StreamReader.")]
+
+        [SerializeField, HideInInspector]
         bool m_TrackingActive = true;
+
         [SerializeField]
+        [Tooltip("Asset that contains the bindings between blend-shape values and SkinnnedMeshRenderer's blend-shape indices.")]
         BlendShapeMappings m_Mappings;
     
         [SerializeField]

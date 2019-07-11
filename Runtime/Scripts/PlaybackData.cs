@@ -26,7 +26,21 @@ namespace Unity.Labs.FacialRemote
         PlaybackBuffer m_ActivePlaybackBuffer;
         int m_CurrentBufferSize = -1;
 
-        public PlaybackBuffer[] playbackBuffers { get { return m_PlaybackBuffers; } }
+        public PlaybackBuffer[] playbackBuffers
+        {
+            get { return m_PlaybackBuffers; }
+        }
+
+        public int Count
+        {
+            get
+            {
+                if (playbackBuffers != null)
+                    return playbackBuffers.Length;
+
+                return 0;
+            }
+        }
 
 #if UNITY_EDITOR
         void OnEnable()
