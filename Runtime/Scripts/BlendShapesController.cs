@@ -55,7 +55,7 @@ namespace Unity.Labs.FacialRemote
         BlendShapeOverride[] m_Overrides;
 
         Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
-        Vector2[] m_SmoothedBlendShapes;
+        BlendShapeValues m_SmoothedBlendShapes;
         BlendShapeValues m_BlendShapeOutput;
 
         public BlendShapeValues blendShapeInput
@@ -99,8 +99,6 @@ namespace Unity.Labs.FacialRemote
 
         void Awake()
         {
-            m_SmoothedBlendShapes = new Vector2[m_BlendShapeValues.Count];
-
             UpdateBlendShapeIndices();
 
             if (m_Overrides.Length != m_BlendShapeValues.Count)
@@ -212,18 +210,17 @@ namespace Unity.Labs.FacialRemote
                 var smoothing = hasOverride ? blendShapeOverride.blendShapeSmoothing : m_Smoothing;
                 var scale = hasOverride ? blendShapeOverride.blendShapeCoefficient : m_Multiplier;
                 var maxValue = hasOverride ? blendShapeOverride.blendShapeMax : m_Maximum;
-                var currentValue = m_SmoothedBlendShapes[i].x;
-                var currentSpeed = m_SmoothedBlendShapes[i].y;
+                var currentValue = m_SmoothedBlendShapes[i];
 
                 if (isTrackingActive)
                 {
                     if (Mathf.Abs(targetValue - currentValue) > threshold)
-                        currentValue = Mathf.SmoothDamp(currentValue, targetValue, ref currentSpeed, smoothing, Mathf.Infinity, deltaTime);
+                        currentValue = Mathf.Lerp(targetValue, currentValue, smoothing);
                 }
                 else
-                    currentValue = Mathf.SmoothDamp(currentValue, 0f, ref currentSpeed, m_TrackingLossSmoothing, Mathf.Infinity, deltaTime);
+                    currentValue = Mathf.Lerp(0f, currentValue, m_TrackingLossSmoothing);
 
-                m_SmoothedBlendShapes[i] = new Vector2(currentValue, currentSpeed);
+                m_SmoothedBlendShapes[i] = currentValue;
 
                 m_BlendShapeOutput[i] = Mathf.Min(currentValue * scale + offset, maxValue);
             }
