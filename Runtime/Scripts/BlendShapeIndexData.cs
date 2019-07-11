@@ -8,7 +8,14 @@
         readonly int m_Index;
         readonly string m_Name;
 
+        /// <summary>
+        /// The index of the blend shape in the renderer
+        /// </summary>
         public int index { get { return m_Index; } }
+        
+        /// <summary>
+        /// The name of the blend shape in the rig
+        /// </summary>
         public string name { get { return m_Name; } }
 
         public BlendShapeIndexData(int index, string name)
