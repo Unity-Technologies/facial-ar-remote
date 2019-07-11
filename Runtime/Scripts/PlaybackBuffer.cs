@@ -66,10 +66,13 @@ namespace Unity.Labs.FacialRemote
         BlendShapeMappings m_BlendShapeMappings;
         int m_TouchInputCount;
         int m_InputStateCount;
+        
+#pragma warning disable CS0649
         int m_InputStateSize;
         int m_InputScreenPositionSize;
         int m_InputStateOffset;
         int m_InputScreenPositionOffset;
+#pragma warning restore CS0649
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }

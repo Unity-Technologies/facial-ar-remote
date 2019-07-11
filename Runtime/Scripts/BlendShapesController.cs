@@ -11,9 +11,11 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
+#pragma warning disable CS0649
         [SerializeField]
         BlendShapeMappings m_BlendShapeMappings;
-    
+#pragma warning restore CS0649
+
         [SerializeField]
         [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
         SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
