@@ -17,61 +17,49 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Recorded byte stream of blend shape data.")]
         byte[] m_RecordStream = { };
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Error check byte value.")]
         byte m_ErrorCheck;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Number of blend shapes in the stream.")]
         int m_BlendShapeCount;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of blend shapes in the byte array.")]
         int m_BlendShapeSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of frame number value in byte array.")]
         int m_FrameNumberSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of frame time value in byte array.")]
         int m_FrameTimeSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of head pose in byte array.")]
         int m_HeadPoseOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of camera pose in byte array.")]
         int m_CameraPoseOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of frame number value in byte array.")]
         int m_FrameNumberOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of frame time value in byte array.")]
         int m_FrameTimeOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Total size of buffer of byte array for single same of data.")]
         int m_BufferSize;
 
         [SerializeField]
-        [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_Locations = {};
 
         IStreamSettings m_StreamSettings;
@@ -129,6 +117,10 @@ namespace Unity.Labs.FacialRemote
 
         PlaybackBuffer() {}
 
+        /// <summary>
+        /// Create a new playback buffer.
+        /// </summary>
+        /// <param name="streamSettings">The stream settings to define the playback buffer.</param>
         public PlaybackBuffer(IStreamSettings streamSettings)
         {
             m_StreamSettings = streamSettings;

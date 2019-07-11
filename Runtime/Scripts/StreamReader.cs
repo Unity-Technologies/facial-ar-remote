@@ -13,7 +13,7 @@ namespace Unity.Labs.FacialRemote
     public class StreamReader : MonoBehaviour, IStreamReader
     {
         [SerializeField]
-        [Tooltip("Root of character to be be driven.")]
+        [Tooltip("Root game object of character to be be driven.")]
         GameObject m_Character;
 
         [SerializeField]
@@ -57,8 +57,21 @@ namespace Unity.Labs.FacialRemote
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public bool verboseLogging { get { return m_VerboseLogging; } }
+        
+        public bool verboseLogging
+        {
+            get => m_VerboseLogging;
+            set => m_VerboseLogging = value;
+        }
+
+        /// <summary>
+        /// The set of all stream sources connected to this stream reader
+        /// </summary>
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
+        
+        /// <summary>
+        /// The set of all stream consumers connected to this stream reader
+        /// </summary>
         public HashSet<IUsesStreamReader> consumers => m_Consumers;
         
         public TouchPhase touchPhase => m_TouchPhase;
@@ -94,9 +107,13 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        /// <summary>
+        /// The root game object of character to be be driven
+        /// </summary>
         public GameObject character
         {
-            get { return m_Character; }
+            get => m_Character;
+            set => m_Character = value;
         }
 
         public bool faceTrackingLost
@@ -140,6 +157,9 @@ namespace Unity.Labs.FacialRemote
             m_TouchPosition.y = m_TouchPositionArray[1];
         }
 
+        /// <summary>
+        /// Connects all stream sources and stream consumers to this stream reader.
+        /// </summary>
         public void ConnectDependencies()
         {
             sources.UnionWith(GetComponentsInChildren<IStreamSource>());

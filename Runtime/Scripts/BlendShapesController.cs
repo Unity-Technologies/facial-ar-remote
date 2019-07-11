@@ -52,9 +52,19 @@ namespace Unity.Labs.FacialRemote
 
         IStreamSettings m_LastStreamSettings;
 
+        /// <summary>
+        /// All renderers with blend shapes being driven by the controller
+        /// </summary>
         public SkinnedMeshRenderer[] skinnedMeshRenderers { get { return m_SkinnedMeshRenderers; }}
+        
+        /// <summary>
+        /// Maps all renderers to their blend shape data
+        /// </summary>
         public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices { get { return m_Indices; } }
 
+        /// <summary>
+        /// Scaled blend shape values after overrides are applied
+        /// </summary>
         public float[] blendShapesScaled { get; private set; }
 
         public IStreamReader streamReader { private get; set; }

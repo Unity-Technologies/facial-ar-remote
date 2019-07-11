@@ -61,8 +61,10 @@ namespace Unity.Labs.FacialRemote
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
 
+        /// <summary>
+        /// Is the current stream being recorded?
+        /// </summary>
         public bool recording { get; private set; }
-
 
         List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
@@ -244,6 +246,9 @@ namespace Unity.Labs.FacialRemote
             return false;
         }
 
+        /// <summary>
+        /// Start recording the current data stream to the assigned Stream Recorder.
+        /// </summary>
         public void StartRecording()
         {
             if (m_StreamRecorder == null)
@@ -258,6 +263,9 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        /// <summary>
+        /// Start recording the current data stream.
+        /// </summary>
         public void StopRecording()
         {
             if (m_StreamRecorder == null)
@@ -292,6 +300,9 @@ namespace Unity.Labs.FacialRemote
             m_UnusedBuffers.Enqueue(buffer);
         }
 
+        /// <summary>
+        /// Update the current frame buffer and send to stream readers.
+        /// </summary>
         public void StreamSourceUpdate()
         {
             var notSource = !HasStreamReader();
