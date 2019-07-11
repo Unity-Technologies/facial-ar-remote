@@ -77,6 +77,27 @@ namespace Unity.Labs.FacialRemote
 
         public IStreamSettings streamSettings { get { return m_StreamSettings; } }
 
+        /// <summary>
+        /// Manual override to use a specific stream recorder. This cannot be set during recording.
+        /// </summary>
+        public GameObject streamRecorderOverride
+        {
+            get => m_StreamRecorderOverride;
+            set
+            {
+                if (value == m_StreamRecorderOverride)
+                    return;
+
+                if (recording)
+                {
+                    Debug.LogError("Cannot set a new Stream Recorder while recording");
+                    return;
+                }
+                
+                m_StreamRecorderOverride = value;
+            }
+        }
+
         void Start()
         {
             if (m_StreamSettings == null)
@@ -86,8 +107,8 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            m_StreamRecorder = m_StreamRecorderOverride
-                ? m_StreamRecorderOverride.GetComponentInChildren<IStreamRecorder>()
+            m_StreamRecorder = streamRecorderOverride
+                ? streamRecorderOverride.GetComponentInChildren<IStreamRecorder>()
                 : GetComponentInChildren<IStreamRecorder>();
 
             if (m_StreamRecorder == null)
