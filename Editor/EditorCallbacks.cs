@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    [InitializeOnLoad]
     public static class EditorCallbacks
     {
         static EditorCallbacks()
