@@ -94,46 +94,27 @@ namespace Unity.Labs.FacialRemote
 
         public IStreamReader streamReader { private get; set; }
 
-#if UNITY_EDITOR
-        float m_LastTime;
-#endif
-
         void Awake()
         {
             UpdateBlendShapeIndices();
 
             if (m_Overrides.Length != m_BlendShapeValues.Count)
                 Array.Resize(ref m_Overrides, m_BlendShapeValues.Count);
-
-#if UNITY_EDITOR
-            m_LastTime = Time.realtimeSinceStartup;
-#endif
         }
 
         void LateUpdate()
         {
-            var deltaTime = Time.deltaTime;
-
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                var currentTime = Time.realtimeSinceStartup;
-                deltaTime = currentTime - m_LastTime;
-                m_LastTime = currentTime;
-            }
-#endif
-
-            UpdateBlendShapes(deltaTime);
+            UpdateBlendShapes();
         }
 
         /// <summary>
         /// Updates BlendShape calculations by a time step and sets the values to the renderers.
         /// </summary>
         /// <param name="deltaTime">Time step to advance.</param>
-        public void UpdateBlendShapes(float deltaTime)
+        public void UpdateBlendShapes()
         {
             UpdateFromStreamReader();
-            PostProcessValues(deltaTime);
+            PostProcessValues();
             UpdateSkinnedMeshRenderers();
         }
 
@@ -199,7 +180,7 @@ namespace Unity.Labs.FacialRemote
             });
         }
 
-        void PostProcessValues(float deltaTime)
+        void PostProcessValues()
         {
             for (var i = 0; i < m_BlendShapeValues.Count; i++)
             {

@@ -270,20 +270,17 @@ namespace Unity.Labs.FacialRemote
             var frameTimeOffset = streamSettings.FrameTimeOffset;
             var frameTimeSize = streamSettings.FrameTimeSize;
             var recordStream = m_PlaybackStream.activePlaybackBuffer.recordStream;
-            var prevTime = m_FirstFrameTime;
 
             for (var i = 0; i < k_FramesPerStep && currentFrame < frameCount; i++, currentFrame++)
             {
                 Buffer.BlockCopy(recordStream, currentFrame * bufferSize + frameTimeOffset, m_FrameTime, 0, frameTimeSize);
-
-                var deltaTime = m_FrameTime[0] - prevTime;
 
                 // Run normal playback to record transform keyframes
                 m_PlaybackStream.PlayBackLoop();
                 m_PlaybackStream.UpdateCurrentFrameBuffer(true);
 
                 if (m_BlendShapesController != null)
-                    m_BlendShapesController.UpdateBlendShapes(deltaTime);
+                    m_BlendShapesController.UpdateBlendShapes();
 
                 if (m_CharacterRigController != null)
                     m_CharacterRigController.InterpolateBlendShapes(true);
@@ -295,7 +292,6 @@ namespace Unity.Labs.FacialRemote
                 }
 
                 KeyFrame(m_FrameTime[0] - m_FirstFrameTime);
-                prevTime = m_FrameTime[0];
             }
 
             return true;
