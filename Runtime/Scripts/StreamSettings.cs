@@ -105,7 +105,7 @@ namespace Unity.Labs.FacialRemote
 
         void OnValidate()
         {
-            const int poseSize = BlendShapeUtils.PoseSize;
+            const int poseSize = PoseArrayUtils.PoseSize;
             m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
             m_FrameNumberSize = sizeof(int);
             m_FrameTimeSize = sizeof(float);

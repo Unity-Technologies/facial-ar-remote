@@ -7,7 +7,7 @@ using UnityEngine.XR;
 
 namespace Unity.Labs.FacialRemote
 {
-    public static class BlendShapeUtils
+    public static class PoseArrayUtils
     {
         public const int PoseFloatCount = 7;
         public const int PoseSize = sizeof(float) * PoseFloatCount;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,8 +41,8 @@ namespace Unity.Labs.FacialRemote
         Pose m_HeadPose;
         Vector3 m_LastHeadPosition;
 
-        float[] m_CameraPoseArray = new float[BlendShapeUtils.PoseFloatCount];
-        float[] m_HeadPoseArray = new float[BlendShapeUtils.PoseFloatCount];
+        float[] m_CameraPoseArray = new float[PoseArrayUtils.PoseFloatCount];
+        float[] m_HeadPoseArray = new float[PoseArrayUtils.PoseFloatCount];
         int[] m_FrameNumArray = new int[1];
         float[] m_FrameTimeArray = new float[1];
         int[] m_TouchPhaseArray = new int[1];
@@ -57,7 +57,7 @@ namespace Unity.Labs.FacialRemote
 
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
-        public bool verboseLogging { get { return m_VerboseLogging; } }
+        public bool verboseLogging { get { return m_VerboseLogging; } private set { m_VerboseLogging = value; } }
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
         public HashSet<IUsesStreamReader> consumers => m_Consumers;
         
@@ -97,6 +97,7 @@ namespace Unity.Labs.FacialRemote
         public GameObject character
         {
             get { return m_Character; }
+            private set { m_Character = value; }
         }
 
         public bool faceTrackingLost
@@ -122,14 +123,14 @@ namespace Unity.Labs.FacialRemote
             if (m_FaceTrackingEnabled)
             {
                 Buffer.BlockCopy(buffer, offset + 1, blendShapesBuffer, 0, settings.BlendShapeSize);
-                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, BlendShapeUtils.PoseSize);
-                BlendShapeUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
+                Buffer.BlockCopy(buffer, offset + settings.HeadPoseOffset, m_HeadPoseArray, 0, PoseArrayUtils.PoseSize);
+                PoseArrayUtils.ArrayToPose(m_HeadPoseArray, ref m_HeadPose);
             }
 
             if (m_CameraTrackingEnabled)
             {
-                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, BlendShapeUtils.PoseSize);
-                BlendShapeUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
+                Buffer.BlockCopy(buffer, offset + settings.CameraPoseOffset, m_CameraPoseArray, 0, PoseArrayUtils.PoseSize);
+                PoseArrayUtils.ArrayToPose(m_CameraPoseArray, ref m_CameraPose);
             }
             
             Buffer.BlockCopy(buffer, offset + settings.inputStateOffset, m_TouchPhaseArray, 0, settings.inputStateSize);
@@ -142,6 +143,7 @@ namespace Unity.Labs.FacialRemote
 
         public void ConnectDependencies()
         {
+            sources.Clear();
             sources.UnionWith(GetComponentsInChildren<IStreamSource>());
             foreach (var go in m_StreamSourceOverrides)
             {
@@ -167,6 +169,8 @@ namespace Unity.Labs.FacialRemote
                     }
                 }
             }
+
+            consumers.Clear();
 
             if (character != null)
             {
@@ -216,6 +220,7 @@ namespace Unity.Labs.FacialRemote
             if (ss != null && !ss.streamReaders.Contains(this))
             {
                 ss.streamReaders.Add(this);
+                ss.streamReaders.RemoveAll(sr => sr == null);
             }
         }
     }
