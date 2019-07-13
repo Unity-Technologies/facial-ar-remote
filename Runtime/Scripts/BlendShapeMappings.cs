@@ -27,6 +27,11 @@ namespace Unity.Labs.FacialRemote
         /// Blend shape names from the rig.
         /// </summary>
         public string[] blendShapeNames { get { return m_BlendShapeNames; }}
+        public StreamSettings streamSettings
+        {
+            get { return m_StreamSettings; }
+            set { m_StreamSettings = value; }
+        }
         
 #if UNITY_EDITOR
         void OnValidate()

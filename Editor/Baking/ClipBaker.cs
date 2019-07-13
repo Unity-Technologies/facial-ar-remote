@@ -102,7 +102,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_BlendShapesController != null)
             {
-                m_BlendShapesController.UpdateBlendShapeIndices(playbackBuffer);
+                m_BlendShapesController.UpdateBlendShapeIndices();
 
                 // Get curve data for blend shapes
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
@@ -270,6 +270,7 @@ namespace Unity.Labs.FacialRemote
             var frameTimeOffset = streamSettings.FrameTimeOffset;
             var frameTimeSize = streamSettings.FrameTimeSize;
             var recordStream = m_PlaybackStream.activePlaybackBuffer.recordStream;
+
             for (var i = 0; i < k_FramesPerStep && currentFrame < frameCount; i++, currentFrame++)
             {
                 Buffer.BlockCopy(recordStream, currentFrame * bufferSize + frameTimeOffset, m_FrameTime, 0, frameTimeSize);
@@ -279,7 +280,7 @@ namespace Unity.Labs.FacialRemote
                 m_PlaybackStream.UpdateCurrentFrameBuffer(true);
 
                 if (m_BlendShapesController != null)
-                    m_BlendShapesController.CalculateInterpolatedBlendShapes(true);
+                    m_BlendShapesController.UpdateBlendShapes();
 
                 if (m_CharacterRigController != null)
                     m_CharacterRigController.InterpolateBlendShapes(true);
@@ -301,6 +302,8 @@ namespace Unity.Labs.FacialRemote
             // Key blend shapes
             if (m_BlendShapesController != null)
             {
+                var blendShapes = m_BlendShapesController.blendShapeOutput;
+
                 foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
                 {
                     if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out var animationCurves))
@@ -316,7 +319,7 @@ namespace Unity.Labs.FacialRemote
                                     continue;
 
                                 var curve = animationCurves[string.Format(k_BlendShapeProp, datum.name)].curve;
-                                curve.AddKey(time, m_BlendShapesController.blendShapesScaled[index]);
+                                curve.AddKey(time, blendShapes[index]);
                             }
                         }
                     }

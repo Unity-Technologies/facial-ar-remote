@@ -173,7 +173,7 @@ GameObject:
   - component: {fileID: 114823813081300294}
   - component: {fileID: 114591291899225592}
   m_Layer: 0
-  m_Name: sloth_head_blendshapes
+  m_Name: Sloth Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -226,14 +226,67 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db8052edd37c5da4ba56c08244eb648a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_BlendShapeMappings: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42,
-    type: 2}
+  m_BlendShapeValues:
+    BrowDownLeft: 0
+    BrowDownRight: 0
+    BrowInnerUp: 0
+    BrowOuterUpLeft: 0
+    BrowOuterUpRight: 0
+    CheekPuff: 0
+    CheekSquintLeft: 0
+    CheekSquintRight: 0
+    EyeBlinkLeft: 0
+    EyeBlinkRight: 0
+    EyeLookDownLeft: 0
+    EyeLookDownRight: 0
+    EyeLookInLeft: 0
+    EyeLookInRight: 0
+    EyeLookOutLeft: 0
+    EyeLookOutRight: 0
+    EyeLookUpLeft: 0
+    EyeLookUpRight: 0
+    EyeSquintLeft: 0
+    EyeSquintRight: 0
+    EyeWideLeft: 0
+    EyeWideRight: 0
+    JawForward: 0
+    JawLeft: 0
+    JawOpen: 0
+    JawRight: 0
+    MouthClose: 0
+    MouthDimpleLeft: 0
+    MouthDimpleRight: 0
+    MouthFrownLeft: 0
+    MouthFrownRight: 0
+    MouthFunnel: 0
+    MouthLeft: 0
+    MouthLowerDownLeft: 0
+    MouthLowerDownRight: 0
+    MouthPressLeft: 0
+    MouthPressRight: 0
+    MouthPucker: 0
+    MouthRight: 0
+    MouthRollLower: 0
+    MouthRollUpper: 0
+    MouthShrugLower: 0
+    MouthShrugUpper: 0
+    MouthSmileLeft: 0
+    MouthSmileRight: 0
+    MouthStretchLeft: 0
+    MouthStretchRight: 0
+    MouthUpperUpLeft: 0
+    MouthUpperUpRight: 0
+    NoseSneerLeft: 0
+    NoseSneerRight: 0
+    TongueOut: 0
+  m_TrackingActive: 1
+  m_Mappings: {fileID: 11400000, guid: 0fb1c947065024113a142dd8ab001d42, type: 2}
   m_SkinnedMeshRenderers:
   - {fileID: 137532649854878984}
-  m_BlendShapeSmoothing: 0.1
-  m_BlendShapeThreshold: 0.01
-  m_BlendShapeCoefficient: 120
-  m_BlendShapeMax: 100
+  m_Smoothing: 0.1
+  m_Threshold: 0.01
+  m_Multiplier: 120
+  m_Maximum: 100
   m_TrackingLossSmoothing: 0.1
   m_Overrides:
   - m_UseOverride: 0
@@ -612,6 +665,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 601c475b43c9a4e46b969b376a0d7d1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SceneCamera: {fileID: 0}
+  m_HeadPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 1}
+  m_CameraPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 1}
   m_TrackingLossSmoothing: 0.1
   m_DriveEyes: 0
   m_LeftEye: {fileID: 0}
@@ -621,8 +681,8 @@ MonoBehaviour:
   m_RightEyeNegZ: 0
   m_LeftEyeNegZ: 0
   m_EyeAngleRange: {x: 30, y: 45}
-  m_DriveHead: 0
-  m_HeadBone: {fileID: 0}
+  m_DriveHead: 1
+  m_HeadBone: {fileID: 4967094478328516}
   m_HeadSmoothing: 0.1
   m_HeadFollowAmount: 0.6
   m_DriveNeck: 0

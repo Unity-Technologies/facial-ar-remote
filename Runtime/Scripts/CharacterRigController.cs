@@ -12,6 +12,12 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("The camera being used to capture the character.")]
         Camera m_SceneCamera;
+        [SerializeField]
+        [Tooltip("Head pose input values. Can be driven by an AnimationClip or a StreamReader.")]
+        Pose m_HeadPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
+        [SerializeField]
+        [Tooltip("Camera pose input values. Can be driven by an AnimationClip or a StreamReader.")]
+        Pose m_CameraPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
         
         [Range(0f, 1f)]
         [SerializeField]
@@ -221,7 +227,7 @@ namespace Unity.Labs.FacialRemote
             }
             
             streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
-            streamReader.SetInitialHeadPose(new Pose(m_HeadBone.position, m_HeadBone.rotation));
+            streamReader.SetInitialHeadPose(new Pose(headBone.position, headBone.rotation));
             
             SetupCharacterRigController();
         }
@@ -304,8 +310,8 @@ namespace Unity.Labs.FacialRemote
             if (m_DriveHead)
             {
                 // ReSharper disable once PossibleNullReferenceException
-                headWorldPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
-                headLocalPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
+                headWorldPose = new Pose(headBone.position, headBone.rotation);
+                headLocalPose = new Pose(headBone.localPosition, headBone.localRotation);
             }
             else if (m_DriveNeck)
             {
@@ -327,16 +333,11 @@ namespace Unity.Labs.FacialRemote
                 neckWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
                 neckLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
             }
-            else if (m_HeadBone)
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                neckWorldPose = new Pose(m_HeadBone.position, m_HeadBone.rotation);
-                neckLocalPose = new Pose(m_HeadBone.localPosition, m_HeadBone.localRotation);
-            }
             else
             {
-                neckWorldPose = new Pose(transform.position, transform.rotation);
-                neckLocalPose = new Pose(transform.localPosition, transform.localRotation);
+                // ReSharper disable once PossibleNullReferenceException
+                neckWorldPose = new Pose(headBone.position, headBone.rotation);
+                neckLocalPose = new Pose(headBone.localPosition, headBone.localRotation);
             }
 
             Pose eyeLeftWorldPose;
@@ -398,7 +399,7 @@ namespace Unity.Labs.FacialRemote
             m_AREyePose.SetPositionAndRotation(Vector3.Lerp(eyeRightWorldPose.position, eyeLeftWorldPose.position, 0.5f), transform.rotation);
             var eyeOffset = new GameObject("eye_offset"){ hideFlags = HideFlags.HideAndDontSave}.transform;
             eyeOffset.position = m_AREyePose.position;
-            eyeOffset.SetParent(m_HeadBone != null ? m_HeadBone : transform, true);
+            eyeOffset.SetParent(headBone, true);
 
             m_AREyePose.SetParent(eyeOffset, true);
 
