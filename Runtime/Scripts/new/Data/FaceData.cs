@@ -5,13 +5,20 @@ using Unity.Labs.FacialRemote;
 namespace PerformanceRecorder
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct FaceData
+    public struct FaceData : IPackageable
     {
         [FieldOffset(0)] public BlendShapeValues blendShapeValues;
 
-        public static int Size
+        public PacketDescriptor descriptor
         {
-            get { return Marshal.SizeOf<FaceData>(); }
+            get
+            {
+                return new PacketDescriptor()
+                {
+                    type = PacketType.Face,
+                    version = 0
+                };
+            }
         }
     }
 }

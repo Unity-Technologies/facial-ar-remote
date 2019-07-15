@@ -14,13 +14,15 @@ namespace PerformanceRecorder
     [StructLayout(LayoutKind.Explicit)]
     public struct PacketDescriptor
     {
+        public static readonly int Size = Marshal.SizeOf<PacketDescriptor>();
+
         [FieldOffset(0)] public PacketType type;
         [FieldOffset(4)] public int version;
+    }
 
-        public static int Size
-        {
-            get { return Marshal.SizeOf<PacketDescriptor>(); }
-        }
+    public interface IPackageable
+    {
+        PacketDescriptor descriptor { get; }
     }
 
     public static class PacketDescriptorExtensions
@@ -30,8 +32,19 @@ namespace PerformanceRecorder
             switch (packet.type)
             {
                 case PacketType.Face:
-                    return FaceData.Size;
+                    return GetFacePayloadSize(packet.version);
             }
+            return 0;
+        }
+
+        static int GetFacePayloadSize(int version)
+        {
+            switch (version)
+            {
+                case 0:
+                    return Marshal.SizeOf<FaceData>();
+            }
+
             return 0;
         }
     }

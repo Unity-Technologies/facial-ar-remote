@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
@@ -61,21 +62,21 @@ namespace PerformanceRecorder
 
         PacketDescriptor ReadPacket(Stream stream)
         {
-            var packet = default(PacketDescriptor);
+            var descriptor = default(PacketDescriptor);
             var bytes = new byte[PacketDescriptor.Size];
             var readByteCount = stream.Read(bytes, 0, bytes.Length);
 
             if (readByteCount != PacketDescriptor.Size)
                 throw new Exception("Invalid read byte count");
             
-            packet = bytes.ToStruct<PacketDescriptor>();
+            descriptor = bytes.ToStruct<PacketDescriptor>();
 
-            return packet;
+            return descriptor;
         }
 
-        byte[] ReadPayload(Stream stream, PacketDescriptor packet)
+        byte[] ReadPayload(Stream stream, PacketDescriptor descriptor)
         {
-            var size = packet.GetPayloadSize();
+            var size = descriptor.GetPayloadSize();
             var bytes = new byte[size];
             var readByteCount = stream.Read(bytes, 0, size);
 
@@ -100,9 +101,20 @@ namespace PerformanceRecorder
             m_NetworkStreamSource.StopConnections();
         }
 
-        public void Send(byte[] bytes)
+        public void Write(byte[] bytes)
         {
             m_NetworkStreamSource.stream.Write(bytes, 0 , bytes.Length);
+            m_NetworkStreamSource.stream.Flush();
+        }
+
+        public void Write<T>(T packet) where T : struct, IPackageable
+        {
+            int size = Marshal.SizeOf<T>();
+            var descBytes = packet.descriptor.ToBytes();
+            var bytes = packet.ToBytes();
+
+            m_NetworkStreamSource.stream.Write(descBytes, 0 , PacketDescriptor.Size);
+            m_NetworkStreamSource.stream.Write(bytes, 0 , size);
             m_NetworkStreamSource.stream.Flush();
         }
     }
@@ -163,19 +175,12 @@ namespace PerformanceRecorder
 
         void SendPacket()
         {
-            var packet = new PacketDescriptor()
-            {
-                type = PacketType.Face,
-                version = 0
-            };
             var faceData = new FaceData();
+
             for (var i = 0; i < BlendShapeValues.Count; ++i)
-            {
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
-            }
             
-            m_Client.Send(packet.ToBytes());
-            m_Client.Send(faceData.ToBytes());
+            m_Client.Write(faceData);
         }
     }
 }
