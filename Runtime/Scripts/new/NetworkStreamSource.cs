@@ -9,12 +9,9 @@ using UnityEngine;
 
 namespace PerformanceRecorder
 {
-    [Serializable]
     public class NetworkStreamSource : IStreamSource
     {
         const int kMaxConnections = 1;
-        [SerializeField]
-        int m_Port = 9000;
         List<Socket> m_ServerSockets = new List<Socket>();
         List<Thread> m_Threads = new List<Thread>();
         Stream m_Stream;
@@ -24,7 +21,7 @@ namespace PerformanceRecorder
             get { return m_Stream; }
         }
 
-        public void ConnectToServer(string serverIP)
+        public void ConnectToServer(string serverIP, int port)
         {
             Dispose();
 
@@ -32,22 +29,25 @@ namespace PerformanceRecorder
             if (!IPAddress.TryParse(serverIP, out ip))
                 return;
 
-            var endPoint = new IPEndPoint(ip, m_Port);
+            var endPoint = new IPEndPoint(ip, port);
             var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             var thread = new Thread(() =>
             {
                 try
                 {
+                    Debug.Log("Client: Connecting to " + endPoint.Address.ToString());
                     socket.Connect(endPoint);
+                    Debug.Log("Client: Connected");
 
                     if (m_Stream == null)
                     {
                         m_Stream = CreateBufferedNetworkStream(socket);
+                        Debug.Log("Client: Stream Created");
                     }
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Exception trying to connect: " + e.Message);
+                    Debug.Log("Client: " + e.Message);
                 }
             });
 
@@ -56,19 +56,19 @@ namespace PerformanceRecorder
             thread.Start();
         }
 
-        public void StartServer()
+        public void StartServer(int port)
         {
             var addresses = GetIPAddresses();
 
             foreach (var address in addresses)
             {
-                var serverSocket = CreateServerSocket(address, m_Port);
+                var serverSocket = CreateServerSocket(address, port);
 
                 if (serverSocket != null)
+                {
                     m_ServerSockets.Add(serverSocket);
-                
-                var serverThread = CreateServerThread(serverSocket);
-                m_Threads.Add(serverThread);
+                    m_Threads.Add(CreateServerThread(serverSocket));
+                }
             }
 
             foreach (var thread in m_Threads)
@@ -82,39 +82,49 @@ namespace PerformanceRecorder
 
         void Dispose()
         {
-            foreach (var thread in m_Threads)
-            {
-                if (thread.ThreadState == ThreadState.Running)
-                    thread.Abort();
-            }
+            DisposeStream();
 
             foreach (var socket in m_ServerSockets)
             {
                 if (socket.Connected)
                     socket.Close();
             }
-            
-            if (m_Stream != null)
+
+            foreach (var thread in m_Threads)
             {
-                m_Stream.Close();
-                m_Stream = null;
+                thread.Abort();
             }
 
             m_Threads.Clear();
             m_ServerSockets.Clear();
         }
 
+        void DisposeStream()
+        {
+            if (m_Stream != null)
+            {
+                m_Stream.Close();
+                m_Stream = null;
+            }
+        }
+
         IPAddress[] GetIPAddresses()
         {
-            IPAddress[] addresses;
             try
             {
-                addresses = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+                var addresses = new List<IPAddress>();
+                
+                addresses.AddRange(Dns.GetHostEntry("localhost").AddressList);
+                addresses.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList);
+
+                return addresses.ToArray();
             }
             catch (Exception)
             {
                 Debug.LogWarning("DNS-based method failed, using network interfaces to find local IP");
-                var addressList = new List<IPAddress>();
+
+                var addresses = new List<IPAddress>();
+
                 foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
                 {
                     if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
@@ -130,20 +140,16 @@ namespace PerformanceRecorder
 
                                 if (address.AddressFamily != AddressFamily.InterNetwork)
                                     continue;
-
-                                if (IPAddress.IsLoopback(address))
-                                    continue;
                                 
-                                addressList.Add(address);
+                                addresses.Add(address);
                             }
 
                             break;
                     }
                 }
 
-                addresses = addressList.ToArray();
+                return addresses.ToArray();
             }
-            return addresses;
         }
 
         Socket CreateServerSocket(IPAddress address, int port)
@@ -155,8 +161,6 @@ namespace PerformanceRecorder
                 socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 socket.Bind(endPoint);
                 socket.Listen(kMaxConnections);
-
-                Debug.Log("Listening: " + address);
             }
             catch (Exception) {}
 
@@ -173,11 +177,16 @@ namespace PerformanceRecorder
                 {
                     while (true)
                     {
+                        Debug.Log("Server: Listening");
                         var socket = listenSocket.Accept();
+                        Debug.Log("Server: Accepted");
+
+                        DisposeStream();
 
                         if (m_Stream == null)
                         {
                             m_Stream = CreateBufferedNetworkStream(socket);
+                            Debug.Log("Server: Stream Created");
                         }
                     }
                 }

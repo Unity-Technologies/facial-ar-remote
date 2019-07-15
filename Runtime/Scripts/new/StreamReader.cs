@@ -36,11 +36,9 @@ namespace PerformanceRecorder
 
             m_Thread = new Thread(() =>
             {
-                var readByteCount = 0;
-                
-                do
+                while (true)
                 {
-                    readByteCount = 0;
+                    var readByteCount = 0;
                     readByteCount = Read();
 
                     if (readByteCount > 0)
@@ -49,10 +47,10 @@ namespace PerformanceRecorder
 
                         if (m_Recording)
                             m_RecordStream.Write(m_Buffer, 0, readByteCount);
-                        
-                        Thread.Sleep(1);
                     }
-                } while (readByteCount > 0);
+
+                    Thread.Sleep(1);
+                };
             });
 
             m_Thread.Start();
@@ -77,7 +75,7 @@ namespace PerformanceRecorder
 
             try
             {
-                readByteCount = stream.Read(m_Buffer, 0, 274);
+                readByteCount = stream.Read(m_Buffer, 0, 1);
             }
             catch (Exception) {}
 

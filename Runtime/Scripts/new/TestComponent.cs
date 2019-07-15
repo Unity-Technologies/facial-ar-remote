@@ -11,10 +11,11 @@ public class TestComponent : MonoBehaviour
     [SerializeField]
     StreamReader m_StreamReader = new StreamReader();
     int m_TakeCount = 0;
+    int b = 0;
 
     void OnEnable()
     {
-        m_NetworkStreamSource.StartServer();
+        m_NetworkStreamSource.StartServer(9000);
         m_StreamReader.streamSource = m_NetworkStreamSource;
         m_StreamReader.StartLiveStream();
     }
@@ -24,6 +25,15 @@ public class TestComponent : MonoBehaviour
         m_StreamReader.Dispose();
         m_NetworkStreamSource.StopConnections();
     }
+
+    void Update()
+    {
+        if (b != m_StreamReader.checkByte)
+            Debug.Log(m_StreamReader.checkByte);
+
+        b = m_StreamReader.checkByte;
+    }
+
 
     [ContextMenu("Start Recording")]
     public void StartRecording()
