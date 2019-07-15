@@ -47,10 +47,10 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         public bool useOverride
         {
-            get => m_UseOverride;
-            set => m_UseOverride = value;
+            get { return m_UseOverride; }
+            set { m_UseOverride = value; }
         }
-        
+
         /// <summary>
         /// Blend shape name to be overridden
         /// </summary>
@@ -71,10 +71,10 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         public float blendShapeOffset
         {
-            get => m_BlendShapeOffset;
-            set => m_BlendShapeOffset = value;
+            get { return m_BlendShapeOffset; }
+            set { m_BlendShapeOffset = value; }
         }
-        
+
         /// <summary>
         /// Scaling coefficient applied to the blend shape values from the stream reader
         /// </summary>

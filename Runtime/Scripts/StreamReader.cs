@@ -60,8 +60,8 @@ namespace Unity.Labs.FacialRemote
         
         public bool verboseLogging
         {
-            get => m_VerboseLogging;
-            set => m_VerboseLogging = value;
+            get { return m_VerboseLogging; }
+            set { m_VerboseLogging = value; }
         }
 
         /// <summary>
@@ -72,12 +72,21 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// The set of all stream consumers connected to this stream reader
         /// </summary>
-        public HashSet<IUsesStreamReader> consumers => m_Consumers;
-        
-        public TouchPhase touchPhase => m_TouchPhase;
+        public HashSet<IUsesStreamReader> consumers
+        {
+            get { return m_Consumers; }
+        }
 
-        public Vector2 touchPosition => m_TouchPosition;
-        
+        public TouchPhase touchPhase
+        {
+            get { return m_TouchPhase; }
+        }
+
+        public Vector2 touchPosition
+        {
+            get { return m_TouchPosition; }
+        }
+
         public void SetInitialHeadPose(Pose pose)
         {
             m_HeadPose = pose;
@@ -112,8 +121,8 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         public GameObject character
         {
-            get => m_Character;
-            set => m_Character = value;
+            get { return m_Character; }
+            set { m_Character = value; }
         }
 
         public bool faceTrackingLost
@@ -133,7 +142,7 @@ namespace Unity.Labs.FacialRemote
             {
                 Buffer.BlockCopy(buffer, offset + settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
                 Buffer.BlockCopy(buffer, offset + settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
-                Debug.Log($"{m_FrameNumArray[0]} : {m_FrameTimeArray[0]}");
+                Debug.Log(m_FrameNumArray[0] + " " + m_FrameTimeArray[0]);
             }
 
             if (m_FaceTrackingEnabled)

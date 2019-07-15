@@ -97,13 +97,25 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public int inputStateOffset => m_InputStateOffset;
+        public int inputStateOffset
+        {
+            get { return m_InputStateOffset; }
+        }
 
-        public int inputStateSize => m_InputStateSize;
+        public int inputStateSize
+        {
+            get { return m_InputStateSize; }
+        }
 
-        public int inputScreenPositionOffset => m_InputScreenPositionOffset;
+        public int inputScreenPositionOffset
+        {
+            get { return m_InputScreenPositionOffset; }
+        }
 
-        public int inputScreenPositionSize => m_InputScreenPositionSize;
+        public int inputScreenPositionSize
+        {
+            get { return m_InputScreenPositionSize; }
+        }
 
         public string name
         {

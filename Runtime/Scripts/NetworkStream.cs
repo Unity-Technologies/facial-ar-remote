@@ -68,7 +68,10 @@ namespace Unity.Labs.FacialRemote
 
         List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
-        public List<IStreamReader> streamReaders => m_StreamReaders;
+        public List<IStreamReader> streamReaders
+        {
+            get { return m_StreamReaders; }
+        }
 
         public bool isActive
         {
@@ -82,7 +85,7 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         public GameObject streamRecorderOverride
         {
-            get => m_StreamRecorderOverride;
+            get { return m_StreamRecorderOverride; }
             set
             {
                 if (value == m_StreamRecorderOverride)
