@@ -5,8 +5,10 @@ namespace PerformanceRecorder
 {
     public enum PacketType
     {
-        Pose = 0,
-        FaceRig
+        Invalid = 0,
+        Pose,
+        Face,
+        HeadPose
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -17,7 +19,7 @@ namespace PerformanceRecorder
 
         public static int Size
         {
-            get { return 8; }
+            get { return Marshal.SizeOf<PacketDescriptor>(); }
         }
     }
 
@@ -25,6 +27,11 @@ namespace PerformanceRecorder
     {
         public static int GetPayloadSize(this PacketDescriptor packet)
         {
+            switch (packet.type)
+            {
+                case PacketType.Face:
+                    return FaceData.Size;
+            }
             return 0;
         }
     }

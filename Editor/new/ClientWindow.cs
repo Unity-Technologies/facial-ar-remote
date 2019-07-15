@@ -1,11 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using Microsoft.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using Unity.Labs.FacialRemote;
 
 namespace PerformanceRecorder
 {
@@ -23,9 +23,19 @@ namespace PerformanceRecorder
             {
                 while (true)
                 {
-                    if (m_NetworkStreamSource.stream != null)
+                    var stream = m_NetworkStreamSource.stream;
+
+                    if (stream != null)
                     {
-                        ReadPacket(m_NetworkStreamSource.stream);
+                        try
+                        {
+                            var packet = ReadPacket(stream);
+                            var payload = ReadPayload(stream, packet);
+                            var faceData = payload.ToStruct<FaceData>();
+
+                            Debug.Log(faceData.blendShapeValues[0]);
+                        }
+                        catch {}
                     }
 
                     Thread.Sleep(1);
@@ -49,16 +59,30 @@ namespace PerformanceRecorder
             }
         }
 
-        void ReadPacket(Stream stream)
+        PacketDescriptor ReadPacket(Stream stream)
         {
+            var packet = default(PacketDescriptor);
             var bytes = new byte[PacketDescriptor.Size];
             var readByteCount = stream.Read(bytes, 0, bytes.Length);
 
-            if (readByteCount > 0)
-            {
-                var packet = bytes.ToStruct<PacketDescriptor>();
-                Debug.Log(packet.type + " " + packet.version);
-            }
+            if (readByteCount != PacketDescriptor.Size)
+                throw new Exception("Invalid read byte count");
+            
+            packet = bytes.ToStruct<PacketDescriptor>();
+
+            return packet;
+        }
+
+        byte[] ReadPayload(Stream stream, PacketDescriptor packet)
+        {
+            var size = packet.GetPayloadSize();
+            var bytes = new byte[size];
+            var readByteCount = stream.Read(bytes, 0, size);
+
+            if (readByteCount != size)
+                throw new Exception("Invalid read byte count");
+
+            return bytes;
         }
     }
 
@@ -141,11 +165,17 @@ namespace PerformanceRecorder
         {
             var packet = new PacketDescriptor()
             {
-                type = PacketType.FaceRig,
-                version = UnityEngine.Random.Range(0, 256)
+                type = PacketType.Face,
+                version = 0
             };
+            var faceData = new FaceData();
+            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            {
+                faceData.blendShapeValues[i] = UnityEngine.Random.value;
+            }
             
             m_Client.Send(packet.ToBytes());
+            m_Client.Send(faceData.ToBytes());
         }
     }
 }

@@ -98,8 +98,8 @@ namespace Unity.Labs.FacialRemote
         {
             UpdateBlendShapeIndices();
 
-            if (m_Overrides.Length != m_BlendShapeValues.Count)
-                Array.Resize(ref m_Overrides, m_BlendShapeValues.Count);
+            if (m_Overrides.Length != BlendShapeValues.Count)
+                Array.Resize(ref m_Overrides, BlendShapeValues.Count);
         }
 
         void LateUpdate()
@@ -132,7 +132,7 @@ namespace Unity.Labs.FacialRemote
             var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
             {
-                if (i >= m_BlendShapeValues.Count)
+                if (i >= BlendShapeValues.Count)
                     break;
                 
                 m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
@@ -182,7 +182,7 @@ namespace Unity.Labs.FacialRemote
 
         void PostProcessValues()
         {
-            for (var i = 0; i < m_BlendShapeValues.Count; i++)
+            for (var i = 0; i < BlendShapeValues.Count; i++)
             {
                 var targetValue = m_BlendShapeValues[i];
                 var hasOverride = HasOverride(i);
@@ -252,7 +252,7 @@ namespace Unity.Labs.FacialRemote
             if (mappings == null)
                 return;
             
-            var blendShapeCount = m_BlendShapeValues.Count;
+            var blendShapeCount = BlendShapeValues.Count;
             if (m_Overrides.Length != blendShapeCount)
             {
                 var overridesCopy = new BlendShapeOverride[blendShapeCount];

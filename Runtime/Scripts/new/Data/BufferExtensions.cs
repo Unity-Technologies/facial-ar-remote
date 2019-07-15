@@ -10,7 +10,7 @@ namespace PerformanceRecorder
             var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
             try
             {
-                return (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+                return Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
             }
             finally
             {
@@ -20,8 +20,7 @@ namespace PerformanceRecorder
 
         public static byte[] ToBytes<T>(this T str) where T : struct
         {
-            int size = Marshal.SizeOf(str);
-            var buffer = new byte[size];
+            var buffer = new byte[Marshal.SizeOf<T>()];
             var handle = default(GCHandle);
 
             try
