@@ -10,57 +10,66 @@ using Unity.Labs.FacialRemote;
 
 namespace PerformanceRecorder
 {
-    public class Server
+    public class FaceDebugger : IData<FaceData>
     {
-        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        Thread m_Thread;
-        byte[] m_Buffer = new byte[1024];
+        FaceData m_Data;
 
-        public void Start()
+        public FaceData data
         {
-            m_NetworkStreamSource.StartServer(9000);
-
-            m_Thread = new Thread(() =>
+            get { return m_Data; }
+            set
             {
-                while (true)
-                {
-                    var stream = m_NetworkStreamSource.stream;
-
-                    if (stream != null)
-                    {
-                        try
-                        {
-                            var packet = ReadPacket(stream);
-                            var payload = ReadPayload(stream, packet);
-                            var faceData = payload.ToStruct<FaceData>();
-
-                            Debug.Log(faceData.blendShapeValues[0]);
-                        }
-                        catch {}
-                    }
-
-                    Thread.Sleep(1);
-                };
-            });
-            m_Thread.Start();
-        }
-
-        public void Stop()
-        {
-            DisposeThread();
-            m_NetworkStreamSource.StopConnections();
-        }
-
-        void DisposeThread()
-        {
-            if (m_Thread != null)
-            {
-                m_Thread.Abort();
-                m_Thread = null;
+                m_Data = value;
+                Debug.Log(m_Data.blendShapeValues[0] + " " + m_Data.blendShapeValues[1] + m_Data.blendShapeValues[2]);
             }
         }
+    }
 
-        PacketDescriptor ReadPacket(Stream stream)
+    public class StreamSplitter
+    {
+        bool m_Recording = false;
+        public IStreamSource streamSource { get; set; }
+        public IStreamSource recorderStreamSource { get; set; }
+        public IData<FaceData> faceOutput { get; set; }
+
+        public void StartRecording()
+        {
+            m_Recording = true;
+        }
+
+        public void StopRecording()
+        {
+            m_Recording = false;
+        }
+
+        public void Read()
+        {
+            if (streamSource == null)
+                return;
+
+            var stream = streamSource.stream;
+
+            if (stream == null)
+                return;
+            
+            try
+            {
+                var descriptor = ReadDescriptor(stream);
+                var payload = ReadPayload(stream, descriptor);
+
+                ProcessPacket(descriptor, payload);
+
+                if (m_Recording && recorderStreamSource != null && recorderStreamSource.stream != null)
+                {
+                    recorderStreamSource.stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
+                    recorderStreamSource.stream.Write(payload, 0, payload.Length);
+                    recorderStreamSource.stream.Flush();
+                }
+            }
+            catch {}
+        }
+
+        PacketDescriptor ReadDescriptor(Stream stream)
         {
             var descriptor = default(PacketDescriptor);
             var bytes = new byte[PacketDescriptor.Size];
@@ -84,6 +93,65 @@ namespace PerformanceRecorder
                 throw new Exception("Invalid read byte count");
 
             return bytes;
+        }
+
+        void ProcessPacket(PacketDescriptor descriptor, byte[] payload)
+        {
+            switch (descriptor.type)
+            {
+                case PacketType.Face:
+                    ProcessFaceData(descriptor, payload);
+                    break;
+            }
+        }
+
+        void ProcessFaceData(PacketDescriptor descriptor, byte[] payload)
+        {
+            if (faceOutput == null)
+                return;
+
+            faceOutput.data = payload.ToStruct<FaceData>();
+        }
+    }
+
+    public class Server
+    {
+        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
+        Thread m_Thread;
+        StreamSplitter m_StreamReader = new StreamSplitter();
+
+        public void Start()
+        {
+            m_StreamReader.streamSource = m_NetworkStreamSource;
+            m_StreamReader.faceOutput = new FaceDebugger();
+
+            m_NetworkStreamSource.StartServer(9000);
+
+            m_Thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    m_StreamReader.Read();
+
+                    Thread.Sleep(1);
+                };
+            });
+            m_Thread.Start();
+        }
+
+        public void Stop()
+        {
+            DisposeThread();
+            m_NetworkStreamSource.StopConnections();
+        }
+
+        void DisposeThread()
+        {
+            if (m_Thread != null)
+            {
+                m_Thread.Abort();
+                m_Thread = null;
+            }
         }
     }
 
