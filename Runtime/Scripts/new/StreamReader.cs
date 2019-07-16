@@ -7,20 +7,9 @@ namespace PerformanceRecorder
     public class StreamReader
     {
         byte[] m_Buffer = new byte[1024];
-        bool m_Recording = false;
         public IStreamSource streamSource { get; set; }
-        public IStreamSource recorderStreamSource { get; set; }
+        public IStreamRecorder recorder { get; set; }
         public IData<FaceData> faceDataOutput { get; set; }
-
-        public void StartRecording()
-        {
-            m_Recording = true;
-        }
-
-        public void StopRecording()
-        {
-            m_Recording = false;
-        }
 
         public void Read()
         {
@@ -73,12 +62,8 @@ namespace PerformanceRecorder
 
         void Record(byte[] bytes, int size)
         {
-            if (!m_Recording || recorderStreamSource == null || recorderStreamSource.stream == null)
-                return;
-
-            var stream = recorderStreamSource.stream;
-
-            stream.Write(bytes, 0, size);
+            if (recorder != null && recorder.isRecording)
+                recorder.Record(bytes, size);
         }
 
         void ReadFaceData(Stream stream, PacketDescriptor descriptor)
