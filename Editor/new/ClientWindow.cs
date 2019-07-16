@@ -50,7 +50,7 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_StreamReader.streamSource = m_NetworkStreamSource;
-            m_StreamReader.faceOutput = new FaceDataDebugger();
+            m_StreamReader.faceDataOutput = new FaceDataDebugger();
 
             m_NetworkStreamSource.StartServer(9000);
 
@@ -106,7 +106,7 @@ namespace PerformanceRecorder
             int size = Marshal.SizeOf<T>();
             var descriptor = packet.descriptor;
             
-            descriptor.time = Time.realtimeSinceStartup;
+            packet.timeStamp = Time.realtimeSinceStartup;
 
             m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0 , PacketDescriptor.Size);
             m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0 , size);

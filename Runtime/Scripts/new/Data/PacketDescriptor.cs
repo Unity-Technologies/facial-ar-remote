@@ -18,12 +18,12 @@ namespace PerformanceRecorder
 
         [FieldOffset(0)] public PacketType type;
         [FieldOffset(4)] public int version;
-        [FieldOffset(8)] public float time;
     }
 
     public interface IPackageable
     {
         PacketDescriptor descriptor { get; }
+        float timeStamp { get; set; }
     }
 
     public static class PacketDescriptorExtensions

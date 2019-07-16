@@ -10,7 +10,7 @@ namespace PerformanceRecorder
         bool m_Recording = false;
         public IStreamSource streamSource { get; set; }
         public IStreamSource recorderStreamSource { get; set; }
-        public IData<FaceData> faceOutput { get; set; }
+        public IData<FaceData> faceDataOutput { get; set; }
 
         public void StartRecording()
         {
@@ -87,8 +87,8 @@ namespace PerformanceRecorder
 
             var data = Read<FaceData>(stream);
 
-            if (faceOutput != null)
-                faceOutput.data = data;
+            if (faceDataOutput != null)
+                faceDataOutput.data = data;
         }
     }
 }

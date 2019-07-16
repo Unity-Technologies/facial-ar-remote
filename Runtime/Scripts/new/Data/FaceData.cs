@@ -6,9 +6,10 @@ namespace PerformanceRecorder
     [StructLayout(LayoutKind.Explicit)]
     public struct FaceData : IPackageable
     {
-        [FieldOffset(0)] public BlendShapeValues blendShapeValues;
+        [FieldOffset(0)] public float timeStamp;
+        [FieldOffset(4)] public BlendShapeValues blendShapeValues;
 
-        public PacketDescriptor descriptor
+        PacketDescriptor IPackageable.descriptor
         {
             get
             {
@@ -18,6 +19,12 @@ namespace PerformanceRecorder
                     version = 0
                 };
             }
+        }
+
+        float IPackageable.timeStamp
+        {
+            get { return timeStamp; }
+            set { timeStamp = value; }
         }
     }
 }
