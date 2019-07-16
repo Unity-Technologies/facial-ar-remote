@@ -41,99 +41,11 @@ namespace PerformanceRecorder
         }
     }
 
-    public class StreamSplitter
-    {
-        byte[] m_Buffer = new byte[1024];
-        bool m_Recording = false;
-        public IStreamSource streamSource { get; set; }
-        public IStreamSource recorderStreamSource { get; set; }
-        public IData<FaceData> faceOutput { get; set; }
-
-        public void StartRecording()
-        {
-            m_Recording = true;
-        }
-
-        public void StopRecording()
-        {
-            m_Recording = false;
-        }
-
-        public void Read()
-        {
-            if (streamSource == null)
-                return;
-
-            var stream = streamSource.stream;
-
-            if (stream == null)
-                return;
-            
-            try
-            {
-                var descriptor = Read<PacketDescriptor>(stream);
-                switch (descriptor.type)
-                {
-                    case PacketType.Face:
-                        ReadFaceData(stream, descriptor);
-                        break;
-                }
-            }
-            catch {}
-        }
-
-        byte[] GetBuffer(int size)
-        {
-            if (m_Buffer == null || m_Buffer.Length < size)
-                m_Buffer = new byte[size];
-
-            return m_Buffer;
-        }
-
-        T Read<T>(Stream stream) where T : struct
-        {
-            var data = default(T);
-            var size = Marshal.SizeOf<T>();
-            var bytes = GetBuffer(size);
-            var readByteCount = stream.Read(bytes, 0, size);
-
-            if (readByteCount != size)
-                throw new Exception("Invalid read byte count");
-            
-            data = bytes.ToStruct<T>();
-
-            Record(bytes, size);
-
-            return data;
-        }
-
-
-        void Record(byte[] bytes, int size)
-        {
-            if (!m_Recording || recorderStreamSource == null || recorderStreamSource.stream == null)
-                return;
-
-            var stream = recorderStreamSource.stream;
-
-            stream.Write(bytes, 0, size);
-        }
-
-        void ReadFaceData(Stream stream, PacketDescriptor descriptor)
-        {
-            //TODO: use descriptor's version to read the correct struct and upgrade to latest FaceData
-
-            var data = Read<FaceData>(stream);
-
-            if (faceOutput != null)
-                faceOutput.data = data;
-        }
-    }
-
     public class Server
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         Thread m_Thread;
-        StreamSplitter m_StreamReader = new StreamSplitter();
+        StreamReader m_StreamReader = new StreamReader();
 
         public void Start()
         {
@@ -147,7 +59,6 @@ namespace PerformanceRecorder
                 while (true)
                 {
                     m_StreamReader.Read();
-
                     Thread.Sleep(1);
                 };
             });
@@ -193,11 +104,12 @@ namespace PerformanceRecorder
         public void Write<T>(T packet) where T : struct, IPackageable
         {
             int size = Marshal.SizeOf<T>();
-            var descBytes = packet.descriptor.ToBytes();
-            var bytes = packet.ToBytes();
+            var descriptor = packet.descriptor;
+            
+            descriptor.time = Time.realtimeSinceStartup;
 
-            m_NetworkStreamSource.stream.Write(descBytes, 0 , PacketDescriptor.Size);
-            m_NetworkStreamSource.stream.Write(bytes, 0 , size);
+            m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0 , PacketDescriptor.Size);
+            m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0 , size);
             m_NetworkStreamSource.stream.Flush();
         }
     }

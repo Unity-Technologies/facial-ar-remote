@@ -1,116 +1,19 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
-using UnityEngine;
-using Microsoft.IO;
+using System.Runtime.InteropServices;
 
 namespace PerformanceRecorder
 {
-    [Serializable]
-    public class StreamReader : IDisposable
+    public class StreamReader
     {
-        IStreamSource m_StreamSource;
-        Thread m_Thread;
         byte[] m_Buffer = new byte[1024];
-        RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
-        MemoryStream m_RecordStream = null;
         bool m_Recording = false;
-
-        public byte checkByte;
-
-        public IStreamSource streamSource
-        {
-            get { return m_StreamSource; }
-            set { m_StreamSource = value; }
-        }
-
-        public void StartLiveStream()
-        {
-            StopLiveStream();
-
-            if (streamSource == null || streamSource.stream == null)
-                return;
-            
-            if (streamSource.stream.CanSeek)
-                throw new Exception("Error: stream not compatible with live streamming");
-
-            m_Thread = new Thread(() =>
-            {
-                while (true)
-                {
-                    var readByteCount = 0;
-                    readByteCount = Read();
-
-                    if (readByteCount > 0)
-                    {
-                        checkByte = m_Buffer[0];
-
-                        if (m_Recording)
-                            m_RecordStream.Write(m_Buffer, 0, readByteCount);
-                    }
-
-                    Thread.Sleep(1);
-                };
-            });
-
-            m_Thread.Start();
-        }
-
-        public void StopLiveStream()
-        {
-            DisposeThread();
-        }
-
-        public int Read()
-        {
-            if (streamSource == null)
-                return 0;
-
-            var stream = streamSource.stream;
-
-            if (stream == null || !stream.CanRead)
-                return 0;
-
-            var readByteCount = 0;
-
-            try
-            {
-                readByteCount = stream.Read(m_Buffer, 0, 1);
-            }
-            catch (Exception) {}
-
-            return readByteCount;
-        }
-
-        public void Dispose()
-        {
-            DisposeThread();
-            StopRecording();
-            DisposeRecording();
-        }
-
-        void DisposeThread()
-        {
-            if (m_Thread != null)
-            {
-                m_Thread.Abort();
-                m_Thread = null;
-            }
-        }
-
-        void DisposeRecording()
-        {
-            if (m_RecordStream != null)
-            {
-                m_RecordStream.Dispose();
-                m_RecordStream = null;
-            }
-        }
+        public IStreamSource streamSource { get; set; }
+        public IStreamSource recorderStreamSource { get; set; }
+        public IData<FaceData> faceOutput { get; set; }
 
         public void StartRecording()
         {
-            DisposeRecording();
-            m_RecordStream = m_Manager.GetStream();
             m_Recording = true;
         }
 
@@ -119,15 +22,73 @@ namespace PerformanceRecorder
             m_Recording = false;
         }
 
-        public void SaveRecording(string path)
+        public void Read()
         {
-            if (m_RecordStream != null)
+            if (streamSource == null)
+                return;
+
+            var stream = streamSource.stream;
+
+            if (stream == null)
+                return;
+            
+            try
             {
-                using (var fileStream = File.Create(path))
+                var descriptor = Read<PacketDescriptor>(stream);
+                switch (descriptor.type)
                 {
-                    m_RecordStream.WriteTo(fileStream);
+                    case PacketType.Face:
+                        ReadFaceData(stream, descriptor);
+                        break;
                 }
             }
+            catch {}
+        }
+
+        byte[] GetBuffer(int size)
+        {
+            if (m_Buffer == null || m_Buffer.Length < size)
+                m_Buffer = new byte[size];
+
+            return m_Buffer;
+        }
+
+        T Read<T>(Stream stream) where T : struct
+        {
+            var data = default(T);
+            var size = Marshal.SizeOf<T>();
+            var bytes = GetBuffer(size);
+            var readByteCount = stream.Read(bytes, 0, size);
+
+            if (readByteCount != size)
+                throw new Exception("Invalid read byte count");
+            
+            data = bytes.ToStruct<T>();
+
+            Record(bytes, size);
+
+            return data;
+        }
+
+
+        void Record(byte[] bytes, int size)
+        {
+            if (!m_Recording || recorderStreamSource == null || recorderStreamSource.stream == null)
+                return;
+
+            var stream = recorderStreamSource.stream;
+
+            stream.Write(bytes, 0, size);
+        }
+
+        void ReadFaceData(Stream stream, PacketDescriptor descriptor)
+        {
+            //TODO: use descriptor's version to read the correct struct and upgrade to latest FaceData
+
+            var data = Read<FaceData>(stream);
+
+            if (faceOutput != null)
+                faceOutput.data = data;
         }
     }
 }
