@@ -1,3 +1,5 @@
+**WARNING: This is an internal development branch and is not meant for use in Unity projects at this time. Please continue to use the master branch until we publish the new update.**
+
 # AR Face Capture
 
 ## About
