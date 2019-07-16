@@ -10,9 +10,10 @@ using Unity.Labs.FacialRemote;
 
 namespace PerformanceRecorder
 {
-    public class FaceDebugger : IData<FaceData>
+    public class FaceDataDebugger : IData<FaceData>
     {
-        FaceData m_Data;
+        FaceData m_Data = new FaceData();
+        System.Text.StringBuilder m_StringBuilder = new System.Text.StringBuilder();
 
         public FaceData data
         {
@@ -20,13 +21,29 @@ namespace PerformanceRecorder
             set
             {
                 m_Data = value;
-                Debug.Log(m_Data.blendShapeValues[0] + " " + m_Data.blendShapeValues[1] + m_Data.blendShapeValues[2]);
+                DebugLog();
             }
+        }
+
+        void DebugLog()
+        {
+            m_StringBuilder.Clear();
+
+            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            {
+                m_StringBuilder.Append(m_Data.blendShapeValues[i]);
+
+                if (i < BlendShapeValues.Count-1)
+                    m_StringBuilder.Append(", ");
+            }
+
+            Debug.Log(m_StringBuilder.ToString());
         }
     }
 
     public class StreamSplitter
     {
+        byte[] m_Buffer = new byte[1024];
         bool m_Recording = false;
         public IStreamSource streamSource { get; set; }
         public IStreamSource recorderStreamSource { get; set; }
@@ -54,63 +71,61 @@ namespace PerformanceRecorder
             
             try
             {
-                var descriptor = ReadDescriptor(stream);
-                var payload = ReadPayload(stream, descriptor);
-
-                ProcessPacket(descriptor, payload);
-
-                if (m_Recording && recorderStreamSource != null && recorderStreamSource.stream != null)
+                var descriptor = Read<PacketDescriptor>(stream);
+                switch (descriptor.type)
                 {
-                    recorderStreamSource.stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
-                    recorderStreamSource.stream.Write(payload, 0, payload.Length);
-                    recorderStreamSource.stream.Flush();
+                    case PacketType.Face:
+                        ReadFaceData(stream, descriptor);
+                        break;
                 }
             }
             catch {}
         }
 
-        PacketDescriptor ReadDescriptor(Stream stream)
+        byte[] GetBuffer(int size)
         {
-            var descriptor = default(PacketDescriptor);
-            var bytes = new byte[PacketDescriptor.Size];
-            var readByteCount = stream.Read(bytes, 0, bytes.Length);
+            if (m_Buffer == null || m_Buffer.Length < size)
+                m_Buffer = new byte[size];
 
-            if (readByteCount != PacketDescriptor.Size)
-                throw new Exception("Invalid read byte count");
-            
-            descriptor = bytes.ToStruct<PacketDescriptor>();
-
-            return descriptor;
+            return m_Buffer;
         }
 
-        byte[] ReadPayload(Stream stream, PacketDescriptor descriptor)
+        T Read<T>(Stream stream) where T : struct
         {
-            var size = descriptor.GetPayloadSize();
-            var bytes = new byte[size];
+            var data = default(T);
+            var size = Marshal.SizeOf<T>();
+            var bytes = GetBuffer(size);
             var readByteCount = stream.Read(bytes, 0, size);
 
             if (readByteCount != size)
                 throw new Exception("Invalid read byte count");
+            
+            data = bytes.ToStruct<T>();
 
-            return bytes;
+            Record(bytes, size);
+
+            return data;
         }
 
-        void ProcessPacket(PacketDescriptor descriptor, byte[] payload)
-        {
-            switch (descriptor.type)
-            {
-                case PacketType.Face:
-                    ProcessFaceData(descriptor, payload);
-                    break;
-            }
-        }
 
-        void ProcessFaceData(PacketDescriptor descriptor, byte[] payload)
+        void Record(byte[] bytes, int size)
         {
-            if (faceOutput == null)
+            if (!m_Recording || recorderStreamSource == null || recorderStreamSource.stream == null)
                 return;
 
-            faceOutput.data = payload.ToStruct<FaceData>();
+            var stream = recorderStreamSource.stream;
+
+            stream.Write(bytes, 0, size);
+        }
+
+        void ReadFaceData(Stream stream, PacketDescriptor descriptor)
+        {
+            //TODO: use descriptor's version to read the correct struct and upgrade to latest FaceData
+
+            var data = Read<FaceData>(stream);
+
+            if (faceOutput != null)
+                faceOutput.data = data;
         }
     }
 
@@ -123,7 +138,7 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_StreamReader.streamSource = m_NetworkStreamSource;
-            m_StreamReader.faceOutput = new FaceDebugger();
+            m_StreamReader.faceOutput = new FaceDataDebugger();
 
             m_NetworkStreamSource.StartServer(9000);
 
