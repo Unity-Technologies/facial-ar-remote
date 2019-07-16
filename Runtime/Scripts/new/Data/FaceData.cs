@@ -7,7 +7,8 @@ namespace PerformanceRecorder
     public struct FaceData : IPackageable
     {
         [FieldOffset(0)] public float timeStamp;
-        [FieldOffset(4)] public BlendShapeValues blendShapeValues;
+        [FieldOffset(4)] public int id;
+        [FieldOffset(8)] public BlendShapeValues blendShapeValues;
 
         PacketDescriptor IPackageable.descriptor
         {
