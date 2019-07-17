@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
 #if UNITY_IOS
-using UnityEngine.XR.ARKit;
 using UnityEngine.XR;
 #endif
 

@@ -41,6 +41,84 @@ namespace PerformanceRecorder
         }
     }
 
+    public class StreamAdapter : MemoryStream
+    {
+        byte[] m_Buffer = new byte[1024];
+        int m_RemainingBytes = 0;
+        public Stream source { get; set; }
+
+        byte[] GetBuffer(int size)
+        {
+            if (m_Buffer == null || m_Buffer.Length < size)
+                m_Buffer = new byte[size];
+
+            return m_Buffer;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (count == 0 || source == null)
+                return 0;
+
+            var remainingBytes = m_RemainingBytes;
+
+            if (remainingBytes == 0)
+            {
+                var readBuffer = GetBuffer(274);
+                source.Read(readBuffer, 0, 274);
+
+                var oldStruct = readBuffer.ToStruct<StreamBufferData>();
+
+                var desc = new PacketDescriptor()
+                {
+                    type = PacketType.Face,
+                    version = 0
+                };
+                var data = new FaceData()
+                {
+                    id = 0,
+                    timeStamp = oldStruct.FrameTime,
+                    blendShapeValues = oldStruct.BlendshapeValues,
+                };
+
+                m_RemainingBytes += Marshal.SizeOf<PacketDescriptor>();
+                m_RemainingBytes += Marshal.SizeOf<FaceData>();
+
+                Position = 0;
+                Write(desc.ToBytes(), 0 , Marshal.SizeOf<PacketDescriptor>());
+                Write(data.ToBytes(), 0 , Marshal.SizeOf<FaceData>());
+                Flush();
+                Position = 0;
+            }
+            else if (m_RemainingBytes < count)
+            {
+                m_RemainingBytes = 0;
+                return base.Read(buffer, offset, remainingBytes);
+            }
+            
+            m_RemainingBytes -= count;
+
+            return base.Read(buffer, offset, count);
+        }
+    }
+
+    public class AdapterSource : IStreamSource
+    {
+        StreamAdapter m_StreamAdapter = new StreamAdapter();
+        public IStreamSource streamSource { get; set; }
+
+        public Stream stream
+        {
+            get
+            {
+                if (streamSource != null)
+                    m_StreamAdapter.source = streamSource.stream;
+                
+                return m_StreamAdapter;
+            }
+        }
+    }
+
     public class Server
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
@@ -49,7 +127,9 @@ namespace PerformanceRecorder
 
         public void Start()
         {
-            m_StreamReader.streamSource = m_NetworkStreamSource;
+            var adapter = new AdapterSource();
+            adapter.streamSource = m_NetworkStreamSource;
+            m_StreamReader.streamSource = adapter;
             m_StreamReader.faceDataOutput = new FaceDataDebugger();
 
             m_NetworkStreamSource.StartServer(9000);
@@ -95,9 +175,9 @@ namespace PerformanceRecorder
             m_NetworkStreamSource.StopConnections();
         }
 
-        public void Write(byte[] bytes)
+        public void Write(byte[] bytes, int count)
         {
-            m_NetworkStreamSource.stream.Write(bytes, 0 , bytes.Length);
+            m_NetworkStreamSource.stream.Write(bytes, 0 , count);
             m_NetworkStreamSource.stream.Flush();
         }
 
@@ -170,12 +250,25 @@ namespace PerformanceRecorder
 
         void SendPacket()
         {
+            /*
             var faceData = new FaceData();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
             m_Client.Write(faceData);
+            */
+
+            var oldData = new StreamBufferData();
+            var blendshapeValues = new BlendShapeValues();
+
+            for (var i = 0; i < BlendShapeValues.Count; ++i)
+                blendshapeValues[i] = UnityEngine.Random.value;
+
+            oldData.BlendshapeValues = blendshapeValues;
+
+            var b = oldData.ToBytes();
+            m_Client.Write(b, 274);
         }
     }
 }
