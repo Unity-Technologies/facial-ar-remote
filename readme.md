@@ -58,6 +58,26 @@ To drive multiple characters from multiple devices at the same time:
 ### Building the remote app
 To build the remote app yourself, you will need to install the [AR Face Capture Remote](https://github.com/Unity-Technologies/com.unity.xr.ar-face-capture-remote) package. See the readme for instructions.
 
+# Troubleshooting
+#### Character facing the wrong way at start
+* Check that all fields on the `Stream Reader` component are assigned.
+* Check that the `Character Rig Controller` component has all the bone transforms assigned to the correct bone. Note that the neck bone will be higher in the heirarchy (i.e. a parent) than the head bone.
+
+#### Character’s eye’s iris appears small or looking in the wrong direction
+* Bone has a mirrored bone facing. Use `Right Eye Neg Z` or `Left Eye Neg Z` on the `Character Rig Controller` on the character to correct the bones look direction.
+
+#### Character is following head movement but not seeing any blend shapes change
+* Stop playback and disable the Timeline game object referencing the character.
+* Check to make sure the skinned mesh renderers are assigned to the `Blend Shape Controller` component
+
+#### Device does not connect even though I have the correct IP and Port number
+* Check console error log for connection errors. If there is a connection error a socket is already open on that port. You will need to stop playback and change the port number.
+* Check that the device and the editor are on the same network.
+* Check that the PC does not have a firewall enabled.
+* Make sure you do not have a VPN running on the device or PC.
+* Make sure your network router is not blocking the port.
+* If using Windows, make sure that the network you're on is set to `Private` not `Public`
+
 # How it works
 ## Networking
 The remote is made up of a client/remote iOS app. The client is a lightweight app that’s able to make use of the latest additions to ARKit and send that data over the network to the `Network Stream` source. Using a simple TCP/IP socket and fixed-size byte stream, we send every frame of blendshape, camera and head pose data from the device to the editor. The editor then decodes the stream and to updates one or more rigged characters in real-time. 
@@ -120,3 +140,5 @@ Why are these separate components? The core reason is to make all this more modu
 3. Some network setups cause an issue with DNS lookup for getting IP addresses of the server computer.
 
 Note: History edits were made on 10/29/2018. If you cloned this repository before that date, please rebase before submitting a Pull Request.
+
+
