@@ -41,11 +41,11 @@ namespace PerformanceRecorder
         }
     }
 
-    public class StreamAdapter : MemoryStream
+    public class AdapterStream : MemoryStream
     {
         byte[] m_Buffer = new byte[1024];
         int m_RemainingBytes = 0;
-        public Stream source { get; set; }
+        public Stream input { get; set; }
 
         byte[] GetBuffer(int size)
         {
@@ -57,7 +57,7 @@ namespace PerformanceRecorder
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (count == 0 || source == null)
+            if (count == 0 || input == null)
                 return 0;
 
             var remainingBytes = m_RemainingBytes;
@@ -66,8 +66,11 @@ namespace PerformanceRecorder
             {
                 var size = Marshal.SizeOf<StreamBufferData>();
                 var readBuffer = GetBuffer(size);
-                source.Read(readBuffer, 0, size);
+                var readBytes = input.Read(readBuffer, 0, size);
 
+                if (readBytes == 0) 
+                    return 0;
+                
                 var oldStruct = readBuffer.ToStruct<StreamBufferData>();
 
                 var desc = new PacketDescriptor()
@@ -82,12 +85,12 @@ namespace PerformanceRecorder
                     blendShapeValues = oldStruct.BlendshapeValues,
                 };
 
-                m_RemainingBytes += Marshal.SizeOf<PacketDescriptor>();
+                m_RemainingBytes = Marshal.SizeOf<PacketDescriptor>();
                 m_RemainingBytes += Marshal.SizeOf<FaceData>();
 
                 Position = 0;
-                Write(desc.ToBytes(), 0 , Marshal.SizeOf<PacketDescriptor>());
-                Write(data.ToBytes(), 0 , Marshal.SizeOf<FaceData>());
+                Write(desc.ToBytes(), 0, Marshal.SizeOf<PacketDescriptor>());
+                Write(data.ToBytes(), 0, Marshal.SizeOf<FaceData>());
                 Flush();
                 Position = 0;
             }
@@ -105,17 +108,19 @@ namespace PerformanceRecorder
 
     public class AdapterSource : IStreamSource
     {
-        StreamAdapter m_StreamAdapter = new StreamAdapter();
+        AdapterStream m_AdapterStream = new AdapterStream();
         public IStreamSource streamSource { get; set; }
 
         public Stream stream
         {
             get
             {
-                if (streamSource != null)
-                    m_StreamAdapter.source = streamSource.stream;
+                if (streamSource == null)
+                    m_AdapterStream.input = null;
+                else
+                    m_AdapterStream.input = streamSource.stream;
                 
-                return m_StreamAdapter;
+                return m_AdapterStream;
             }
         }
     }
@@ -125,12 +130,12 @@ namespace PerformanceRecorder
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         Thread m_Thread;
         StreamReader m_StreamReader = new StreamReader();
+        AdapterSource m_Adapter = new AdapterSource();
 
         public void Start()
         {
-            var adapter = new AdapterSource();
-            adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = adapter;
+            m_Adapter.streamSource = m_NetworkStreamSource;
+            m_StreamReader.streamSource = m_Adapter;
             m_StreamReader.faceDataOutput = new FaceDataDebugger();
 
             m_NetworkStreamSource.StartServer(9000);
@@ -166,9 +171,9 @@ namespace PerformanceRecorder
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
 
-        public void ConnectToServer(string ip)
+        public void ConnectToServer(string ip, int port)
         {
-            m_NetworkStreamSource.ConnectToServer(ip, 9000);
+            m_NetworkStreamSource.ConnectToServer(ip, port);
         }
 
         public void Disconnect()
@@ -241,7 +246,7 @@ namespace PerformanceRecorder
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("Connect"))
-                    m_Client.ConnectToServer("127.0.0.1");
+                    m_Client.ConnectToServer("127.0.0.1", 9000);
                 if (GUILayout.Button("Disconnect"))
                     m_Client.Disconnect();
                 if (GUILayout.Button("Send"))
