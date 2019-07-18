@@ -140,7 +140,7 @@ namespace Unity.Labs.FacialRemote
 
             if (m_CharacterRigController != null)
             {
-                m_CharacterRigController.SetEyeBlendShapeIndices(playbackBuffer);
+                //m_CharacterRigController.SetEyeBlendShapeIndices(playbackBuffer);
 
                 m_CharacterRigController.SetupCharacterRigController();
 
