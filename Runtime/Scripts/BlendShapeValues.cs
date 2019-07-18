@@ -64,61 +64,61 @@ namespace Unity.Labs.FacialRemote
 
 
     [Serializable]
-    [StructLayout(LayoutKind.Explicit)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct BlendShapeValues
     {
-        [FieldOffset(0)] public float BrowDownLeft;
-        [FieldOffset(4)] public float BrowDownRight;
-        [FieldOffset(8)] public float BrowInnerUp;
-        [FieldOffset(12)] public float BrowOuterUpLeft;
-        [FieldOffset(16)] public float BrowOuterUpRight;
-        [FieldOffset(20)] public float CheekPuff;
-        [FieldOffset(24)] public float CheekSquintLeft;
-        [FieldOffset(28)] public float CheekSquintRight;
-        [FieldOffset(32)] public float EyeBlinkLeft;
-        [FieldOffset(36)] public float EyeBlinkRight;
-        [FieldOffset(40)] public float EyeLookDownLeft;
-        [FieldOffset(44)] public float EyeLookDownRight;
-        [FieldOffset(48)] public float EyeLookInLeft;
-        [FieldOffset(52)] public float EyeLookInRight;
-        [FieldOffset(56)] public float EyeLookOutLeft;
-        [FieldOffset(60)] public float EyeLookOutRight;
-        [FieldOffset(64)] public float EyeLookUpLeft;
-        [FieldOffset(68)] public float EyeLookUpRight;
-        [FieldOffset(72)] public float EyeSquintLeft;
-        [FieldOffset(76)] public float EyeSquintRight;
-        [FieldOffset(80)] public float EyeWideLeft;
-        [FieldOffset(84)] public float EyeWideRight;
-        [FieldOffset(88)] public float JawForward;
-        [FieldOffset(92)] public float JawLeft;
-        [FieldOffset(96)] public float JawOpen;
-        [FieldOffset(100)] public float JawRight;
-        [FieldOffset(104)] public float MouthClose;
-        [FieldOffset(108)] public float MouthDimpleLeft;
-        [FieldOffset(112)] public float MouthDimpleRight;
-        [FieldOffset(116)] public float MouthFrownLeft;
-        [FieldOffset(120)] public float MouthFrownRight;
-        [FieldOffset(124)] public float MouthFunnel;
-        [FieldOffset(128)] public float MouthLeft;
-        [FieldOffset(132)] public float MouthLowerDownLeft;
-        [FieldOffset(136)] public float MouthLowerDownRight;
-        [FieldOffset(140)] public float MouthPressLeft;
-        [FieldOffset(144)] public float MouthPressRight;
-        [FieldOffset(148)] public float MouthPucker;
-        [FieldOffset(152)] public float MouthRight;
-        [FieldOffset(156)] public float MouthRollLower;
-        [FieldOffset(160)] public float MouthRollUpper;
-        [FieldOffset(164)] public float MouthShrugLower;
-        [FieldOffset(168)] public float MouthShrugUpper;
-        [FieldOffset(172)] public float MouthSmileLeft;
-        [FieldOffset(176)] public float MouthSmileRight;
-        [FieldOffset(180)] public float MouthStretchLeft;
-        [FieldOffset(184)] public float MouthStretchRight;
-        [FieldOffset(188)] public float MouthUpperUpLeft;
-        [FieldOffset(192)] public float MouthUpperUpRight;
-        [FieldOffset(196)] public float NoseSneerLeft;
-        [FieldOffset(200)] public float NoseSneerRight;
-        [FieldOffset(204)] public float TongueOut;
+        public float BrowDownLeft;
+        public float BrowDownRight;
+        public float BrowInnerUp;
+        public float BrowOuterUpLeft;
+        public float BrowOuterUpRight;
+        public float CheekPuff;
+        public float CheekSquintLeft;
+        public float CheekSquintRight;
+        public float EyeBlinkLeft;
+        public float EyeBlinkRight;
+        public float EyeLookDownLeft;
+        public float EyeLookDownRight;
+        public float EyeLookInLeft;
+        public float EyeLookInRight;
+        public float EyeLookOutLeft;
+        public float EyeLookOutRight;
+        public float EyeLookUpLeft;
+        public float EyeLookUpRight;
+        public float EyeSquintLeft;
+        public float EyeSquintRight;
+        public float EyeWideLeft;
+        public float EyeWideRight;
+        public float JawForward;
+        public float JawLeft;
+        public float JawOpen;
+        public float JawRight;
+        public float MouthClose;
+        public float MouthDimpleLeft;
+        public float MouthDimpleRight;
+        public float MouthFrownLeft;
+        public float MouthFrownRight;
+        public float MouthFunnel;
+        public float MouthLeft;
+        public float MouthLowerDownLeft;
+        public float MouthLowerDownRight;
+        public float MouthPressLeft;
+        public float MouthPressRight;
+        public float MouthPucker;
+        public float MouthRight;
+        public float MouthRollLower;
+        public float MouthRollUpper;
+        public float MouthShrugLower;
+        public float MouthShrugUpper;
+        public float MouthSmileLeft;
+        public float MouthSmileRight;
+        public float MouthStretchLeft;
+        public float MouthStretchRight;
+        public float MouthUpperUpLeft;
+        public float MouthUpperUpRight;
+        public float NoseSneerLeft;
+        public float NoseSneerRight;
+        public float TongueOut;
 
         public static int Count
         {

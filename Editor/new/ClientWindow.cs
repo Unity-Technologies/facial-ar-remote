@@ -64,8 +64,9 @@ namespace PerformanceRecorder
 
             if (remainingBytes == 0)
             {
-                var readBuffer = GetBuffer(274);
-                source.Read(readBuffer, 0, 274);
+                var size = Marshal.SizeOf<StreamBufferData>();
+                var readBuffer = GetBuffer(size);
+                source.Read(readBuffer, 0, size);
 
                 var oldStruct = readBuffer.ToStruct<StreamBufferData>();
 
@@ -259,16 +260,12 @@ namespace PerformanceRecorder
             m_Client.Write(faceData);
             */
 
-            var oldData = new StreamBufferData();
-            var blendshapeValues = new BlendShapeValues();
+            var data = new StreamBufferData();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
-                blendshapeValues[i] = UnityEngine.Random.value;
+                data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            oldData.BlendshapeValues = blendshapeValues;
-
-            var b = oldData.ToBytes();
-            m_Client.Write(b, 274);
+            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferData>());
         }
     }
 }
