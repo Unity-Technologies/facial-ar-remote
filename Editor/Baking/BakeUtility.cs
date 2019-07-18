@@ -1,6 +1,6 @@
 ﻿using System;
 using UnityEngine;
-using UnityEditor;
+using PerformanceRecorder;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -39,14 +39,14 @@ namespace Unity.Labs.FacialRemote
 
             var timeStep = 1.0 / (double)sampleRate;
             var timeAcc = 0.0;
-            var lastData = StreamBufferData.Create(buffer);
+            var lastData = buffer.ToStruct<StreamBufferDataV1>();
             var startTime = lastData.FrameTime;
             var lastFrameTime = 0.0;
 
             for (var i = 0; i < stream.Length; i+=bufferSize)
             {
                 Buffer.BlockCopy(stream, i, buffer, 0, bufferSize);
-                var data = StreamBufferData.Create(buffer);
+                var data = buffer.ToStruct<StreamBufferDataV1>();
                 var time = data.FrameTime - startTime;
                 var lastTime = lastData.FrameTime - startTime;
 

@@ -41,96 +41,18 @@ namespace PerformanceRecorder
         }
     }
 
-    public class AdapterStream : MemoryStream
-    {
-        byte[] m_Buffer = new byte[1024];
-        int m_RemainingBytes = 0;
-        public Stream input { get; set; }
-
-        byte[] GetBuffer(int size)
-        {
-            if (m_Buffer == null || m_Buffer.Length < size)
-                m_Buffer = new byte[size];
-
-            return m_Buffer;
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            if (count == 0 || input == null)
-                return 0;
-
-            var remainingBytes = m_RemainingBytes;
-
-            if (remainingBytes == 0)
-            {
-                var size = Marshal.SizeOf<StreamBufferData>();
-                var readBuffer = GetBuffer(size);
-                var readBytes = input.Read(readBuffer, 0, size);
-
-                if (readBytes == 0) 
-                    return 0;
-                
-                var oldStruct = readBuffer.ToStruct<StreamBufferData>();
-
-                var desc = new PacketDescriptor()
-                {
-                    type = PacketType.Face,
-                    version = 0
-                };
-                var data = new FaceData()
-                {
-                    id = 0,
-                    timeStamp = oldStruct.FrameTime,
-                    blendShapeValues = oldStruct.BlendshapeValues,
-                };
-
-                m_RemainingBytes = Marshal.SizeOf<PacketDescriptor>();
-                m_RemainingBytes += Marshal.SizeOf<FaceData>();
-
-                Position = 0;
-                Write(desc.ToBytes(), 0, Marshal.SizeOf<PacketDescriptor>());
-                Write(data.ToBytes(), 0, Marshal.SizeOf<FaceData>());
-                Flush();
-                Position = 0;
-            }
-            else if (m_RemainingBytes < count)
-            {
-                m_RemainingBytes = 0;
-                return base.Read(buffer, offset, remainingBytes);
-            }
-            
-            m_RemainingBytes -= count;
-
-            return base.Read(buffer, offset, count);
-        }
-    }
-
-    public class AdapterSource : IStreamSource
-    {
-        AdapterStream m_AdapterStream = new AdapterStream();
-        public IStreamSource streamSource { get; set; }
-
-        public Stream stream
-        {
-            get
-            {
-                if (streamSource == null)
-                    m_AdapterStream.input = null;
-                else
-                    m_AdapterStream.input = streamSource.stream;
-                
-                return m_AdapterStream;
-            }
-        }
-    }
-
     public class Server
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         Thread m_Thread;
         StreamReader m_StreamReader = new StreamReader();
         AdapterSource m_Adapter = new AdapterSource();
+
+        public AdapterVersion adapterVersion
+        {
+            get { return m_Adapter.version; }
+            set { m_Adapter.version = value; }
+        }
 
         public void Start()
         {
@@ -194,8 +116,8 @@ namespace PerformanceRecorder
             
             packet.timeStamp = Time.realtimeSinceStartup;
 
-            m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0 , PacketDescriptor.Size);
-            m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0 , size);
+            m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
+            m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0, size);
             m_NetworkStreamSource.stream.Flush();
         }
     }
@@ -239,6 +161,7 @@ namespace PerformanceRecorder
                 if (GUILayout.Button("Stop"))
                     m_Server.Stop();
             }
+            m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
         void ClientGUI()
@@ -265,12 +188,12 @@ namespace PerformanceRecorder
             m_Client.Write(faceData);
             */
 
-            var data = new StreamBufferData();
+            var data = new StreamBufferDataV2();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferData>());
+            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
         }
     }
 }
