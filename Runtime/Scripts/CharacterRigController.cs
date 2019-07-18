@@ -12,13 +12,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("The camera being used to capture the character.")]
         Camera m_SceneCamera;
-        [SerializeField]
-        [Tooltip("Head pose input values. Can be driven by an AnimationClip or a StreamReader.")]
-        Pose m_HeadPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
-        [SerializeField]
-        [Tooltip("Camera pose input values. Can be driven by an AnimationClip or a StreamReader.")]
-        Pose m_CameraPose = new Pose() { position = Vector3.zero, rotation = Quaternion.identity };
-        
+
         [Range(0f, 1f)]
         [SerializeField]
         [Tooltip("Amount to smoothing when returning to the start pose for the character when AR tracking is lost.")]
@@ -205,7 +199,6 @@ namespace Unity.Labs.FacialRemote
         }
 
         [NonSerialized]
-        [HideInInspector]
         public Transform[] animatedBones = new Transform [4];
 
         void Start()
@@ -278,30 +271,30 @@ namespace Unity.Labs.FacialRemote
         {
             Debug.Log("Start avatar Setup");
 
-            if (m_DriveEyes)
+            if (driveEyes)
             {
                 if (m_LeftEye == null)
                 {
-                    Debug.LogWarning("Drive Eyes is set but Left Eye Bone returning NULL!");
-                    m_DriveEyes = false;
+                    Debug.LogWarning("Drive Eyes is set but Left Eye Bone is returning null. Disabling Drive Eyes.");
+                    driveEyes = false;
                 }
 
                 if (m_RightEye == null)
                 {
-                    Debug.LogWarning("Drive Eyes is set but Right Eye Bone returning NULL!");
-                    m_DriveEyes = false;
+                    Debug.LogWarning("Drive Eyes is set but Right Eye Bone is returning null. Disabling Drive Eyes.");
+                    driveEyes = false;
                 }
             }
 
             if (m_DriveHead && m_HeadBone == null)
             {
-                Debug.LogWarning("Drive Head is set but Head Bone returning NULL!");
+                Debug.LogWarning("Drive Head is set but Head Bone is returning null. Disabling Drive Head.");
                 m_DriveHead = false;
             }
 
             if (m_DriveNeck && m_NeckBone == null)
             {
-                Debug.LogWarning("Drive Neck is set but Neck Bone returning NULL!");
+                Debug.LogWarning("Drive Neck is set but Neck Bone is returning null. Disabling Drive Neck.");
                 m_DriveNeck = false;
             }
 
@@ -309,13 +302,11 @@ namespace Unity.Labs.FacialRemote
             Pose headLocalPose;
             if (m_DriveHead)
             {
-                // ReSharper disable once PossibleNullReferenceException
                 headWorldPose = new Pose(headBone.position, headBone.rotation);
                 headLocalPose = new Pose(headBone.localPosition, headBone.localRotation);
             }
             else if (m_DriveNeck)
             {
-                // ReSharper disable once PossibleNullReferenceException
                 headWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
                 headLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
             }
