@@ -77,8 +77,8 @@ namespace PerformanceRecorder
 
         public void Stop()
         {
-            DisposeThread();
             m_NetworkStreamSource.StopConnections();
+            DisposeThread();
         }
 
         void DisposeThread()
@@ -209,6 +209,7 @@ namespace PerformanceRecorder
             
             m_Client.Write(FaceData.Descriptor, faceData);
             */
+            
 
             var data = new StreamBufferDataV1();
 

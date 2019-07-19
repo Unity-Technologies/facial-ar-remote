@@ -86,8 +86,8 @@ namespace PerformanceRecorder
 
             foreach (var socket in m_ServerSockets)
             {
-                if (socket.Connected)
-                    socket.Close();
+                socket.Close(1);
+                socket.Dispose();
             }
 
             foreach (var thread in m_Threads)
@@ -180,7 +180,7 @@ namespace PerformanceRecorder
                         var endPoint = listenSocket.LocalEndPoint as IPEndPoint;
                         Debug.Log("Server: Listening " + endPoint.Address);
                         var socket = listenSocket.Accept();
-                        Debug.Log("Server: Accepted");
+                        Debug.Log("Server: Accepted " + endPoint.Address);
 
                         DisposeStream();
 
