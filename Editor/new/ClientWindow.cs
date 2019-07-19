@@ -2,11 +2,13 @@
 using System.IO;
 using System.Threading;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
+using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
@@ -92,6 +94,8 @@ namespace PerformanceRecorder
     public class Client
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
+        RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
+        ConcurrentQueue<MemoryStream> m_StreamQueue = new ConcurrentQueue<MemoryStream>();
 
         public void ConnectToServer(string ip, int port)
         {
@@ -105,17 +109,37 @@ namespace PerformanceRecorder
 
         public void Write(byte[] bytes, int count)
         {
+            var stream = m_Manager.GetStream();
+            stream.Write(bytes, 0, count);
+            m_StreamQueue.Enqueue(stream);
+
             m_NetworkStreamSource.stream.Write(bytes, 0 , count);
             m_NetworkStreamSource.stream.Flush();
         }
 
         public void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
         {
+            var stream = m_Manager.GetStream();
             int size = Marshal.SizeOf<T>();
 
-            m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
-            m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0, size);
-            m_NetworkStreamSource.stream.Flush();
+            stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
+            stream.Write(packet.ToBytes(), 0, size);
+
+            m_StreamQueue.Enqueue(stream);
+        }
+
+        public void Send()
+        {
+            var outputStream = m_NetworkStreamSource.stream;
+            var stream = default(MemoryStream);
+
+            while (m_StreamQueue.TryDequeue(out stream))
+            {
+                stream.CopyTo(outputStream);
+                stream.Dispose();
+            }
+
+            outputStream.Flush();
         }
     }
 
@@ -186,12 +210,14 @@ namespace PerformanceRecorder
             m_Client.Write(FaceData.Descriptor, faceData);
             */
 
-            var data = new StreamBufferDataV2();
+            var data = new StreamBufferDataV1();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
+            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+
+            m_Client.Send();
         }
     }
 }
