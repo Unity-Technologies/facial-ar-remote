@@ -20,12 +20,6 @@ namespace PerformanceRecorder
         [FieldOffset(4)] public int version;
     }
 
-    public interface IPackageable
-    {
-        PacketDescriptor descriptor { get; }
-        float timeStamp { get; set; }
-    }
-
     public static class PacketDescriptorExtensions
     {
         public static int GetPayloadSize(this PacketDescriptor packet)

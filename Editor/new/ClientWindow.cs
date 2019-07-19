@@ -109,12 +109,9 @@ namespace PerformanceRecorder
             m_NetworkStreamSource.stream.Flush();
         }
 
-        public void Write<T>(T packet) where T : struct, IPackageable
+        public void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
         {
             int size = Marshal.SizeOf<T>();
-            var descriptor = packet.descriptor;
-            
-            packet.timeStamp = Time.realtimeSinceStartup;
 
             m_NetworkStreamSource.stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
             m_NetworkStreamSource.stream.Write(packet.ToBytes(), 0, size);
@@ -181,11 +178,12 @@ namespace PerformanceRecorder
         {
             /*
             var faceData = new FaceData();
+            faceData.timeStamp = Time.realtimeSinceStartup;
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.Write(faceData);
+            m_Client.Write(FaceData.Descriptor, faceData);
             */
 
             var data = new StreamBufferDataV2();
