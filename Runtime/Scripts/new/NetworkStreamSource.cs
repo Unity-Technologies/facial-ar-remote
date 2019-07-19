@@ -177,7 +177,8 @@ namespace PerformanceRecorder
                 {
                     while (true)
                     {
-                        Debug.Log("Server: Listening");
+                        var endPoint = listenSocket.LocalEndPoint as IPEndPoint;
+                        Debug.Log("Server: Listening " + endPoint.Address);
                         var socket = listenSocket.Accept();
                         Debug.Log("Server: Accepted");
 
