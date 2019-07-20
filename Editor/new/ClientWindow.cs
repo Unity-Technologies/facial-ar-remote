@@ -59,7 +59,7 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_Adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = m_Adapter;
+            m_StreamReader.streamSource = m_NetworkStreamSource;
             m_StreamReader.faceDataOutput = new FaceDataDebugger();
 
             m_NetworkStreamSource.StartServer(9000);
@@ -93,6 +93,8 @@ namespace PerformanceRecorder
 
     public class Client
     {
+        static readonly int PacketDescriptorSize = Marshal.SizeOf<PacketDescriptor>();
+
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_StreamQueue = new ConcurrentQueue<MemoryStream>();
@@ -112,9 +114,6 @@ namespace PerformanceRecorder
             var stream = m_Manager.GetStream();
             stream.Write(bytes, 0, count);
             m_StreamQueue.Enqueue(stream);
-
-            m_NetworkStreamSource.stream.Write(bytes, 0 , count);
-            m_NetworkStreamSource.stream.Flush();
         }
 
         public void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
@@ -122,7 +121,7 @@ namespace PerformanceRecorder
             var stream = m_Manager.GetStream();
             int size = Marshal.SizeOf<T>();
 
-            stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.Size);
+            stream.Write(descriptor.ToBytes(), 0, PacketDescriptorSize);
             stream.Write(packet.ToBytes(), 0, size);
 
             m_StreamQueue.Enqueue(stream);
@@ -135,7 +134,8 @@ namespace PerformanceRecorder
 
             while (m_StreamQueue.TryDequeue(out stream))
             {
-                stream.CopyTo(outputStream);
+                var count = (int)stream.Position;
+                outputStream.Write(stream.GetBuffer(), 0 , count);
                 stream.Dispose();
             }
 

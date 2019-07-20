@@ -11,13 +11,33 @@ namespace PerformanceRecorder
         HeadPose
     }
 
-    [StructLayout(LayoutKind.Explicit)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct PacketDescriptor
     {
-        public static readonly int Size = Marshal.SizeOf<PacketDescriptor>();
+        public static readonly PacketDescriptor DescriptorInvalid = new PacketDescriptor() { type = PacketType.Invalid, version = 0 };
+        public static readonly PacketDescriptor DescriptorPose = new PacketDescriptor() { type = PacketType.Pose, version = 0 };
+        public static readonly PacketDescriptor DescriptorFace = new PacketDescriptor() { type = PacketType.Face, version = 0 };
+        public static readonly PacketDescriptor DescriptorHeadPose = new PacketDescriptor() { type = PacketType.HeadPose, version = 0 };
 
-        [FieldOffset(0)] public PacketType type;
-        [FieldOffset(4)] public int version;
+        public static PacketDescriptor Get(PacketType type)
+        {
+            switch (type)
+            {
+                case PacketType.Invalid:
+                    return DescriptorInvalid;
+                case PacketType.Pose:
+                    return DescriptorPose;
+                case PacketType.Face:
+                    return DescriptorFace;
+                case PacketType.HeadPose:
+                    return DescriptorHeadPose;
+            }
+
+            return DescriptorInvalid;
+        }
+
+        public PacketType type;
+        public int version;
     }
 
     public static class PacketDescriptorExtensions
