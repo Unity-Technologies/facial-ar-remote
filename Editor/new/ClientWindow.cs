@@ -16,6 +16,7 @@ namespace PerformanceRecorder
     {
         FaceData m_Data = new FaceData();
         System.Text.StringBuilder m_StringBuilder = new System.Text.StringBuilder();
+        public BlendShapesController controller { get; set; }
 
         public FaceData data
         {
@@ -23,7 +24,13 @@ namespace PerformanceRecorder
             set
             {
                 m_Data = value;
-                DebugLog();
+
+                if (controller != null)
+                {
+                    controller.blendShapeInput = value.blendShapeValues;
+                    controller.UpdateBlendShapes();
+                }
+                //DebugLog();
             }
         }
 
@@ -56,11 +63,15 @@ namespace PerformanceRecorder
             set { m_Adapter.version = value; }
         }
 
+        public StreamReader streamReader
+        {
+            get { return m_StreamReader; }
+        }
+
         public void Start()
         {
             m_Adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = m_NetworkStreamSource;
-            m_StreamReader.faceDataOutput = new FaceDataDebugger();
+            m_StreamReader.streamSource = m_Adapter;
 
             m_NetworkStreamSource.StartServer(9000);
 
@@ -97,7 +108,7 @@ namespace PerformanceRecorder
 
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
-        ConcurrentQueue<MemoryStream> m_StreamQueue = new ConcurrentQueue<MemoryStream>();
+        ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
         public void ConnectToServer(string ip, int port)
         {
@@ -113,7 +124,7 @@ namespace PerformanceRecorder
         {
             var stream = m_Manager.GetStream();
             stream.Write(bytes, 0, count);
-            m_StreamQueue.Enqueue(stream);
+            m_Queue.Enqueue(stream);
         }
 
         public void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
@@ -124,7 +135,7 @@ namespace PerformanceRecorder
             stream.Write(descriptor.ToBytes(), 0, PacketDescriptorSize);
             stream.Write(packet.ToBytes(), 0, size);
 
-            m_StreamQueue.Enqueue(stream);
+            m_Queue.Enqueue(stream);
         }
 
         public void Send()
@@ -132,7 +143,7 @@ namespace PerformanceRecorder
             var outputStream = m_NetworkStreamSource.stream;
             var stream = default(MemoryStream);
 
-            while (m_StreamQueue.TryDequeue(out stream))
+            while (m_Queue.TryDequeue(out stream))
             {
                 var count = (int)stream.Position;
                 outputStream.Write(stream.GetBuffer(), 0 , count);
@@ -147,6 +158,8 @@ namespace PerformanceRecorder
     {
         Server m_Server = new Server();
         Client m_Client = new Client();
+        BlendShapesController m_Controller;
+        FaceDataDebugger m_FaceDataDebugger = new FaceDataDebugger();
 
         [MenuItem("Window/Test Client")]
         public static void ShowWindow()
@@ -158,13 +171,15 @@ namespace PerformanceRecorder
 
         void OnEnable()
         {
-            
+            EditorApplication.update += Update;
         }
 
         void OnDisable()
         {
             m_Server.Stop();
             m_Client.Disconnect();
+
+            EditorApplication.update -= Update;
         }
 
         void OnGUI()
@@ -173,12 +188,27 @@ namespace PerformanceRecorder
             ClientGUI();
         }
 
+        void Update()
+        {
+            if (m_Controller == null)
+                return;
+            
+            m_FaceDataDebugger.controller = m_Controller;
+
+            m_Server.streamReader.faceDataOutput = m_FaceDataDebugger;
+            m_Server.streamReader.Dequeue();
+        }
+
         void ServerGUI()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("Start"))
+                {
+                    m_Controller = GameObject.FindObjectOfType<BlendShapesController>();
+
                     m_Server.Start();
+                }
                 if (GUILayout.Button("Stop"))
                     m_Server.Stop();
             }
@@ -207,9 +237,8 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.Write(FaceData.Descriptor, faceData);
+            m_Client.Write(PacketDescriptor.Get(PacketType.Face), faceData);
             */
-            
 
             var data = new StreamBufferDataV1();
 
@@ -217,7 +246,7 @@ namespace PerformanceRecorder
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-
+            
             m_Client.Send();
         }
     }

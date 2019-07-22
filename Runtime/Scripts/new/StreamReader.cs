@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
 namespace PerformanceRecorder
@@ -10,7 +11,11 @@ namespace PerformanceRecorder
         public IStreamSource streamSource { get; set; }
         public IStreamRecorder recorder { get; set; }
         public IData<FaceData> faceDataOutput { get; set; }
+        ConcurrentQueue<FaceData> m_FaceDataQueue = new ConcurrentQueue<FaceData>();
 
+        /// <summary>
+        /// Reads stream source and enqueue packets. This can be called from a separate thread.
+        /// </summary>
         public void Read()
         {
             if (streamSource == null)
@@ -34,31 +39,36 @@ namespace PerformanceRecorder
             catch {}
         }
 
-        byte[] GetBuffer(int size)
+        /// <summary>
+        /// Dequeue packets into outputs. Call this one from main thread.
+        /// </summary>
+        public void Dequeue()
         {
-            if (m_Buffer == null || m_Buffer.Length < size)
-                m_Buffer = new byte[size];
+            Dequeue<FaceData>(m_FaceDataQueue, faceDataOutput);
+        }
 
-            return m_Buffer;
+        void Dequeue<T>(ConcurrentQueue<T> queue, IData<T> output) where T : struct
+        {
+            var data = default(T);
+            while (queue.TryDequeue(out data))
+            {
+                output.data = data;
+            }
         }
 
         T Read<T>(Stream stream) where T : struct
         {
-            var data = default(T);
             var size = Marshal.SizeOf<T>();
             var bytes = GetBuffer(size);
             var readByteCount = stream.Read(bytes, 0, size);
 
             if (readByteCount != size)
                 throw new Exception("Invalid read byte count");
-            
-            data = bytes.ToStruct<T>();
 
             Record(bytes, size);
 
-            return data;
+            return bytes.ToStruct<T>();
         }
-
 
         void Record(byte[] bytes, int size)
         {
@@ -69,11 +79,16 @@ namespace PerformanceRecorder
         void ReadFaceData(Stream stream, PacketDescriptor descriptor)
         {
             //TODO: use descriptor's version to read the correct struct and upgrade to latest FaceData
-
             var data = Read<FaceData>(stream);
+            m_FaceDataQueue.Enqueue(data);
+        }
 
-            if (faceDataOutput != null)
-                faceDataOutput.data = data;
+        byte[] GetBuffer(int size)
+        {
+            if (m_Buffer == null || m_Buffer.Length < size)
+                m_Buffer = new byte[size];
+
+            return m_Buffer;
         }
     }
 }
