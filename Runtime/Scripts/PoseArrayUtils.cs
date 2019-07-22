@@ -1,8 +1,5 @@
 ﻿using System;
 using UnityEngine;
-#if UNITY_IOS
-using UnityEngine.XR;
-#endif
 
 namespace Unity.Labs.FacialRemote
 {

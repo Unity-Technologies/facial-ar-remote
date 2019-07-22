@@ -47,6 +47,10 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object.")]
         GameObject m_StreamRecorderOverride;
 
+        [SerializeField]
+        [Tooltip("Shows extra logging information in the console.")]
+        bool m_VerboseLogging;
+        
         int m_LastFrameNum;
 
         bool m_Running;
@@ -62,7 +66,6 @@ namespace Unity.Labs.FacialRemote
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
 
         public bool recording { get; private set; }
-
 
         List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
@@ -205,8 +208,9 @@ namespace Unity.Labs.FacialRemote
                                         m_StreamSettings.FrameNumberSize);
 
                                     var frameNum = frameNumArray[0];
-                                    //if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
-                                      //  Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                    
+                                    if (m_VerboseLogging && m_LastFrameNum != frameNum - 1)
+                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
                                 }
@@ -301,12 +305,9 @@ namespace Unity.Labs.FacialRemote
             if (notSource || !isActive)
                 return;
 
-            //if (streamReader.verboseLogging)
-            //{
-            //    if (m_BufferQueue.Count > m_CatchUpSize)
-            //        Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
-            //            m_BufferQueue.Count, m_CatchUpSize));
-            //}
+            if (m_VerboseLogging && m_BufferQueue.Count > m_CatchUpSize)
+                Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", 
+                    m_BufferQueue.Count, m_CatchUpSize));
 
             UpdateCurrentFrameBuffer();
         }
