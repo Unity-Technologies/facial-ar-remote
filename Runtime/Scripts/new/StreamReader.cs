@@ -85,8 +85,14 @@ namespace PerformanceRecorder
 
         void ReadFaceData(Stream stream, PacketDescriptor descriptor)
         {
-            //TODO: use descriptor's version to read the correct struct and upgrade to latest FaceData
-            var data = Read<FaceData>(stream);
+            var data = default(FaceData);
+
+            switch (descriptor.version)
+            {
+                default:
+                    data = Read<FaceData>(stream); break;
+            }
+            
             m_FaceDataQueue.Enqueue(data);
         }
 
