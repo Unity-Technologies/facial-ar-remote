@@ -60,10 +60,17 @@ namespace PerformanceRecorder
         {
             var size = Marshal.SizeOf<T>();
             var bytes = GetBuffer(size);
-            var readByteCount = stream.Read(bytes, 0, size);
+            var offset = 0;
+            
+            do {
+                var readBytes = stream.Read(bytes, offset, size - offset);
 
-            if (readByteCount != size)
-                throw new Exception("Invalid read byte count");
+                if (readBytes == 0)
+                    throw new Exception("Invalid read byte count");
+
+                offset += readBytes;
+
+            } while(offset < size);
 
             Record(bytes, size);
 
