@@ -11,20 +11,18 @@ namespace PerformanceRecorder.Takes
 {
     public class TakeGraphView : GraphView
     {
+        TakeSystemWindow m_TakeSystemWindow;
         /*
         private static readonly Vector2 s_CopyOffset = new Vector2(50, 50);
-        SimpleGraphViewWindow m_SimpleGraphViewWindow;
         SimpleBlackboard m_Blackboard;
 
         public SimpleGraphViewWindow window { get { return m_SimpleGraphViewWindow; } }
         public SimpleBlackboard blackboard { get { return m_Blackboard; } }
         */
 
-        public TakeGraphView(/* SimpleGraphViewWindow simpleGraphViewWindow */)
+        public TakeGraphView(TakeSystemWindow takeSystemWindow)
         {
-            /*
-            m_SimpleGraphViewWindow = simpleGraphViewWindow;
-            */
+            m_TakeSystemWindow = takeSystemWindow;
 
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             // FIXME: add a coordinator so that ContentDragger and SelectionDragger cannot be active at the same time.
@@ -412,8 +410,7 @@ namespace PerformanceRecorder.Takes
 
         public void Reload(List<TakeAsset> nodesToReload, bool select = false)
         {
-            /*
-            var nodes = new Dictionary<MathNode, GraphElement>();
+            var nodes = new Dictionary<TakeAsset, GraphElement>();
 
             if (select)
             {
@@ -421,9 +418,9 @@ namespace PerformanceRecorder.Takes
             }
 
             // Create the nodes.
-            foreach (MathNode mathNode in nodesToReload)
+            foreach (TakeAsset takeAsset in nodesToReload)
             {
-                GraphElement node = m_SimpleGraphViewWindow.CreateNode(mathNode);
+                GraphElement node = m_TakeSystemWindow.CreateNode(takeAsset);
 
                 if (node is Group)
                 {
@@ -435,41 +432,46 @@ namespace PerformanceRecorder.Takes
                 }
                 else
                 {
-                    node.name = "SimpleNode";
+                    node.name = "TakeNode";
                 }
 
                 if (node == null)
                 {
-                    Debug.LogError("Could not create node " + mathNode);
+                    Debug.LogError("Could not create node " + takeAsset);
                     continue;
                 }
 
-                nodes[mathNode] = node;
+                nodes[takeAsset] = node;
 
                 AddElement(node);
 
                 // Do not select node in groups as their containing group will be selected
-                if (select && mathNode.groupNode == null)
+                /*
+                if (select && takeAsset.groupNode == null)
                 {
                     AddToSelection(node);
                 }
+                */
             }
 
             // Assign scopes
-            foreach (MathNode mathNode in nodesToReload)
+            /*
+            foreach (TakeAsset takeAsset in nodesToReload)
             {
-                if (mathNode.groupNode == null)
+                if (takeAsset.groupNode == null)
                     continue;
 
-                Scope graphScope = nodes[mathNode.groupNode] as Scope;
+                Scope graphScope = nodes[takeAsset.groupNode] as Scope;
 
-                graphScope.AddElement(nodes[mathNode]);
+                graphScope.AddElement(nodes[takeAsset]);
             }
+            */
 
             // Add to stacks
-            foreach (MathNode mathNode in nodesToReload)
+            /*
+            foreach (TakeAsset takeAsset in nodesToReload)
             {
-                MathStackNode stack = mathNode as MathStackNode;
+                MathStackNode stack = takeAsset as MathStackNode;
 
                 if (stack == null)
                     continue;
@@ -478,7 +480,7 @@ namespace PerformanceRecorder.Takes
 
                 for (int i = 0; i < stack.nodeCount; ++i)
                 {
-                    MathNode stackMember = stack.GetNode(i);
+                    TakeAsset stackMember = stack.GetNode(i);
                     if (stackMember == null)
                     {
                         Debug.LogWarning("null stack member! Item " + i + " of stack " + stack.name + " is null. Possibly a leftover from bad previous manips.");
@@ -486,21 +488,23 @@ namespace PerformanceRecorder.Takes
                     graphStackNode.AddElement(nodes[stackMember]);
                 }
             }
+            */
 
             // Connect the presenters.
-            foreach (var mathNode in nodesToReload)
+            foreach (var takeAsset in nodesToReload)
             {
-                if (mathNode is MathOperator)
+                if (takeAsset is TakeDevice)
                 {
-                    MathOperator mathOperator = mathNode as MathOperator;
+                    TakeDevice device = takeAsset as TakeDevice;
 
-                    if (!nodes.ContainsKey(mathNode))
+                    if (!nodes.ContainsKey(takeAsset))
                     {
-                        Debug.LogError("No element found for " + mathNode);
+                        Debug.LogError("No element found for " + takeAsset);
                         continue;
                     }
 
-                    var graphNode = nodes[mathNode] as Node;
+                    /*
+                    var graphNode = nodes[takeAsset] as Node;
 
                     if (mathOperator.left != null && nodes.ContainsKey(mathOperator.left))
                     {
@@ -531,22 +535,24 @@ namespace PerformanceRecorder.Takes
                         //add.m_Right = null;
                         Debug.LogWarning("Invalid right operand for operator " + mathOperator.ToString() + " , " + mathOperator.right.ToString());
                     }
+                    */
                 }
-                else if (mathNode is MathFunction)
+                else if (takeAsset is TakeActor)
                 {
-                    MathFunction mathFunction = mathNode as MathFunction;
+                    TakeActor actor = takeAsset as TakeActor;
 
-                    if (!nodes.ContainsKey(mathNode))
+                    if (!nodes.ContainsKey(takeAsset))
                     {
-                        Debug.LogError("No element found for " + mathNode);
+                        Debug.LogError("No element found for " + takeAsset);
                         continue;
                     }
 
-                    var graphNode = nodes[mathNode] as Node;
+                    /*
+                    var graphNode = nodes[takeAsset] as Node;
 
                     for (int i = 0; i < mathFunction.parameterCount; ++i)
                     {
-                        MathNode param = mathFunction.GetParameter(i);
+                        TakeAsset param = mathFunction.GetParameter(i);
 
                         if (param != null && nodes.ContainsKey(param))
                         {
@@ -563,24 +569,9 @@ namespace PerformanceRecorder.Takes
                                 param.ToString());
                         }
                     }
-                }
-                else if (mathNode is MathResult)
-                {
-                    MathResult mathResult = mathNode as MathResult;
-                    var graphNode = nodes[mathNode] as Node;
-
-                    if (mathResult.root != null)
-                    {
-                        var outputPort = (nodes[mathResult.root] as Node).outputContainer[0] as Port;
-                        var inputPort = graphNode.inputContainer[0] as Port;
-
-                        Edge edge = inputPort.ConnectTo(outputPort);
-                        edge.persistenceKey = mathResult.root.nodeID + "_edge";
-                        AddElement(edge);
-                    }
+                    */
                 }
             }
-            */
         }
     }
 }

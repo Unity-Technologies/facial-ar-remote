@@ -26,7 +26,7 @@ namespace PerformanceRecorder.Takes
 
         void OnEnable()
         {
-            graphView = new TakeGraphView(/* this */);
+            graphView = new TakeGraphView(this);
             graphView.name = "Take System";
             graphView.persistenceKey = "TakeSystemGraphView";
             graphView.StretchToParentSize();
@@ -37,6 +37,7 @@ namespace PerformanceRecorder.Takes
 
             graphView.nodeCreationRequest += OnRequestNodeCreation;
 
+            Reload();
             SelectionChanged();
 
             Selection.selectionChanged += SelectionChanged;
@@ -88,13 +89,13 @@ namespace PerformanceRecorder.Takes
             {
                 TakeDevice device = node as TakeDevice;
 
-                return CreateDeviceNode(device, device.name, device.m_Position, 2, 1);
+                return CreateDeviceNode(device, "Device", device.position, 2, 1);
             }
             else if (node is TakeActor)
             {
-                TakeActor takeActor = node as TakeActor;
+                TakeActor actor = node as TakeActor;
 
-                //return CreateStackNode(takeActor, takeActor.m_Position);
+                return CreateActorNode(actor, "Actor", actor.position, 2, 1);
             }
 
             return null;
@@ -124,6 +125,36 @@ namespace PerformanceRecorder.Takes
             TakeNode node = new TakeNode();
             node.userData = device;
             node.persistenceKey = device.nodeID.ToString();
+
+            /*
+            for (int i = 0; i < inputs; ++i)
+            {
+                var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(float));
+                inputPort.userData = device;
+                node.inputContainer.Add(inputPort);
+            }
+
+            for (int i = 0; i < outputs; ++i)
+            {
+                var outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(float));
+                outputPort.userData = device;
+                node.outputContainer.Add(outputPort);
+            }
+            */
+
+            node.SetPosition(new Rect(pos.x, pos.y, 100, 100));
+            node.title = title;
+            node.RefreshPorts();
+            node.visible = true;
+
+            return node;
+        }
+
+        private Node CreateActorNode(TakeActor actor, string title, Vector2 pos, int inputs, int outputs)
+        {
+            TakeNode node = new TakeNode();
+            node.userData = actor;
+            node.persistenceKey = actor.nodeID.ToString();
 
             /*
             for (int i = 0; i < inputs; ++i)

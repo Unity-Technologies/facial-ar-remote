@@ -9,6 +9,8 @@ namespace PerformanceRecorder.Takes
         public TakeSystem m_TakeSystem;
         [SerializeField]
         private NodeID m_NodeID = NodeID.empty;
+        [SerializeField]
+        private Vector2 m_Position;
 
         public TakeSystem takeSystem
         {
@@ -21,7 +23,11 @@ namespace PerformanceRecorder.Takes
             get { return m_NodeID; }
         }
 
-        public Vector2 m_Position;
+        public Vector2 position
+        {
+            get { return m_Position; }
+            set { m_Position = value; }
+        }
 
         protected TakeAsset()
         {
