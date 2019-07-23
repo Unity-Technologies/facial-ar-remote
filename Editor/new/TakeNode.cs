@@ -20,16 +20,12 @@ namespace PerformanceRecorder.Takes
 
         public override void SetPosition(Rect newPos)
         {
-            /*
-            MathNode mathNode = userData as MathNode;
+            TakeAsset takeAsset = userData as TakeAsset;
 
-            if (mathNode == null)
-            {
-                return;
-            }
+            Debug.Assert(takeAsset != null);
 
-            mathNode.m_Position = newPos.position;
-            */
+            takeAsset.position = newPos.position;
+
             base.SetPosition(newPos);
         }
 
