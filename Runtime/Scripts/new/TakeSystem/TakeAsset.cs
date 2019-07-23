@@ -15,7 +15,7 @@ namespace PerformanceRecorder.Takes
         public TakeSystem takeSystem
         {
             get { return m_TakeSystem; }
-            set { m_TakeSystem = value; }
+            internal set { m_TakeSystem = value; }
         }
 
         public NodeID nodeID

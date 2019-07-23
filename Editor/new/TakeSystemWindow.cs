@@ -21,7 +21,7 @@ namespace PerformanceRecorder.Takes
         [MenuItem("Window/Take System")]
         public static void ShowWindow()
         {
-            GetWindow<TakeSystemWindow>();
+            GetWindow<TakeSystemWindow>("Take System");
         }
 
         void OnEnable()
@@ -33,19 +33,24 @@ namespace PerformanceRecorder.Takes
 
             this.GetRootVisualContainer().Add(graphView);
 
-            m_GraphViewCallbacks.Init(m_TakeSystem, graphView);
-
             graphView.nodeCreationRequest += OnRequestNodeCreation;
 
             Reload();
             SelectionChanged();
 
+            Undo.undoRedoPerformed += UndoRedoPerformed;
             Selection.selectionChanged += SelectionChanged;
         }
 
         void OnDisable()
         {
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
             Selection.selectionChanged -= SelectionChanged;
+        }
+
+        void UndoRedoPerformed()
+        {
+            Reload();
         }
 
         void SelectionChanged()
@@ -69,35 +74,50 @@ namespace PerformanceRecorder.Takes
 
         public void Reload()
         {
-            if (graphView == null)
-                return;
-
             if (m_TakeSystem == null)
                 return;
 
-            (graphView as TakeGraphView).Reload(m_TakeSystem.nodes);
+            m_GraphViewCallbacks.Unregister();
+
+            graphView.Reload(m_TakeSystem.assets);
+
+            m_GraphViewCallbacks.Register(graphView);
 
             // Add the minimap.
+            /*
             var miniMap = new MiniMap();
             miniMap.SetPosition(new Rect(0, 372, 200, 176));
             graphView.Add(miniMap);
+            */
         }
 
-        public void AddNode(TakeAsset node)
-        {
-            Debug.Assert(node != null);
 
-            m_TakeSystem.Add(node);
-            AssetDatabase.AddObjectToAsset(node, m_TakeSystem);
+        public TakeAsset CreateTakeAsset(Type type)
+        {
+            var undoName = "Create Asset";
+
+            var asset = ScriptableObject.CreateInstance(type) as TakeAsset;
+            Undo.RegisterCreatedObjectUndo(asset, undoName);
+
+            Undo.RegisterCompleteObjectUndo(m_TakeSystem, undoName);
+            m_TakeSystem.Add(asset);
+
+            AssetDatabase.AddObjectToAsset(asset, m_TakeSystem);
+
+            return asset;
         }
 
-        public void DestroyNode(TakeAsset node)
+        public void DestroyTakeAsset(TakeAsset node)
         {
+            var undoName = "Destroy Asset";
+
+            Undo.RegisterCompleteObjectUndo(m_TakeSystem, undoName);
+
             Debug.Assert(node != null);
 
             m_TakeSystem.Remove(node);
             //node.groupNode = null;
-            UnityEngine.Object.DestroyImmediate(node, true);
+            Undo.DestroyObjectImmediate(node);
         }
 
         public TakeNode CreateNode(TakeAsset node)
@@ -145,13 +165,19 @@ namespace PerformanceRecorder.Takes
             var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(FaceData));
             inputPort.userData = actor;
             node.inputContainer.Add(inputPort);
-            
+
             var prefabField = new ObjectField()
             {
                 objectType = typeof(GameObject),
                 allowSceneObjects = false
             };
-            prefabField.OnValueChanged( (ev) => actor.prefab = ev.newValue as GameObject );
+            prefabField.OnValueChanged((ev) => 
+            {
+                Undo.RegisterCompleteObjectUndo(actor, "Inspector");
+
+                actor.prefab = ev.newValue as GameObject;
+                EditorUtility.SetDirty(actor);
+            });
 
             node.inputContainer.Add(prefabField);
 
@@ -188,10 +214,8 @@ namespace PerformanceRecorder.Takes
         {
             if (!(entry is SearchTreeGroupEntry))
             {
-                TakeAsset node = ScriptableObject.CreateInstance(entry.userData as Type) as TakeAsset;
-
-                AddNode(node);
-                Node nodeUI = CreateNode(node) as Node;
+                var asset = CreateTakeAsset(entry.userData as Type);
+                Node nodeUI = CreateNode(asset) as Node;
                 if (nodeUI != null)
                 {
                     if (m_InsertStack != null)
@@ -216,7 +240,7 @@ namespace PerformanceRecorder.Takes
                 }
                 else
                 {
-                    Debug.LogError("Failed to create element for " + node);
+                    Debug.LogError("Failed to create element for " + asset);
                     return false;
                 }
 

@@ -11,12 +11,10 @@ namespace PerformanceRecorder.Takes
 {
     public class GraphViewCallbacks
     {
-        private TakeSystem m_TakeSystem;
         private TakeGraphView m_TakeGraphView;
 
-        public void Init(TakeSystem takeSystem, TakeGraphView takeGraphView)
+        public void Register(TakeGraphView takeGraphView)
         {
-            m_TakeSystem = takeSystem;
             m_TakeGraphView = takeGraphView;
 
             m_TakeGraphView.graphViewChanged = GraphViewChanged;
@@ -27,12 +25,31 @@ namespace PerformanceRecorder.Takes
             m_TakeGraphView.elementsInsertedToStackNode = OnElementsInsertedToStackNode;
             m_TakeGraphView.elementsRemovedFromStackNode = OnElementsRemovedFromStackNode;
 
-            takeGraphView.RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
-            takeGraphView.RegisterCallback<DragPerformEvent>(OnDragPerformEvent);
+            m_TakeGraphView.RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
+            m_TakeGraphView.RegisterCallback<DragPerformEvent>(OnDragPerformEvent);
 
-            //m_GraphView.elementDeleted = ElementDeletedCallback;
-            //m_GraphView.edgeConnected = EdgeConnected;
-            //m_GraphView.edgeDisconnected = EdgeDisconnected;
+            //m_TakeGraphView.elementDeleted = ElementDeletedCallback;
+            //m_TakeGraphView.edgeConnected = EdgeConnected;
+            //m_TakeGraphView.edgeDisconnected = EdgeDisconnected;
+        }
+
+        public void Unregister()
+        {
+            if (m_TakeGraphView == null)
+                return;
+            
+            m_TakeGraphView.graphViewChanged = null;
+            m_TakeGraphView.groupTitleChanged = null;
+            m_TakeGraphView.elementsAddedToGroup = null;
+            m_TakeGraphView.elementsRemovedFromGroup = null;
+
+            m_TakeGraphView.elementsInsertedToStackNode = null;
+            m_TakeGraphView.elementsRemovedFromStackNode = null;
+
+            m_TakeGraphView.UnregisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
+            m_TakeGraphView.UnregisterCallback<DragPerformEvent>(OnDragPerformEvent);
+
+            m_TakeGraphView = null;
         }
 
         private GraphViewChange GraphViewChanged(GraphViewChange graphViewChange)
@@ -93,12 +110,9 @@ namespace PerformanceRecorder.Takes
 
         private void ElementDeletedCallback(VisualElement ve)
         {
-            if (m_TakeSystem == null)
-                return;
-
             if (ve.userData is TakeAsset)
             {
-                m_TakeGraphView.window.DestroyNode(ve.userData as TakeAsset);
+                m_TakeGraphView.controller.DestroyTakeAsset(ve.userData as TakeAsset);
             }
             /*
             else if (ve.userData is MathBookField)

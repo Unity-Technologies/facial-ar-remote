@@ -7,16 +7,16 @@ namespace PerformanceRecorder.Takes
     public class TakeSystem : ScriptableObject
     {
         [SerializeField]
-        private List<TakeAsset> m_Nodes = new List<TakeAsset>();
+        private List<TakeAsset> m_Assets = new List<TakeAsset>();
 
-        public List<TakeAsset> nodes
+        public TakeAsset[] assets
         {
-            get { return m_Nodes; }
+            get { return m_Assets.ToArray(); }
         }
 
         public TakeAsset Get(NodeID id)
         {
-            return m_Nodes != null ? m_Nodes.Find(node => node.nodeID.Equals(id)) : null;
+            return m_Assets != null ? m_Assets.Find(node => node.nodeID.Equals(id)) : null;
         }
 
         public void Add(TakeAsset node)
@@ -24,7 +24,7 @@ namespace PerformanceRecorder.Takes
             if (node == null)
                 return;
 
-            m_Nodes.Add(node);
+            m_Assets.Add(node);
             node.takeSystem = this;
         }
 
@@ -33,7 +33,7 @@ namespace PerformanceRecorder.Takes
             if (node == null)
                 return;
             
-            m_Nodes.Remove(node);
+            m_Assets.Remove(node);
             node.takeSystem = null;
         }
     }

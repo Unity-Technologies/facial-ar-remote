@@ -11,11 +11,11 @@ namespace PerformanceRecorder.Takes
 {
     public class TakeGraphView : GraphView
     {
-        TakeSystemWindow m_TakeSystemWindow;
-        
-        public TakeSystemWindow window
+        TakeSystemWindow m_Controller;
+
+        public TakeSystemWindow controller
         {
-            get { return m_TakeSystemWindow; }
+            get { return m_Controller; }
         }
 
         /*
@@ -25,9 +25,9 @@ namespace PerformanceRecorder.Takes
         public SimpleBlackboard blackboard { get { return m_Blackboard; } }
         */
 
-        public TakeGraphView(TakeSystemWindow takeSystemWindow)
+        public TakeGraphView(TakeSystemWindow controller)
         {
-            m_TakeSystemWindow = takeSystemWindow;
+            m_Controller = controller;
 
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             // FIXME: add a coordinator so that ContentDragger and SelectionDragger cannot be active at the same time.
@@ -195,7 +195,7 @@ namespace PerformanceRecorder.Takes
             base.BuildContextualMenu(evt);
         }
 
-        const string m_SerializedDataMimeType = "application/vnd.unity.simplegraphview.elements";
+        const string m_SerializedDataMimeType = "application/vnd.unity.takesystemview.elements";
 
         /*
         string SerializeGraphElementsImplementation(IEnumerable<GraphElement> elements)
@@ -413,8 +413,11 @@ namespace PerformanceRecorder.Takes
             */
         }
 
-        public void Reload(List<TakeAsset> nodesToReload, bool select = false)
+        public void Reload(IEnumerable<TakeAsset> nodesToReload, bool select = false)
         {
+            var elements = graphElements.ToList();
+            DeleteElements(elements);
+
             var nodes = new Dictionary<TakeAsset, GraphElement>();
 
             if (select)
@@ -425,7 +428,7 @@ namespace PerformanceRecorder.Takes
             // Create the nodes.
             foreach (TakeAsset takeAsset in nodesToReload)
             {
-                GraphElement node = m_TakeSystemWindow.CreateNode(takeAsset);
+                GraphElement node = m_Controller.CreateNode(takeAsset);
 
                 if (node is Group)
                 {
