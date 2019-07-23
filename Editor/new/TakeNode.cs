@@ -11,12 +11,10 @@ namespace PerformanceRecorder.Takes
 {
     public class TakeNode : Node
     {
-        /*
         public override Port InstantiatePort(Orientation orientation, Direction direction, Port.Capacity capacity, Type type)
         {
-            return Port.Create<SimpleEdge>(orientation, direction, capacity, type);
+            return Port.Create<TakeEdge>(orientation, direction, capacity, type);
         }
-        */
 
         public override void SetPosition(Rect newPos)
         {

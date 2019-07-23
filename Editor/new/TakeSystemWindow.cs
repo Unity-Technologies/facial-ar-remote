@@ -83,24 +83,6 @@ namespace PerformanceRecorder.Takes
             graphView.Add(miniMap);
         }
 
-        public GraphElement CreateNode(TakeAsset node)
-        {
-            if (node is TakeDevice)
-            {
-                TakeDevice device = node as TakeDevice;
-
-                return CreateDeviceNode(device, "Device", device.position, 2, 1);
-            }
-            else if (node is TakeActor)
-            {
-                TakeActor actor = node as TakeActor;
-
-                return CreateActorNode(actor, "Actor", actor.position, 2, 1);
-            }
-
-            return null;
-        }
-
         public void AddNode(TakeAsset node)
         {
             if (m_TakeSystem == null)
@@ -120,27 +102,33 @@ namespace PerformanceRecorder.Takes
             }
         }
 
-        private Node CreateDeviceNode(TakeDevice device, string title, Vector2 pos, int inputs, int outputs)
+        public TakeNode CreateNode(TakeAsset node)
+        {
+            if (node is TakeDevice)
+            {
+                TakeDevice device = node as TakeDevice;
+
+                return CreateDeviceNode(device, "Device", device.position);
+            }
+            else if (node is TakeActor)
+            {
+                TakeActor actor = node as TakeActor;
+
+                return CreateActorNode(actor, "Actor", actor.position);
+            }
+
+            return null;
+        }
+
+        private TakeNode CreateDeviceNode(TakeAsset asset, string title, Vector2 pos)
         {
             TakeNode node = new TakeNode();
-            node.userData = device;
-            node.persistenceKey = device.nodeID.ToString();
+            node.userData = asset;
+            node.persistenceKey = asset.nodeID.ToString();
 
-            /*
-            for (int i = 0; i < inputs; ++i)
-            {
-                var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(float));
-                inputPort.userData = device;
-                node.inputContainer.Add(inputPort);
-            }
-
-            for (int i = 0; i < outputs; ++i)
-            {
-                var outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(float));
-                outputPort.userData = device;
-                node.outputContainer.Add(outputPort);
-            }
-            */
+            var outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(FaceData));
+            outputPort.userData = asset;
+            node.outputContainer.Add(outputPort);
 
             node.SetPosition(new Rect(pos.x, pos.y, 100, 100));
             node.title = title;
@@ -150,27 +138,15 @@ namespace PerformanceRecorder.Takes
             return node;
         }
 
-        private Node CreateActorNode(TakeActor actor, string title, Vector2 pos, int inputs, int outputs)
+        private TakeNode CreateActorNode(TakeActor actor, string title, Vector2 pos)
         {
             TakeNode node = new TakeNode();
             node.userData = actor;
             node.persistenceKey = actor.nodeID.ToString();
 
-            /*
-            for (int i = 0; i < inputs; ++i)
-            {
-                var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(float));
-                inputPort.userData = device;
-                node.inputContainer.Add(inputPort);
-            }
-
-            for (int i = 0; i < outputs; ++i)
-            {
-                var outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(float));
-                outputPort.userData = device;
-                node.outputContainer.Add(outputPort);
-            }
-            */
+            var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(FaceData));
+            inputPort.userData = actor;
+            node.inputContainer.Add(inputPort);
 
             node.SetPosition(new Rect(pos.x, pos.y, 100, 100));
             node.title = title;

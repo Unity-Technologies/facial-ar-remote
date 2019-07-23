@@ -58,11 +58,11 @@ namespace PerformanceRecorder.Takes
 
             if (graphViewChange.edgesToCreate != null)
             {
-                /*
                 foreach (Edge edge in graphViewChange.edgesToCreate)
                 {
                     EdgeConnected(edge);
                 }
+                /*
                 needToComputeOutputs = true;
                 */
             }
@@ -186,7 +186,7 @@ namespace PerformanceRecorder.Takes
             */
         }
 
-        private void SetEdgeConnection(Edge edge, TakeAsset takeNode)
+        private void SetEdgeConnection(Edge edge, TakeAsset takeAsset)
         {
             if (edge == null || edge.input == null || edge.output == null)
                 return;
@@ -235,10 +235,8 @@ namespace PerformanceRecorder.Takes
             if (edge == null || edge.output == null)
                 return;
 
-            /*
-            var outputMathNode = edge.output.userData as TakeNode;
-            SetEdgeConnection(edge, outputMathNode);
-            */
+            var outputTakeAsset = edge.output.userData as TakeAsset;
+            SetEdgeConnection(edge, outputTakeAsset);
         }
 
         private void EdgeDisconnected(Edge edge)
@@ -272,9 +270,9 @@ namespace PerformanceRecorder.Takes
 
             Vector2 localPos = (e.currentTarget as VisualElement).ChangeCoordinatesTo(m_GraphView.contentViewContainer, e.localMousePosition);
 
+            /*
             foreach (BlackboardField field in fields)
             {
-                /*
                 MathBookField bookField = field.userData as MathBookField;
 
                 if (bookField == null)
@@ -305,8 +303,8 @@ namespace PerformanceRecorder.Takes
                 m_GraphView.AddElement(visualNode);
 
                 localPos += new Vector2(0, 25);
-                */
             }
+            */
         }
     }
 }
