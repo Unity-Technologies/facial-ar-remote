@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Runtime.InteropServices;
-
-namespace PerformanceRecorder
+﻿namespace PerformanceRecorder
 {
     public interface IStreamRecorder
     {
