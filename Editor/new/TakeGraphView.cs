@@ -12,11 +12,16 @@ namespace PerformanceRecorder.Takes
     public class TakeGraphView : GraphView
     {
         TakeSystemWindow m_TakeSystemWindow;
+        
+        public TakeSystemWindow window
+        {
+            get { return m_TakeSystemWindow; }
+        }
+
         /*
         private static readonly Vector2 s_CopyOffset = new Vector2(50, 50);
         SimpleBlackboard m_Blackboard;
 
-        public SimpleGraphViewWindow window { get { return m_SimpleGraphViewWindow; } }
         public SimpleBlackboard blackboard { get { return m_Blackboard; } }
         */
 

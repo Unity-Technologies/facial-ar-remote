@@ -12,23 +12,23 @@ namespace PerformanceRecorder.Takes
     public class GraphViewCallbacks
     {
         private TakeSystem m_TakeSystem;
-        private GraphView m_GraphView;
+        private TakeGraphView m_TakeGraphView;
 
-        public void Init(TakeSystem takeSystem, GraphView graphView)
+        public void Init(TakeSystem takeSystem, TakeGraphView takeGraphView)
         {
             m_TakeSystem = takeSystem;
-            m_GraphView = graphView;
+            m_TakeGraphView = takeGraphView;
 
-            m_GraphView.graphViewChanged = GraphViewChanged;
-            m_GraphView.groupTitleChanged = OnGroupTitleChanged;
-            m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
-            m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
+            m_TakeGraphView.graphViewChanged = GraphViewChanged;
+            m_TakeGraphView.groupTitleChanged = OnGroupTitleChanged;
+            m_TakeGraphView.elementsAddedToGroup = OnElementsAddedToGroup;
+            m_TakeGraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
 
-            m_GraphView.elementsInsertedToStackNode = OnElementsInsertedToStackNode;
-            m_GraphView.elementsRemovedFromStackNode = OnElementsRemovedFromStackNode;
+            m_TakeGraphView.elementsInsertedToStackNode = OnElementsInsertedToStackNode;
+            m_TakeGraphView.elementsRemovedFromStackNode = OnElementsRemovedFromStackNode;
 
-            graphView.RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
-            graphView.RegisterCallback<DragPerformEvent>(OnDragPerformEvent);
+            takeGraphView.RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
+            takeGraphView.RegisterCallback<DragPerformEvent>(OnDragPerformEvent);
 
             //m_GraphView.elementDeleted = ElementDeletedCallback;
             //m_GraphView.edgeConnected = EdgeConnected;
@@ -43,7 +43,6 @@ namespace PerformanceRecorder.Takes
 
             if (graphViewChange.elementsToRemove != null)
             {
-                /*
                 foreach (GraphElement element in graphViewChange.elementsToRemove)
                 {
                     if (element is Node || element is Group || element is BlackboardField)
@@ -51,6 +50,7 @@ namespace PerformanceRecorder.Takes
                     else if (element is Edge)
                         EdgeDisconnected(element as Edge);
                 }
+                /*
                 m_GraphView.window.RemoveEmptyScopes();
                 needToComputeOutputs = true;
                 */
@@ -98,9 +98,7 @@ namespace PerformanceRecorder.Takes
 
             if (ve.userData is TakeAsset)
             {
-                /*
-                m_GraphView.window.DestroyNode(ve.userData as TakeNode);
-                */
+                m_TakeGraphView.window.DestroyNode(ve.userData as TakeAsset);
             }
             /*
             else if (ve.userData is MathBookField)
@@ -268,7 +266,7 @@ namespace PerformanceRecorder.Takes
             if (fields.Count() == 0)
                 return;
 
-            Vector2 localPos = (e.currentTarget as VisualElement).ChangeCoordinatesTo(m_GraphView.contentViewContainer, e.localMousePosition);
+            Vector2 localPos = (e.currentTarget as VisualElement).ChangeCoordinatesTo(m_TakeGraphView.contentViewContainer, e.localMousePosition);
 
             /*
             foreach (BlackboardField field in fields)

@@ -12,7 +12,7 @@ namespace PerformanceRecorder.Takes
 {
     public class TakeSystemWindow : EditorWindow, ISearchWindowProvider
     {
-        public GraphView graphView { get; private set; }
+        public TakeGraphView graphView { get; private set; }
         private TakeSystem m_TakeSystem;
         private GraphViewCallbacks m_GraphViewCallbacks = new GraphViewCallbacks();
         private StackNode m_InsertStack;
@@ -85,8 +85,7 @@ namespace PerformanceRecorder.Takes
 
         public void AddNode(TakeAsset node)
         {
-            if (m_TakeSystem == null)
-                return;
+            Debug.Assert(node != null);
 
             m_TakeSystem.Add(node);
             AssetDatabase.AddObjectToAsset(node, m_TakeSystem);
@@ -94,12 +93,11 @@ namespace PerformanceRecorder.Takes
 
         public void DestroyNode(TakeAsset node)
         {
-            if (node != null)
-            {
-                m_TakeSystem.Remove(node);
-                //node.groupNode = null;
-                UnityEngine.Object.DestroyImmediate(node, true);
-            }
+            Debug.Assert(node != null);
+
+            m_TakeSystem.Remove(node);
+            //node.groupNode = null;
+            UnityEngine.Object.DestroyImmediate(node, true);
         }
 
         public TakeNode CreateNode(TakeAsset node)
@@ -147,6 +145,15 @@ namespace PerformanceRecorder.Takes
             var inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(FaceData));
             inputPort.userData = actor;
             node.inputContainer.Add(inputPort);
+            
+            var prefabField = new ObjectField()
+            {
+                objectType = typeof(GameObject),
+                allowSceneObjects = false
+            };
+            prefabField.OnValueChanged( (ev) => actor.prefab = ev.newValue as GameObject );
+
+            node.inputContainer.Add(prefabField);
 
             node.SetPosition(new Rect(pos.x, pos.y, 100, 100));
             node.title = title;
