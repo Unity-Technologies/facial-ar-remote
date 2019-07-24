@@ -37,6 +37,13 @@ namespace PerformanceRecorder
             Write<FaceData>(PacketDescriptor.DescriptorFace, faceData);
         }
 
+        public void Write(byte[] bytes, int count)
+        {
+            var stream = m_Manager.GetStream();
+            stream.Write(bytes, 0, count);
+            m_Queue.Enqueue(stream);
+        }
+
         /// <summary>
         /// Flushes queue into the stream. Can be called from a separate thread.
         /// </summary>
