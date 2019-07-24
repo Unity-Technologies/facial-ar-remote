@@ -8,7 +8,6 @@ namespace PerformanceRecorder
 {
     public class StreamWriter
     {
-        static readonly int PacketDescriptorSize = Marshal.SizeOf<PacketDescriptor>();
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
@@ -70,7 +69,7 @@ namespace PerformanceRecorder
             var stream = m_Manager.GetStream();
             int size = Marshal.SizeOf<T>();
 
-            stream.Write(descriptor.ToBytes(), 0, PacketDescriptorSize);
+            stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.DescriptorSize);
             stream.Write(packet.ToBytes(), 0, size);
             
             m_Queue.Enqueue(stream);
