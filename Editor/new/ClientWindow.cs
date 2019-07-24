@@ -71,7 +71,7 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_Adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = m_Adapter;
+            m_StreamReader.streamSource = m_NetworkStreamSource;
 
             m_NetworkStreamSource.StartServer(9000);
 
@@ -104,11 +104,18 @@ namespace PerformanceRecorder
 
     public class Client
     {
-        static readonly int PacketDescriptorSize = Marshal.SizeOf<PacketDescriptor>();
-
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
-        ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
+        StreamWriter m_StreamWriter = new StreamWriter();
+
+        public StreamWriter streamWriter
+        {
+            get { return m_StreamWriter; }
+        }
+
+        public Client()
+        {
+            m_StreamWriter.streamSource = m_NetworkStreamSource;
+        }
 
         public void ConnectToServer(string ip, int port)
         {
@@ -118,39 +125,6 @@ namespace PerformanceRecorder
         public void Disconnect()
         {
             m_NetworkStreamSource.StopConnections();
-        }
-
-        public void Write(byte[] bytes, int count)
-        {
-            var stream = m_Manager.GetStream();
-            stream.Write(bytes, 0, count);
-            m_Queue.Enqueue(stream);
-        }
-
-        public void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
-        {
-            var stream = m_Manager.GetStream();
-            int size = Marshal.SizeOf<T>();
-
-            stream.Write(descriptor.ToBytes(), 0, PacketDescriptorSize);
-            stream.Write(packet.ToBytes(), 0, size);
-
-            m_Queue.Enqueue(stream);
-        }
-
-        public void Send()
-        {
-            var outputStream = m_NetworkStreamSource.stream;
-            var stream = default(MemoryStream);
-
-            while (m_Queue.TryDequeue(out stream))
-            {
-                var count = (int)stream.Position;
-                outputStream.Write(stream.GetBuffer(), 0 , count);
-                stream.Dispose();
-            }
-
-            outputStream.Flush();
         }
     }
 
@@ -230,24 +204,24 @@ namespace PerformanceRecorder
 
         void SendPacket()
         {
-            /*
             var faceData = new FaceData();
             faceData.timeStamp = Time.realtimeSinceStartup;
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.Write(PacketDescriptor.Get(PacketType.Face), faceData);
-            */
-
+            m_Client.streamWriter.Write(faceData);
+            
+            /*
             var data = new StreamBufferDataV1();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+            */
             
-            m_Client.Send();
+            m_Client.streamWriter.Send();
         }
     }
 }
