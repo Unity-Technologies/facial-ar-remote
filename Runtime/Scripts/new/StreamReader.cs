@@ -8,10 +8,12 @@ namespace PerformanceRecorder
 {
     public class StreamReader
     {
+        public delegate void FaceDataCallback(FaceData faceData);
+        public event FaceDataCallback faceDataChanged;
+
         byte[] m_Buffer = new byte[1024];
         public IStreamSource streamSource { get; set; }
-        public IStreamRecorder recorder { get; set; }
-        public IData<FaceData> faceDataOutput { get; set; }
+        
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
@@ -50,15 +52,6 @@ namespace PerformanceRecorder
 
             while (m_Queue.TryDequeue(out memoryStream))
             {
-                if (recorder != null && recorder.isRecording)
-                {
-                    var count = (int)memoryStream.Position;
-                    var bytes = GetBuffer(count);
-                    memoryStream.Position = 0;
-                    Read(memoryStream, bytes, count);
-                    recorder.Record(bytes, count);
-                }
-
                 memoryStream.Position = 0;
 
                 var packetDescriptor = Read<PacketDescriptor>(memoryStream);
@@ -144,8 +137,7 @@ namespace PerformanceRecorder
                     data = Read<FaceData>(stream); break;
             }
             
-            if (faceDataOutput != null)
-                faceDataOutput.data = data;
+            faceDataChanged.Invoke(data);
         }
 
         byte[] GetBuffer(int size)

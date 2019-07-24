@@ -12,44 +12,6 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public class FaceDataDebugger : IData<FaceData>
-    {
-        FaceData m_Data = new FaceData();
-        System.Text.StringBuilder m_StringBuilder = new System.Text.StringBuilder();
-        public BlendShapesController controller { get; set; }
-
-        public FaceData data
-        {
-            get { return m_Data; }
-            set
-            {
-                m_Data = value;
-
-                if (controller != null)
-                {
-                    controller.blendShapeInput = value.blendShapeValues;
-                    controller.UpdateBlendShapes();
-                }
-                //DebugLog();
-            }
-        }
-
-        void DebugLog()
-        {
-            m_StringBuilder.Clear();
-
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
-            {
-                m_StringBuilder.Append(m_Data.blendShapeValues[i]);
-
-                if (i < BlendShapeValues.Count-1)
-                    m_StringBuilder.Append(", ");
-            }
-
-            Debug.Log(m_StringBuilder.ToString());
-        }
-    }
-
     public class Server
     {
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
@@ -133,7 +95,6 @@ namespace PerformanceRecorder
         Server m_Server = new Server();
         Client m_Client = new Client();
         BlendShapesController m_Controller;
-        FaceDataDebugger m_FaceDataDebugger = new FaceDataDebugger();
 
         [MenuItem("Window/Test Client")]
         public static void ShowWindow()
@@ -145,11 +106,15 @@ namespace PerformanceRecorder
 
         void OnEnable()
         {
+            m_Server.streamReader.faceDataChanged += FaceDataChanged;
+
             EditorApplication.update += Update;
         }
 
         void OnDisable()
         {
+            m_Server.streamReader.faceDataChanged -= FaceDataChanged;
+
             m_Server.Stop();
             m_Client.Disconnect();
 
@@ -164,13 +129,16 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            if (m_Controller == null)
-                return;
-            
-            m_FaceDataDebugger.controller = m_Controller;
-
-            m_Server.streamReader.faceDataOutput = m_FaceDataDebugger;
             m_Server.streamReader.Dequeue();
+        }
+
+        void FaceDataChanged(FaceData faceData)
+        {
+            if (m_Controller != null)
+            {
+                m_Controller.blendShapeInput = faceData.blendShapeValues;
+                m_Controller.UpdateBlendShapes();
+            }
         }
 
         void ServerGUI()
