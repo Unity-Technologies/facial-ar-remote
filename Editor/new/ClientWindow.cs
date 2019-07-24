@@ -71,7 +71,7 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_Adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = m_NetworkStreamSource;
+            m_StreamReader.streamSource = m_Adapter;
 
             m_NetworkStreamSource.StartServer(9000);
 
@@ -204,6 +204,7 @@ namespace PerformanceRecorder
 
         void SendPacket()
         {
+            /*
             var faceData = new FaceData();
             faceData.timeStamp = Time.realtimeSinceStartup;
 
@@ -211,15 +212,14 @@ namespace PerformanceRecorder
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
             m_Client.streamWriter.Write(faceData);
+            */
             
-            /*
             var data = new StreamBufferDataV1();
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-            */
+            m_Client.streamWriter.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
             
             m_Client.streamWriter.Send();
         }
