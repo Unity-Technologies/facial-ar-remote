@@ -14,6 +14,7 @@ namespace PerformanceRecorder
     [StructLayout(LayoutKind.Sequential)]
     public struct PacketDescriptor
     {
+        public static readonly int DescriptorSize = Marshal.SizeOf<PacketDescriptor>();
         public static readonly PacketDescriptor DescriptorInvalid = new PacketDescriptor() { type = PacketType.Invalid, version = 0 };
         public static readonly PacketDescriptor DescriptorPose = new PacketDescriptor() { type = PacketType.Pose, version = 0 };
         public static readonly PacketDescriptor DescriptorFace = new PacketDescriptor() { type = PacketType.Face, version = 0 };

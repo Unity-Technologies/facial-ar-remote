@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
@@ -11,7 +12,8 @@ namespace PerformanceRecorder
         public IStreamSource streamSource { get; set; }
         public IStreamRecorder recorder { get; set; }
         public IData<FaceData> faceDataOutput { get; set; }
-        ConcurrentQueue<FaceData> m_FaceDataQueue = new ConcurrentQueue<FaceData>();
+        RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
+        ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
         /// <summary>
         /// Reads stream source and enqueue packets. This can be called from a separate thread.
@@ -26,17 +28,17 @@ namespace PerformanceRecorder
             if (stream == null)
                 return;
             
+            var memoryStream = m_Manager.GetStream();
+
             try
             {
-                var descriptor = Read<PacketDescriptor>(stream);
-                switch (descriptor.type)
-                {
-                    case PacketType.Face:
-                        ReadFaceData(stream, descriptor);
-                        break;
-                }
+                ReadPacket(stream, memoryStream);
+                m_Queue.Enqueue(memoryStream);
             }
-            catch {}
+            catch (Exception)
+            {
+                memoryStream.Dispose();
+            }
         }
 
         /// <summary>
@@ -44,56 +46,106 @@ namespace PerformanceRecorder
         /// </summary>
         public void Dequeue()
         {
-            Dequeue<FaceData>(m_FaceDataQueue, faceDataOutput);
-        }
+            var memoryStream = default(MemoryStream);
 
-        void Dequeue<T>(ConcurrentQueue<T> queue, IData<T> output) where T : struct
-        {
-            var data = default(T);
-            while (queue.TryDequeue(out data))
+            while (m_Queue.TryDequeue(out memoryStream))
             {
-                output.data = data;
+                if (recorder != null && recorder.isRecording)
+                {
+                    var count = (int)memoryStream.Position;
+                    var bytes = GetBuffer(count);
+                    memoryStream.Position = 0;
+                    Read(memoryStream, bytes, count);
+                    recorder.Record(bytes, count);
+                }
+
+                memoryStream.Position = 0;
+
+                var packetDescriptor = Read<PacketDescriptor>(memoryStream);
+
+                switch(packetDescriptor.type)
+                {
+                    case PacketType.Face:
+                        ReadFaceData(memoryStream, packetDescriptor.version);
+                        break;
+                }
+
+                memoryStream.Dispose();
             }
         }
 
-        T Read<T>(Stream stream) where T : struct
+        void ReadPacket(Stream input, Stream output)
         {
-            var size = Marshal.SizeOf<T>();
-            var bytes = GetBuffer(size);
+            var bytes = GetBuffer(PacketDescriptor.DescriptorSize);
+            Read(input, bytes, PacketDescriptor.DescriptorSize);
+            output.Write(bytes, 0, PacketDescriptor.DescriptorSize);
+
+            var payloadSize = GetPayloadSize(bytes.ToStruct<PacketDescriptor>());
+            bytes = GetBuffer(payloadSize);
+            Read(input, bytes, payloadSize);
+            output.Write(bytes, 0, payloadSize);
+        }
+
+        int GetPayloadSize(PacketDescriptor descriptor)
+        {
+            switch (descriptor.type)
+            {
+                case PacketType.Face:
+                    return GetFacePayloadSize(descriptor.version);
+            }
+
+            return 0;
+        }
+
+        int GetFacePayloadSize(int version)
+        {   
+            switch (version)
+            {
+                default:
+                    return Marshal.SizeOf<FaceData>();
+            }
+        }
+
+        void Read(Stream stream, byte[] bytes, int count)
+        {
+            if (bytes.Length < count)
+                throw new Exception("Read buffer too small");
+            
             var offset = 0;
             
             do {
-                var readBytes = stream.Read(bytes, offset, size - offset);
+                var readBytes = stream.Read(bytes, offset, count - offset);
 
                 if (readBytes == 0)
                     throw new Exception("Invalid read byte count");
 
                 offset += readBytes;
 
-            } while(offset < size);
+            } while(offset < count);
+        }
 
-            Record(bytes, size);
+        T Read<T>(Stream stream) where T : struct
+        {
+            var size = Marshal.SizeOf<T>();
+            var bytes = GetBuffer(size);
+            
+            Read(stream, bytes, size);
 
             return bytes.ToStruct<T>();
         }
 
-        void Record(byte[] bytes, int size)
-        {
-            if (recorder != null && recorder.isRecording)
-                recorder.Record(bytes, size);
-        }
-
-        void ReadFaceData(Stream stream, PacketDescriptor descriptor)
+        void ReadFaceData(Stream stream, int version)
         {
             var data = default(FaceData);
 
-            switch (descriptor.version)
+            switch (version)
             {
                 default:
                     data = Read<FaceData>(stream); break;
             }
             
-            m_FaceDataQueue.Enqueue(data);
+            if (faceDataOutput != null)
+                faceDataOutput.data = data;
         }
 
         byte[] GetBuffer(int size)
