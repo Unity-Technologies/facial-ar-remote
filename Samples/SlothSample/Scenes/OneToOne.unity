@@ -258,6 +258,31 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_SceneCamera
+      value: 
+      objectReference: {fileID: 347698979}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_DriveNeck
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_DriveEyes
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_DriveHead
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114591291899225592, guid: f52b9039400198449907ac105acc8616,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f52b9039400198449907ac105acc8616, type: 3}
 --- !u!1 &786562247 stripped

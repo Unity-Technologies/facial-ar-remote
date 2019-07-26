@@ -283,7 +283,7 @@ namespace Unity.Labs.FacialRemote
                     m_BlendShapesController.UpdateBlendShapes();
 
                 if (m_CharacterRigController != null)
-                    m_CharacterRigController.InterpolateBlendShapes(true);
+                    m_CharacterRigController.GenerateRigRotationsFromBlendShapes(true);
 
                 if (m_TargetTransform != null)
                 {

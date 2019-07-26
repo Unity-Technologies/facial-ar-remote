@@ -5,8 +5,11 @@ namespace Unity.Labs.FacialRemote
 {
     /// <inheritdoc cref="IUsesStreamReader" />
     /// <summary>
-    /// Updates tracking pose values from the stream reader to the transformed referenced in this script.
+    /// Updates tracking pose values from the <see cref="StreamReader"/> to bone transforms for head, neck, and/or eyes. 
     /// </summary>
+    /// TODO reset rig when drive changes
+    [ExecuteAlways]
+    [DisallowMultipleComponent]
     public class CharacterRigController : MonoBehaviour, IUsesStreamReader
     {
         [SerializeField]
@@ -39,7 +42,7 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Amount of smoothing to apply to eye movement")]
         float m_EyeSmoothing = 0.2f;
 
-#pragma warning disable CS0649
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Corrects the right eye look direction if z is negative.")]
         bool m_RightEyeNegZ;
@@ -47,7 +50,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Corrects the left eye look direction if z is negative.")]
         bool m_LeftEyeNegZ;
-#pragma warning restore CS0649
+#pragma warning restore 649
 
         [SerializeField]
         [Tooltip("Max amount of x and y movement for the eyes.")]
@@ -57,11 +60,9 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Enable controller driving head bone pose.")]
         bool m_DriveHead = true;
 
-#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Head bone transform")]
         Transform m_HeadBone;
-#pragma warning restore CS0649
 
         [Range(0f, 1f)]
         [SerializeField]
@@ -105,19 +106,49 @@ namespace Unity.Labs.FacialRemote
         float m_EyeLookOutRight;
         float m_EyeLookUpLeft;
         float m_EyeLookUpRight;
-
-        Transform m_ARHeadPose;
+        
+        [SerializeField, HideInInspector]
+        Transform m_HeadOffsetObject;
+        [SerializeField, HideInInspector]
+        GameObject m_NeckPoseObject;
+        [SerializeField, HideInInspector]
+        Transform m_NeckOffsetObject;
+        [SerializeField, HideInInspector]
+        GameObject m_LocHeadOffsetObject;
+        [SerializeField, HideInInspector]
+        Transform m_LocalizedHeadRotObject;
+        [SerializeField, HideInInspector]
+        Transform m_OtherThingOffsetObject;
+        [SerializeField, HideInInspector]
+        GameObject m_EyeLeftPoseLookObject;
+        [SerializeField, HideInInspector]
+        GameObject m_EyeRightPoseLookObject;
+        [SerializeField, HideInInspector]
+        Transform m_EyeOffsetObject;
+        [SerializeField, HideInInspector]
+        GameObject m_EyePoseLookObject;
+        [SerializeField, HideInInspector]
+        GameObject m_EyePoseObject;
+        [SerializeField, HideInInspector]
+        Transform m_ARHeadPoseObject;
+        [SerializeField, HideInInspector]
         Transform m_ARNeckPose;
+        [SerializeField, HideInInspector]
         Transform m_AREyePose;
-
+        [SerializeField, HideInInspector]
         Transform m_EyePoseLookAt;
+        [SerializeField, HideInInspector]
         Transform m_EyeRightPoseLookAt;
+        [SerializeField, HideInInspector]
         Transform m_EyeLeftPoseLookAt;
-
+        [SerializeField, HideInInspector]
         Transform m_LocalizedHeadParent;
+        [SerializeField, HideInInspector]
         Transform m_LocalizedHeadRot;
+        [SerializeField, HideInInspector]
         Transform m_OtherThing;
-        Transform m_OtherLook;
+        [SerializeField, HideInInspector]
+        Transform m_OtherLookObject;
 
         Pose m_HeadStartPose;
         Pose m_NeckStartPose;
@@ -127,22 +158,26 @@ namespace Unity.Labs.FacialRemote
         Quaternion m_LastHeadRotation;
         Quaternion m_LastNeckRotation;
 
-        Quaternion m_BackwardRot = Quaternion.Euler(0, 180, 0);
-
+        [SerializeField, HideInInspector]
+        bool m_IsRigSetup = false;
+        
         IStreamSettings m_LastStreamSettings;
 
         public IStreamReader streamReader { private get; set; }
 
         public Transform headBone
         {
-            get { return m_HeadBone != null ? m_HeadBone : transform; }
-            set
+            get
+            {
+                return m_HeadBone != null ? m_HeadBone : transform;
+            }
+            private set
             {
                 if (m_HeadBone == value)
                     return;
 
                 m_HeadBone = value;
-                streamReader.SetInitialHeadPose(new Pose(m_HeadBone.position, m_HeadBone.rotation));
+                SetupCharacterRigController();
             }
         }
 
@@ -191,20 +226,14 @@ namespace Unity.Labs.FacialRemote
                     return;
 
                 m_SceneCamera = value;
-                streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
+                
+                if (m_SceneCamera != null)
+                    streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
             }
         }
 
         [NonSerialized]
         public Transform[] animatedBones = new Transform [4];
-
-        void Start()
-        {
-            streamReader.SetInitialCameraPose(new Pose(sceneCamera.transform.position, sceneCamera.transform.rotation));
-            streamReader.SetInitialHeadPose(new Pose(headBone.position, headBone.rotation));
-
-            SetupCharacterRigController();
-        }
 
         void LateUpdate()
         {
@@ -212,12 +241,16 @@ namespace Unity.Labs.FacialRemote
             if (streamSource == null || !streamSource.isActive)
                 return;
 
-            InterpolateBlendShapes();
+            if (!m_IsRigSetup)
+                return;
+
+            GenerateRigRotationsFromBlendShapes();
             UpdateBoneTransforms();
         }
 
         /// <summary>
-        /// Create the pose data and helper game objects for driving the values of the face rig.
+        /// Create transform references and helper game objects for driving the values of the face rig. This must be
+        /// called each time the rig changes
         /// </summary>
         public void SetupCharacterRigController()
         {
@@ -250,39 +283,6 @@ namespace Unity.Labs.FacialRemote
                 driveNeck = false;
             }
 
-            Pose headWorldPose;
-            Pose headLocalPose;
-            if (driveHead)
-            {
-                headWorldPose = new Pose(headBone.position, headBone.rotation);
-                headLocalPose = new Pose(headBone.localPosition, headBone.localRotation);
-            }
-            else if (driveNeck)
-            {
-                headWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
-                headLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
-            }
-            else
-            {
-                headWorldPose = new Pose(transform.position, transform.rotation);
-                headLocalPose = new Pose(transform.localPosition, transform.localRotation);
-            }
-
-            Pose neckWorldPose;
-            Pose neckLocalPose;
-            if (driveNeck)
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                neckWorldPose = new Pose(m_NeckBone.position, m_NeckBone.rotation);
-                neckLocalPose = new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
-            }
-            else
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                neckWorldPose = new Pose(headBone.position, headBone.rotation);
-                neckLocalPose = new Pose(headBone.localPosition, headBone.localRotation);
-            }
-
             Pose eyeLeftWorldPose;
             Pose eyeLeftLocalPose;
             Pose eyeRightWorldPose;
@@ -299,59 +299,70 @@ namespace Unity.Labs.FacialRemote
             }
             else
             {
-                eyeLeftWorldPose = new Pose(headWorldPose.position, headWorldPose.rotation);
-                eyeLeftLocalPose = new Pose(headLocalPose.position, headLocalPose.rotation);
-                eyeRightWorldPose = new Pose(headWorldPose.position, headWorldPose.rotation);
-                eyeRightLocalPose = new Pose(headLocalPose.position, headLocalPose.rotation);
+                var headWorldPose = GetHeadPose(Space.World);
+                var headLocalPose = GetHeadPose(Space.Self);
+                eyeLeftWorldPose = headWorldPose;
+                eyeLeftLocalPose = headLocalPose;
+                eyeRightWorldPose = headWorldPose;
+                eyeRightLocalPose = headLocalPose;
             }
 
             // Set Head Look Rig
-            var headPoseObject = new GameObject("head_pose"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_ARHeadPose = headPoseObject.transform;
+            if (m_ARHeadPoseObject == null)
+                m_ARHeadPoseObject = new GameObject("head_pose").transform; //{ hideFlags = HideFlags.HideAndDontSave};
 
-            m_HeadStartPose = new Pose(headLocalPose.position, headLocalPose.rotation);
+            m_HeadStartPose = GetHeadPose(Space.Self);
 
-            m_ARHeadPose.SetPositionAndRotation(headWorldPose.position, Quaternion.identity);
-            var headOffset = new GameObject("head_offset").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            headOffset.SetPositionAndRotation(headWorldPose.position, headWorldPose.rotation);
-            headOffset.SetParent(transform, true);
-            m_ARHeadPose.SetParent(headOffset, true);
-            m_ARHeadPose.localRotation = Quaternion.identity;
+            m_ARHeadPoseObject.SetPositionAndRotation(GetHeadPose(Space.World).position, Quaternion.identity);
+            
+            if (m_HeadOffsetObject == null)
+                m_HeadOffsetObject = new GameObject("head_offset").transform;
+            m_HeadOffsetObject.SetPositionAndRotation(GetHeadPose(Space.World).position, GetHeadPose(Space.World).rotation);
+            m_HeadOffsetObject.SetParent(transform, true);
+            m_ARHeadPoseObject.SetParent(m_HeadOffsetObject, true);
+            m_ARHeadPoseObject.localRotation = Quaternion.identity;
 
             // Set Neck Look Rig
-            var neckPoseObject = new GameObject("neck_pose"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_ARNeckPose = neckPoseObject.transform;
+            if (m_NeckPoseObject == null)
+                m_NeckPoseObject = new GameObject("neck_pose");
+            m_ARNeckPose = m_NeckPoseObject.transform;
 
-            m_NeckStartPose = new Pose(neckLocalPose.position, neckLocalPose.rotation);
+            m_NeckStartPose = GetNeckPose(Space.Self);
 
-            m_ARNeckPose.SetPositionAndRotation(neckWorldPose.position, Quaternion.identity);
-            var neckOffset = new GameObject("neck_offset").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            neckOffset.SetPositionAndRotation(neckWorldPose.position, neckWorldPose.rotation);
-            neckOffset.SetParent(transform, true);
-            m_ARNeckPose.SetParent(neckOffset, true);
+            m_ARNeckPose.SetPositionAndRotation(GetNeckPose(Space.World).position, Quaternion.identity);
+            if (m_NeckOffsetObject == null)
+                m_NeckOffsetObject = new GameObject("neck_offset").transform;
+            m_NeckOffsetObject.SetPositionAndRotation(GetNeckPose(Space.World).position, GetNeckPose(Space.World).rotation);
+            m_NeckOffsetObject.SetParent(transform, true);
+            m_ARNeckPose.SetParent(m_NeckOffsetObject, true);
             m_ARNeckPose.localRotation = Quaternion.identity;
 
             // Set Eye Look Rig
-            var eyePoseObject = new GameObject("eye_pose"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_AREyePose = eyePoseObject.transform;
-            var eyePoseLookObject = new GameObject("eye_look"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_EyePoseLookAt = eyePoseLookObject.transform;
+            if (m_EyePoseObject == null)
+                m_EyePoseObject = new GameObject("eye_pose");
+            m_AREyePose = m_EyePoseObject.transform;
+            if (m_EyePoseLookObject == null)
+                m_EyePoseLookObject = new GameObject("eye_look");
+            m_EyePoseLookAt = m_EyePoseLookObject.transform;
             m_EyePoseLookAt.SetParent(m_AREyePose);
             m_EyePoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance;
 
             // Eye Center Look
+            // TODO should the rotation be transform.rotation or the head transform?
             m_AREyePose.SetPositionAndRotation(Vector3.Lerp(eyeRightWorldPose.position, eyeLeftWorldPose.position, 0.5f), transform.rotation);
-            var eyeOffset = new GameObject("eye_offset").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            eyeOffset.position = m_AREyePose.position;
-            eyeOffset.SetParent(headBone, true);
+            if (m_EyeOffsetObject == null)
+                m_EyeOffsetObject = new GameObject("eye_offset").transform;
+            m_EyeOffsetObject.position = m_AREyePose.position;
+            m_EyeOffsetObject.SetParent(headBone, true);
 
-            m_AREyePose.SetParent(eyeOffset, true);
+            m_AREyePose.SetParent(m_EyeOffsetObject, true);
 
             // Eye Right Look
             m_RightEyeStartPose = new Pose(eyeRightLocalPose.position, eyeRightLocalPose.rotation);
             var rightEyeOffset = eyeRightWorldPose.position - m_AREyePose.position;
-            var eyeRightPoseLookObject = new GameObject("eye_right_look"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_EyeRightPoseLookAt = eyeRightPoseLookObject.transform;
+            if (m_EyeRightPoseLookObject == null)
+                m_EyeRightPoseLookObject = new GameObject("eye_right_look");
+            m_EyeRightPoseLookAt = m_EyeRightPoseLookObject.transform;
             m_EyeRightPoseLookAt.SetParent(m_AREyePose);
             if (!m_RightEyeNegZ)
                 m_EyeRightPoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance + rightEyeOffset;
@@ -361,8 +372,9 @@ namespace Unity.Labs.FacialRemote
             // Eye Left Look
             m_LeftEyeStartPose = new Pose(eyeLeftLocalPose.position, eyeLeftLocalPose.rotation);
             var leftEyeOffset = eyeLeftWorldPose.position - m_AREyePose.position;
-            var eyeLeftPoseLookObject = new GameObject("eye_left_look"); //{ hideFlags = HideFlags.HideAndDontSave};
-            m_EyeLeftPoseLookAt = eyeLeftPoseLookObject.transform;
+            if (m_EyeLeftPoseLookObject == null)
+                m_EyeLeftPoseLookObject = new GameObject("eye_left_look");
+            m_EyeLeftPoseLookAt = m_EyeLeftPoseLookObject.transform;
             m_EyeLeftPoseLookAt.SetParent(m_AREyePose);
             if (!m_LeftEyeNegZ)
                 m_EyeLeftPoseLookAt.localPosition = Vector3.forward * m_EyeLookDistance + leftEyeOffset;
@@ -372,20 +384,27 @@ namespace Unity.Labs.FacialRemote
             m_AREyePose.rotation = Quaternion.identity;
 
             // Other strange rig stuff
-            m_LocalizedHeadParent = new GameObject("loc_head_parent").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            var locHeadOffset = new GameObject("loc_head_offset"); //{ hideFlags = HideFlags.HideAndDontSave};
-            locHeadOffset.transform.SetParent(m_LocalizedHeadParent);
-            m_LocalizedHeadRot = new GameObject("loc_head_rot").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            m_LocalizedHeadRot.SetParent(locHeadOffset.transform);
-            m_OtherLook = new GameObject("other_look").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            m_OtherLook.SetParent(m_LocalizedHeadRot.transform);
-            m_OtherLook.localPosition = Vector3.forward * 0.25f;
+            if (m_LocalizedHeadParent == null)
+                m_LocalizedHeadParent = new GameObject("loc_head_parent").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
+            if (m_LocHeadOffsetObject == null)
+                m_LocHeadOffsetObject = new GameObject("loc_head_offset");
+            m_LocHeadOffsetObject.transform.SetParent(m_LocalizedHeadParent);
 
-            var otherThingOffset = new GameObject("other_thing_offset").transform; //{ hideFlags = HideFlags.HideAndDontSave};
-            otherThingOffset.transform.SetParent(m_LocalizedHeadParent);
-            otherThingOffset.transform.rotation = transform.rotation;
-            m_OtherThing = new GameObject("other_thing").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
-            m_OtherThing.SetParent(otherThingOffset.transform);
+            if (m_LocalizedHeadRotObject == null)
+                m_LocalizedHeadRotObject = m_LocalizedHeadRot = new GameObject("loc_head_rot").transform;
+            m_LocalizedHeadRot.SetParent(m_LocHeadOffsetObject.transform);
+            if (m_OtherLookObject == null)
+                m_OtherLookObject = new GameObject("other_look").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
+            m_OtherLookObject.SetParent(m_LocalizedHeadRot.transform);
+            m_OtherLookObject.localPosition = Vector3.forward * 0.25f;
+
+            if (m_OtherThingOffsetObject == null)
+                m_OtherThingOffsetObject = new GameObject("other_thing_offset").transform;
+            m_OtherThingOffsetObject.transform.SetParent(m_LocalizedHeadParent);
+            m_OtherThingOffsetObject.transform.rotation = transform.rotation;
+            if (m_OtherThing == null)
+                m_OtherThing = new GameObject("other_thing").transform; //{ hideFlags = HideFlags.HideAndDontSave}.transform;
+            m_OtherThing.SetParent(m_OtherThingOffsetObject.transform);
 
             if (m_HeadBone != null)
                 animatedBones[0] = m_HeadBone;
@@ -398,6 +417,48 @@ namespace Unity.Labs.FacialRemote
 
             if (m_RightEye != null)
                 animatedBones[3] = m_RightEye;
+        }
+
+        Pose GetHeadPose(Space space)
+        {
+            if (space == Space.Self)
+            {
+                if (driveHead)
+                    return new Pose(headBone.localPosition, headBone.localRotation);
+                
+                if (driveNeck)
+                    return new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+                
+                return new Pose(transform.localPosition, transform.localRotation);
+            }
+            else
+            {
+                if (driveHead)
+                    return new Pose(headBone.position, headBone.rotation);
+                
+                if (driveNeck)
+                    return new Pose(m_NeckBone.position, m_NeckBone.rotation);
+                
+                return new Pose(transform.position, transform.rotation);
+            }
+        }
+
+        Pose GetNeckPose(Space space)
+        {
+            if (space == Space.Self)
+            {
+                if (driveNeck)
+                    return new Pose(m_NeckBone.localPosition, m_NeckBone.localRotation);
+                
+                return new Pose(headBone.localPosition, headBone.localRotation);
+            }
+            else
+            {
+                if (driveNeck)
+                    return new Pose(m_NeckBone.position, m_NeckBone.rotation);
+                
+                return new Pose(headBone.position, headBone.rotation);
+            }
         }
 
         /// <summary>
@@ -427,13 +488,19 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void InterpolateBlendShapes(bool force = false)
+        /// <summary>
+        /// Generate a new eye poses and head and neck rotations based on blend shape values.
+        /// </summary>
+        /// <param name="force">Force rig movement even if tracking is lost.</param>
+        public void GenerateRigRotationsFromBlendShapes(bool force = false)
         {
             if (force || !streamReader.faceTrackingLost)
             {
                 LocalizeFacePose();
 
                 var buffer = streamReader.blendShapesBuffer;
+                
+                // Interpolate blend shape values driving eye movement
                 m_EyeLookDownLeft = Mathf.Lerp(buffer[(int)m_EyeLookDownLeftLocation], m_EyeLookDownLeft, m_EyeSmoothing);
                 m_EyeLookInLeft = Mathf.Lerp(buffer[(int)m_EyeLookInLeftLocation], m_EyeLookInLeft, m_EyeSmoothing);
                 m_EyeLookOutLeft = Mathf.Lerp(buffer[(int)m_EyeLookOutLeftLocation], m_EyeLookOutLeft, m_EyeSmoothing);
@@ -444,6 +511,7 @@ namespace Unity.Labs.FacialRemote
                 m_EyeLookOutRight = Mathf.Lerp(buffer[(int)m_EyeLookOutRightLocation], m_EyeLookOutRight, m_EyeSmoothing);
                 m_EyeLookUpRight = Mathf.Lerp(buffer[(int)m_EyeLookUpRightLocation], m_EyeLookUpRight, m_EyeSmoothing);
 
+                // Calculate new eye rotations
                 var leftEyePitch = Quaternion.AngleAxis((m_EyeLookUpLeft - m_EyeLookDownLeft) * eyeAngleRange.x, Vector3.right);
                 var leftEyeYaw = Quaternion.AngleAxis((m_EyeLookInLeft - m_EyeLookOutLeft) * eyeAngleRange.y, Vector3.up);
                 var leftEyeRot = leftEyePitch * leftEyeYaw;
@@ -452,15 +520,17 @@ namespace Unity.Labs.FacialRemote
                 var rightEyeYaw = Quaternion.AngleAxis((m_EyeLookOutRight - m_EyeLookInRight) * eyeAngleRange.y, Vector3.up);
                 var rightEyeRot = rightEyePitch * rightEyeYaw;
 
+                // Set new look-at transform
                 m_AREyePose.localRotation = Quaternion.Slerp(leftEyeRot, rightEyeRot, 0.5f);
 
+                // Rotate the head
                 var headRot = m_LocalizedHeadRot.localRotation;
-                var neckRot = headRot;
-
                 headRot = Quaternion.Slerp(m_HeadStartPose.rotation, headRot, m_HeadFollowAmount);
-                m_ARHeadPose.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, headSmoothing);
-                m_LastHeadRotation = m_ARHeadPose.localRotation;
+                m_ARHeadPoseObject.localRotation = Quaternion.Slerp(headRot, m_LastHeadRotation, headSmoothing);
+                m_LastHeadRotation = m_ARHeadPoseObject.localRotation;
 
+                // Rotate the neck
+                var neckRot = headRot;
                 neckRot = Quaternion.Slerp(m_NeckStartPose.rotation, neckRot, neckFollowAmount);
                 m_ARNeckPose.localRotation = Quaternion.Slerp(neckRot, m_LastNeckRotation, headSmoothing);
                 m_LastNeckRotation = m_ARNeckPose.localRotation;
@@ -469,25 +539,32 @@ namespace Unity.Labs.FacialRemote
             {
                 if (driveEyes)
                 {
+                    // TODO should this drive from the last position instead of an identity Quaternion?
                     m_AREyePose.localRotation = Quaternion.Slerp(Quaternion.identity, m_AREyePose.localRotation, m_TrackingLossSmoothing);
-                    m_ARHeadPose.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPose.localRotation, m_TrackingLossSmoothing);
+                    m_ARHeadPoseObject.localRotation = Quaternion.Slerp(Quaternion.identity, m_ARHeadPoseObject.localRotation, m_TrackingLossSmoothing);
                 }
 
-                m_LastHeadRotation = m_ARHeadPose.localRotation;
+                m_LastHeadRotation = m_ARHeadPoseObject.localRotation;
             }
 
             if (force)
                 UpdateBoneTransforms();
         }
 
+        /// <summary>
+        /// Localizes the head pose to rotation between the real face and the device camera
+        /// </summary>
         void LocalizeFacePose()
         {
+            if (streamReader == null)
+                return;
+            
             var headPose = streamReader.headPose;
             m_LocalizedHeadParent.position = headPose.position;
             m_LocalizedHeadParent.LookAt(streamReader.cameraPose.position);
 
-            m_LocalizedHeadRot.rotation = headPose.rotation * m_BackwardRot;
-            m_OtherThing.LookAt(m_OtherLook, m_OtherLook.up);
+            m_LocalizedHeadRot.rotation = headPose.rotation * Quaternion.Euler(0, 180, 0);;
+            m_OtherThing.LookAt(m_OtherLookObject, m_OtherLookObject.up);
         }
 
         void UpdateBoneTransforms()
@@ -506,11 +583,13 @@ namespace Unity.Labs.FacialRemote
             }
 
             if (driveHead)
-                m_HeadBone.rotation = m_ARHeadPose.rotation;
+                headBone.rotation = m_ARHeadPoseObject.rotation;
 
             if (driveNeck)
                 m_NeckBone.rotation = m_ARNeckPose.rotation;
         }
+        
+        public 
 
         void OnValidate()
         {

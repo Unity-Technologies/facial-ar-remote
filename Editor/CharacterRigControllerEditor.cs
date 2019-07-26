@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
@@ -49,6 +50,8 @@ namespace Unity.Labs.FacialRemote
 
         public override void OnInspectorGUI()
         {
+            var characterRigController = (CharacterRigController)target;
+            
             using (var check = new EditorGUI.ChangeCheckScope())
             {
                 EditorGUILayout.PropertyField(m_SceneCamera);
@@ -99,6 +102,17 @@ namespace Unity.Labs.FacialRemote
                     EditorGUILayout.PropertyField(m_EyeSmoothing);
                 }
                 EditorGUI.indentLevel--;
+                
+                EditorGUILayout.Space();
+                
+                GUILayout.BeginHorizontal ();
+                GUILayout.FlexibleSpace();
+                if(GUILayout.Button("Setup Rig", GUILayout.Width(200)))
+                {
+                    characterRigController.SetupCharacterRigController();
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal ();
                 
                 if (check.changed)
                     serializedObject.ApplyModifiedProperties();
