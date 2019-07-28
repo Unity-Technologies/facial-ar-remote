@@ -47,6 +47,10 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object.")]
         GameObject m_StreamRecorderOverride;
 
+        [SerializeField]
+        [Tooltip("Shows extra logging information in the console.")]
+        bool m_VerboseLogging;
+        
         int m_LastFrameNum;
 
         bool m_Running;
@@ -61,12 +65,17 @@ namespace Unity.Labs.FacialRemote
         readonly Queue<byte[]> m_BufferQueue = new Queue<byte[]>();
         readonly Queue<byte[]> m_UnusedBuffers = new Queue<byte[]>();
 
+        /// <summary>
+        /// Is the current stream being recorded?
+        /// </summary>
         public bool recording { get; private set; }
-
 
         List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
-        public List<IStreamReader> streamReaders => m_StreamReaders;
+        public List<IStreamReader> streamReaders
+        {
+            get { return m_StreamReaders; }
+        }
 
         public bool isActive
         {
@@ -74,6 +83,33 @@ namespace Unity.Labs.FacialRemote
         }
 
         public IStreamSettings streamSettings { get { return m_StreamSettings; } }
+
+        /// <summary>
+        /// Manual override to use a specific stream recorder. This cannot be set during recording.
+        /// </summary>
+        public GameObject streamRecorderOverride
+        {
+            get { return m_StreamRecorderOverride; }
+            set
+            {
+                if (value == m_StreamRecorderOverride)
+                    return;
+
+                if (recording)
+                {
+                    Debug.LogError("Cannot set a new Stream Recorder while recording");
+                    return;
+                }
+                
+                m_StreamRecorderOverride = value;
+            }
+        }
+
+        public bool verboseLogging
+        {
+            get { return m_VerboseLogging; }
+            set { m_VerboseLogging = value; }
+        }
 
         void Start()
         {
@@ -84,8 +120,8 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            m_StreamRecorder = m_StreamRecorderOverride
-                ? m_StreamRecorderOverride.GetComponentInChildren<IStreamRecorder>()
+            m_StreamRecorder = streamRecorderOverride
+                ? streamRecorderOverride.GetComponentInChildren<IStreamRecorder>()
                 : GetComponentInChildren<IStreamRecorder>();
 
             if (m_StreamRecorder == null)
@@ -205,8 +241,9 @@ namespace Unity.Labs.FacialRemote
                                         m_StreamSettings.FrameNumberSize);
 
                                     var frameNum = frameNumArray[0];
-                                    //if (streamReader.verboseLogging && m_LastFrameNum != frameNum - 1)
-                                      //  Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
+                                    
+                                    if (verboseLogging && m_LastFrameNum != frameNum - 1)
+                                        Debug.LogFormat("Dropped frame {0} (last frame: {1}) ", frameNum, m_LastFrameNum);
 
                                     m_LastFrameNum = frameNum;
                                 }
@@ -244,6 +281,9 @@ namespace Unity.Labs.FacialRemote
             return false;
         }
 
+        /// <summary>
+        /// Start recording the current data stream to the assigned Stream Recorder.
+        /// </summary>
         public void StartRecording()
         {
             if (m_StreamRecorder == null)
@@ -258,6 +298,9 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        /// <summary>
+        /// Start recording the current data stream.
+        /// </summary>
         public void StopRecording()
         {
             if (m_StreamRecorder == null)
@@ -292,6 +335,9 @@ namespace Unity.Labs.FacialRemote
             m_UnusedBuffers.Enqueue(buffer);
         }
 
+        /// <summary>
+        /// Update the current frame buffer and send to stream readers.
+        /// </summary>
         public void StreamSourceUpdate()
         {
             var notSource = !HasStreamReader();
@@ -301,12 +347,9 @@ namespace Unity.Labs.FacialRemote
             if (notSource || !isActive)
                 return;
 
-            //if (streamReader.verboseLogging)
-            //{
-            //    if (m_BufferQueue.Count > m_CatchUpSize)
-            //        Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!",
-            //            m_BufferQueue.Count, m_CatchUpSize));
-            //}
+            if (verboseLogging && m_BufferQueue.Count > m_CatchUpSize)
+                Debug.LogWarning(string.Format("{0} is larger than Catchup Size of {1} Dropping Frames!", 
+                    m_BufferQueue.Count, m_CatchUpSize));
 
             UpdateCurrentFrameBuffer();
         }

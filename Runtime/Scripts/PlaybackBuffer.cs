@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -17,61 +16,49 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Recorded byte stream of blend shape data.")]
         byte[] m_RecordStream = { };
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Error check byte value.")]
         byte m_ErrorCheck;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Number of blend shapes in the stream.")]
         int m_BlendShapeCount;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of blend shapes in the byte array.")]
         int m_BlendShapeSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of frame number value in byte array.")]
         int m_FrameNumberSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Size of frame time value in byte array.")]
         int m_FrameTimeSize;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of head pose in byte array.")]
         int m_HeadPoseOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of camera pose in byte array.")]
         int m_CameraPoseOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of frame number value in byte array.")]
         int m_FrameNumberOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Location of frame time value in byte array.")]
         int m_FrameTimeOffset;
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Total size of buffer of byte array for single same of data.")]
         int m_BufferSize;
 
         [SerializeField]
-        [Tooltip("String names of the blend shapes in the stream with their index in the array being their relative location.")]
         string[] m_Locations = {};
 
         IStreamSettings m_StreamSettings;
@@ -79,10 +66,13 @@ namespace Unity.Labs.FacialRemote
         BlendShapeMappings m_BlendShapeMappings;
         int m_TouchInputCount;
         int m_InputStateCount;
+        
+#pragma warning disable CS0649
         int m_InputStateSize;
         int m_InputScreenPositionSize;
         int m_InputStateOffset;
         int m_InputScreenPositionOffset;
+#pragma warning restore CS0649
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
         public int BlendShapeCount { get { return m_BlendShapeCount; } }
@@ -107,13 +97,25 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public int inputStateOffset => m_InputStateOffset;
+        public int inputStateOffset
+        {
+            get { return m_InputStateOffset; }
+        }
 
-        public int inputStateSize => m_InputStateSize;
+        public int inputStateSize
+        {
+            get { return m_InputStateSize; }
+        }
 
-        public int inputScreenPositionOffset => m_InputScreenPositionOffset;
+        public int inputScreenPositionOffset
+        {
+            get { return m_InputScreenPositionOffset; }
+        }
 
-        public int inputScreenPositionSize => m_InputScreenPositionSize;
+        public int inputScreenPositionSize
+        {
+            get { return m_InputScreenPositionSize; }
+        }
 
         public string name
         {
@@ -129,6 +131,10 @@ namespace Unity.Labs.FacialRemote
 
         PlaybackBuffer() {}
 
+        /// <summary>
+        /// Create a new playback buffer.
+        /// </summary>
+        /// <param name="streamSettings">The stream settings to define the playback buffer.</param>
         public PlaybackBuffer(IStreamSettings streamSettings)
         {
             m_StreamSettings = streamSettings;

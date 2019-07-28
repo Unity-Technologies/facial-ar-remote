@@ -25,6 +25,7 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Enable controller driving eye bones pose.")]
         bool m_DriveEyes = true;
 
+#pragma warning disable CS0649
         [SerializeField]
         [Tooltip("Left eye bone transform")]
         Transform m_LeftEye;
@@ -32,7 +33,8 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Right eye bone transform")]
         Transform m_RightEye;
-
+#pragma warning restore CS0649
+        
         [SerializeField]
         [Tooltip("Local offset distance for the eye look target")]
         float m_EyeLookDistance = -0.5f;

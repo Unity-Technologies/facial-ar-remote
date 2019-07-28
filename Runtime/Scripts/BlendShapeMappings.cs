@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -12,9 +11,11 @@ namespace Unity.Labs.FacialRemote
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject
     {
+#pragma warning disable 649
         [SerializeField]
         StreamSettings m_StreamSettings;
-        
+#pragma warning restore 649
+
         [SerializeField]
         [Tooltip("Names of the data streams with their index in the array being their relative location")]
         string[] m_LocationIdentifiers;

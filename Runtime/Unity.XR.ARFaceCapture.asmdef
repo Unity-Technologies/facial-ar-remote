@@ -1,11 +1,7 @@
 {
     "name": "com.unity.xr.ar-face-capture",
     "references": [
-        "Unity.TextMeshPro",
-        "Unity.XR.ARKit",
-        "Unity.XR.ARKit.FaceTracking",
-        "Unity.XR.ARFoundation",
-        "Unity.XR.ARSubsystems"
+        "Unity.TextMeshPro"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
