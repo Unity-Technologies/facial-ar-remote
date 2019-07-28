@@ -42,12 +42,47 @@ namespace Unity.Labs.FacialRemote
         [Tooltip("Max value a scaled blend shape can reach.")]
         float m_BlendShapeMax = 100f;
 
-        public bool useOverride { get { return m_UseOverride; } }
+        /// <summary>
+        /// Enables the use of these override values on a blend shape
+        /// </summary>
+        public bool useOverride
+        {
+            get { return m_UseOverride; }
+            set { m_UseOverride = value; }
+        }
+
+        /// <summary>
+        /// Blend shape name to be overridden
+        /// </summary>
         public string name { get { return m_Name; } }
+        
+        /// <summary>
+        /// Smoothing to apply to blend shape values coming from the stream reader
+        /// </summary>
         public float blendShapeSmoothing { get { return m_BlendShapeSmoothing; } }
+        
+        /// <summary>
+        /// Min threshold of change to register as a new blend shape value
+        /// </summary>
         public float blendShapeThreshold { get { return m_BlendShapeThreshold; } }
-        public float blendShapeOffset { get { return m_BlendShapeOffset; } }
+
+        /// <summary>
+        /// Offsets the zero value of the blend shape.
+        /// </summary>
+        public float blendShapeOffset
+        {
+            get { return m_BlendShapeOffset; }
+            set { m_BlendShapeOffset = value; }
+        }
+
+        /// <summary>
+        /// Scaling coefficient applied to the blend shape values from the stream reader
+        /// </summary>
         public float blendShapeCoefficient { get { return m_BlendShapeCoefficient; } }
+        
+        /// <summary>
+        /// Max value a scaled blend shape can reach
+        /// </summary>
         public float blendShapeMax { get { return m_BlendShapeMax; } }
 
         BlendShapeOverride(){}

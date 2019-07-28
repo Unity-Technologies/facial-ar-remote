@@ -28,7 +28,10 @@ namespace Unity.Labs.FacialRemote
         
         List<IStreamReader> m_StreamReaders = new List<IStreamReader>();
 
-        public List<IStreamReader> streamReaders => m_StreamReaders;
+        public List<IStreamReader> streamReaders
+        {
+            get { return m_StreamReaders; }
+        }
 
         public bool isActive { get; private set; }
         public PlaybackBuffer activePlaybackBuffer { get { return m_ActivePlaybackBuffer; } }
@@ -36,8 +39,8 @@ namespace Unity.Labs.FacialRemote
 
         public PlaybackData playbackData
         {
-            get => m_PlaybackData;
-            set => m_PlaybackData = value;
+            get { return m_PlaybackData; }
+            set { m_PlaybackData = value; }
         }
 
         void Start()
