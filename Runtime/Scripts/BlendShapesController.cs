@@ -21,10 +21,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Asset that contains the bindings between blend-shape values and SkinnnedMeshRenderer's blend-shape indices.")]
         BlendShapeMappings m_Mappings;
-    
-        [SerializeField]
-        [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
-        SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
 
         [Range(0f, 1)]
         [SerializeField]
@@ -54,8 +50,9 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Overrides settings for individual blend shapes.")]
         BlendShapeOverride[] m_Overrides;
-
-        Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
+        BlendShapeMappings m_CurrentMappings;
+        BlendShapeMap[] m_Maps = null;
+        List<SkinnedMeshRenderer> m_SkinnedMeshRenderers = new List<SkinnedMeshRenderer>();
         BlendShapeValues m_SmoothedBlendShapes;
         BlendShapeValues m_BlendShapeOutput;
 
@@ -81,25 +78,11 @@ namespace Unity.Labs.FacialRemote
             get { return m_Mappings; }
             private set { m_Mappings = value; }
         }
-		/// <summary>
-        /// All renderers with blend shape values being driven.
-        /// </summary>
-        public SkinnedMeshRenderer[] skinnedMeshRenderers
-        {
-            get { return m_SkinnedMeshRenderers; }
-        }
-
-        public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices
-        {
-            get { return m_Indices; }
-        }
 
         public IStreamReader streamReader { private get; set; }
 
         void Awake()
         {
-            UpdateBlendShapeIndices();
-
             if (m_Overrides.Length != m_BlendShapeValues.Count)
                 Array.Resize(ref m_Overrides, m_BlendShapeValues.Count);
         }
@@ -111,8 +94,6 @@ namespace Unity.Labs.FacialRemote
 
         /// <summary>
         /// Updates BlendShape calculations by a time step and sets the values to the renderers.
-        /// </summary>
-        /// <param name="deltaTime">Time step to advance.</param>
         public void UpdateBlendShapes()
         {
             UpdateFromStreamReader();
@@ -139,47 +120,6 @@ namespace Unity.Labs.FacialRemote
                 
                 m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
             }
-        }
-
-        /// <summary>
-        /// Update the blend shape indices based on the incoming data stream.
-        /// </summary>
-        public void UpdateBlendShapeIndices()
-        {
-            m_Indices.Clear();
-
-            if (mappings == null)
-                return;
-            
-            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
-            {
-                var mesh = meshRenderer.sharedMesh;
-                var count = mesh.blendShapeCount;
-                var indices = new BlendShapeIndexData[count];
-                for (var i = 0; i < count; i++)
-                {
-                    var shapeName = mesh.GetBlendShapeName(i);
-                    var index = -1;
-                    for (var j = 0; j < mappings.blendShapeNames.Length; j++)
-                    {
-                        // Check using 'contains' rather than a direct comparison so that multiple blend shapes can 
-                        // easily be driven by the same driver e.g. jaw and teeth
-                        if (!string.IsNullOrEmpty(mappings.blendShapeNames[j]) 
-                            && shapeName.Contains(mappings.blendShapeNames[j]))
-                        {
-                            index = j;
-                            break;
-                        }
-                    }
-
-                    indices[i] = new BlendShapeIndexData(index, shapeName);
-
-                    if (index < 0)
-                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
-                }
-
-                m_Indices.Add(meshRenderer, indices);
-            });
         }
 
         void PostProcessValues()
@@ -212,41 +152,60 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateSkinnedMeshRenderers()
         {
-            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
+            PrepareMappings();
+
+            for (var i = 0; i < m_SkinnedMeshRenderers.Count; ++i)
             {
-                var blendShapeIndexData = default(BlendShapeIndexData[]);
+                var skinnedMeshRenderer = m_SkinnedMeshRenderers[i];
 
-                if (m_Indices.TryGetValue(meshRenderer, out blendShapeIndexData))
-                {
-                    var indices = m_Indices[meshRenderer];
-                    var length = indices.Length;
-                    for (var i = 0; i < length; i++)
-                    {
-                        var datum = indices[i];
-                        if (datum.index < 0)
-                            continue;
-
-                        meshRenderer.SetBlendShapeWeight(i, m_BlendShapeOutput[datum.index]);
-                    }
-                }
-            });
-        }
-
-        void ForeachRenderer(Action<SkinnedMeshRenderer> action)
-        {
-            foreach (var skinnedMeshRenderer in m_SkinnedMeshRenderers)
-            {
                 if (skinnedMeshRenderer == null)
                     continue;
 
-                if (skinnedMeshRenderer.sharedMesh == null)
-                    continue;
+                var map = m_Maps[i];
 
-                if (action != null)
-                    action.Invoke(skinnedMeshRenderer);
+                for (var j = 0; j < 52; j++)
+                {
+                    var location = (BlendShapeLocation)j;
+                    var index = map.GetIndex(location);
+
+                    if (index == -1)
+                        continue;
+
+                    skinnedMeshRenderer.SetBlendShapeWeight(index, m_BlendShapeOutput[j]);
+                }
             }
         }
 
+        void PrepareMappings()
+        {
+            if (m_CurrentMappings == mappings)
+                return;
+
+            m_SkinnedMeshRenderers.Clear();
+            m_Maps = null;
+
+            if (mappings != null)
+            {
+                m_Maps = mappings.maps;
+
+                foreach (var map in m_Maps)
+                    m_SkinnedMeshRenderers.Add(GetSkinnedMeshRenderer(map.path));
+            }
+
+            m_CurrentMappings = mappings;
+        }
+
+        SkinnedMeshRenderer GetSkinnedMeshRenderer(string path)
+        {
+            var targetTransform = transform.Find(path);
+
+            if (targetTransform == null)
+                return null;
+
+            return targetTransform.GetComponent<SkinnedMeshRenderer>();
+        }
+
+        /*
         void OnValidate()
         {
             UpdateBlendShapeIndices();
@@ -270,6 +229,7 @@ namespace Unity.Labs.FacialRemote
                 m_Overrides = overridesCopy;
             }
         }
+        */
 
         bool HasOverride(int index)
         {
