@@ -59,7 +59,8 @@ namespace Unity.Labs.FacialRemote
         MouthUpperUpRight   ,
         NoseSneerLeft       ,
         NoseSneerRight      ,
-        TongueOut
+        TongueOut           ,
+        Invalid
     }
 
 

@@ -12,11 +12,11 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         string m_Path;
         [SerializeField]
-        List<BlendShapeLocation> m_Locations = new List<BlendShapeLocation>();
-        [SerializeField]
         List<int> m_Indices = new List<int>();
+        [SerializeField]
+        List<BlendShapeLocation> m_Locations = new List<BlendShapeLocation>();
 
-        Dictionary<BlendShapeLocation, int> m_Map = new Dictionary<BlendShapeLocation, int>();
+        Dictionary<int, BlendShapeLocation> m_Map = new Dictionary<int, BlendShapeLocation>();
 
         public string path
         {
@@ -29,30 +29,23 @@ namespace Unity.Labs.FacialRemote
             m_Map.Clear();
         }
 
-        public int GetIndex(BlendShapeLocation location)
+        public BlendShapeLocation Get(int index)
         {
-            int index;
-            if (m_Map.TryGetValue(location, out index))
-                return index;
+            BlendShapeLocation location;
+            if (m_Map.TryGetValue(index, out location))
+                return location;
             
-            return -1;
+            return BlendShapeLocation.Invalid;
         }
 
-        public void SetIndex(BlendShapeLocation location, int index)
+        public void Set(int index, BlendShapeLocation location)
         {
-            m_Map[location] = index;
+            m_Map[index] = location;
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
-            m_Locations.Clear();
-            m_Indices.Clear();
 
-            foreach (var pair in m_Map)
-            {
-                m_Locations.Add(pair.Key);
-                m_Indices.Add(pair.Value);
-            }
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
@@ -60,7 +53,14 @@ namespace Unity.Labs.FacialRemote
             m_Map.Clear();
 
             for (var i = 0; i < Math.Min(m_Locations.Count, m_Indices.Count); i++)
-                m_Map.Add(m_Locations[i], m_Indices[i]);
+            {
+                var location = m_Locations[i];
+                
+                if (location == BlendShapeLocation.Invalid)
+                    continue;
+
+                Set(m_Indices[i], location);
+            }
         }
     }
 

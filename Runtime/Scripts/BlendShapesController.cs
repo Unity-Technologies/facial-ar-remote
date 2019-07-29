@@ -161,17 +161,17 @@ namespace Unity.Labs.FacialRemote
                 if (skinnedMeshRenderer == null)
                     continue;
 
+                var mesh = skinnedMeshRenderer.sharedMesh;
                 var map = m_Maps[i];
 
-                for (var j = 0; j < 52; j++)
+                for (var j = 0; j < mesh.blendShapeCount; j++)
                 {
-                    var location = (BlendShapeLocation)j;
-                    var index = map.GetIndex(location);
+                    var location = map.Get(j);
 
-                    if (index == -1)
+                    if (location == BlendShapeLocation.Invalid)
                         continue;
 
-                    skinnedMeshRenderer.SetBlendShapeWeight(index, m_BlendShapeOutput[j]);
+                    skinnedMeshRenderer.SetBlendShapeWeight(j, m_BlendShapeOutput[(int)location]);
                 }
             }
         }

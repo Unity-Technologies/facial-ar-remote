@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEditor;
@@ -11,7 +13,7 @@ namespace Unity.Labs.FacialRemote
     {
         SerializedProperty m_PrefabProp;
         SerializedProperty m_MapsProp;
-        List<string> m_LocationNames = new List<string>();
+        string[] m_LocationNames = {};
 
         void OnEnable()
         {
@@ -23,10 +25,12 @@ namespace Unity.Labs.FacialRemote
 
         void PrepareLocationNames()
         {
-            m_LocationNames.Clear();
+            var names = new List<string>(53);
 
-            for (var i = 0; i < 52; ++i)
-                m_LocationNames.Add(((BlendShapeLocation)i).ToString());
+            for (var i = 0; i < 53; ++i)
+                names.Add(((BlendShapeLocation)i).ToString());
+
+            m_LocationNames = names.ToArray();
         }
 
         public override void OnInspectorGUI()
@@ -37,9 +41,15 @@ namespace Unity.Labs.FacialRemote
             {
                 EditorGUILayout.PropertyField(m_PrefabProp);
 
-                if (GUILayout.Button("Build", EditorStyles.miniButton, GUILayout.Width(35f)))
+                var prefab = m_PrefabProp.objectReferenceValue as GameObject;
+
+                using (new EditorGUI.DisabledGroupScope(prefab == null))
                 {
-                    Build();
+                    if (GUILayout.Button("Build", EditorStyles.miniButton, GUILayout.Width(35f)))
+                    {
+                        if (prefab != null)
+                            Build(prefab);
+                    }
                 }
             }
 
@@ -51,54 +61,58 @@ namespace Unity.Labs.FacialRemote
 
         void DoMapGUI(SerializedProperty mapProp)
         {
-            var prefab = m_PrefabProp.objectReferenceValue as GameObject;
-
-            if (prefab == null)
-                return;
-
             var pathProp = mapProp.FindPropertyRelative("m_Path");
-            var locationsProp = mapProp.FindPropertyRelative("m_Locations");
             var indicesProp = mapProp.FindPropertyRelative("m_Indices");
+            var locationsProp = mapProp.FindPropertyRelative("m_Locations");
+            var mesh = default(Mesh);
 
-            var targetTransform = prefab.transform.Find(pathProp.stringValue);
+            var prefab = m_PrefabProp.objectReferenceValue as GameObject;
+            if (prefab != null)
+            {
+                var targetTransform = prefab.transform.Find(pathProp.stringValue);
 
-            if (targetTransform == null)
-                return;
+                if (targetTransform != null)
+                {
+                    var skinnedMeshRenderer = targetTransform.GetComponent<SkinnedMeshRenderer>();
 
-            var skinnedMeshRenderer = targetTransform.GetComponent<SkinnedMeshRenderer>();
+                    if (skinnedMeshRenderer != null)
+                        mesh = skinnedMeshRenderer.sharedMesh;
+                }
+            }
 
-            if (skinnedMeshRenderer == null)
-                return;
+            var blendShapeNames = default(List<string>);
 
-            var blendShapeNames = new List<string>(53);
-            blendShapeNames.Add("None");
-            blendShapeNames.AddRange(GetBlendShapeNames(skinnedMeshRenderer.sharedMesh));
+            if (mesh != null)
+            {
+                blendShapeNames = GetBlendShapeNames(mesh);
+            }
 
-            EditorGUILayout.LabelField(pathProp.stringValue, EditorStyles.boldLabel);
+            var transformName = Path.GetFileName(pathProp.stringValue);
+
+            EditorGUILayout.LabelField(transformName, EditorStyles.boldLabel);
 
             ++EditorGUI.indentLevel;
 
-            for (var i = 0; i < locationsProp.arraySize; ++i)
-            {
-                var locationIndex = locationsProp.GetArrayElementAtIndex(i).enumValueIndex;
-                var index = indicesProp.GetArrayElementAtIndex(i).intValue;
+            for (var i = 0; i < indicesProp.arraySize; ++i)
+            {                
+                var indexProp = indicesProp.GetArrayElementAtIndex(i);
+                var label = default(GUIContent);
 
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    index = EditorGUILayout.Popup(new GUIContent(m_LocationNames[locationIndex]), index + 1, blendShapeNames.ToArray()) - 1;
-                    indicesProp.GetArrayElementAtIndex(i).intValue = index;
-                }
+                if (blendShapeNames != null)
+                    label = new GUIContent(blendShapeNames[indexProp.intValue]);
+                else
+                    label = new GUIContent("Index: " + indexProp.intValue.ToString());
+
+                var locationProp = locationsProp.GetArrayElementAtIndex(i);
+                locationProp.intValue = EditorGUILayout.Popup(label, locationProp.intValue, m_LocationNames);
             }
 
             --EditorGUI.indentLevel;
         }
 
-        void Build()
+        void Build(GameObject prefab)
         {
-            var prefab = m_PrefabProp.objectReferenceValue as GameObject;
-
-            if (prefab == null)
-                return;
+            Debug.Assert(prefab != null);
 
             var skinnedMeshRenderers = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true)
                 .Where( s => s.sharedMesh != null && s.sharedMesh.blendShapeCount > 0 )
@@ -124,24 +138,26 @@ namespace Unity.Labs.FacialRemote
 
             var locationsProp = mapProp.FindPropertyRelative("m_Locations");
             var indicesProp = mapProp.FindPropertyRelative("m_Indices");
-            var blendShapeNames = GetBlendShapeNames(mesh);
+            var blendShapeNames = PrepareNames(GetBlendShapeNames(mesh)).ToArray();
+            var locationNames = PrepareNames(new List<string>(m_LocationNames)).ToArray();
 
-            PrepareNames(blendShapeNames);
+            indicesProp.arraySize = blendShapeNames.Length;
+            locationsProp.arraySize = blendShapeNames.Length;
 
-            locationsProp.arraySize = m_LocationNames.Count;
-            indicesProp.arraySize = m_LocationNames.Count;
-
-            for (var i = 0; i < m_LocationNames.Count; ++i)
+            for (var i = 0; i < blendShapeNames.Length; ++i)
             {
-                locationsProp.GetArrayElementAtIndex(i).enumValueIndex = i;
+                indicesProp.GetArrayElementAtIndex(i).intValue = i;
 
                 var match = default(string);
                 var matchIndex = -1;
                 
-                if (FindMatch(m_LocationNames[i], blendShapeNames.ToArray(), out match))
-                    matchIndex = blendShapeNames.IndexOf(match);
+                if (FindMatch(blendShapeNames[i], locationNames, out match))
+                    matchIndex = Array.IndexOf(locationNames, match);
 
-                indicesProp.GetArrayElementAtIndex(i).intValue = matchIndex;
+                if (matchIndex == -1)
+                    matchIndex = (int)BlendShapeLocation.Invalid;
+
+                locationsProp.GetArrayElementAtIndex(i).enumValueIndex = matchIndex;
             }
         }
 
@@ -158,14 +174,18 @@ namespace Unity.Labs.FacialRemote
             return names;
         }
 
-        void PrepareNames(List<string> names)
+        List<string> PrepareNames(List<string> names)
         {
+            names = new List<string>(names);
+            
             for (var i = 0; i < names.Count; ++i)
             {
                 var name = names[i];
                 var startIndex = name.LastIndexOf('.');
                 names[i] = RemoveSpecialCharacters(name.Substring(startIndex + 1).ToLower());
             }
+
+            return names;
         }
 
         string RemoveSpecialCharacters(string str)
@@ -184,21 +204,20 @@ namespace Unity.Labs.FacialRemote
             Debug.Assert(otherArray.Length > 0);
 
             var others = new List<string>(otherArray);
-            var lowerStr = str.ToLower();
 
             others.Sort( (s1, s2) =>
             {
 
-                var first = LevenshteinDistance.Compute(lowerStr, s1);
-                var second = LevenshteinDistance.Compute(lowerStr, s2);
+                var first = LevenshteinDistance.Compute(str, s1);
+                var second = LevenshteinDistance.Compute(str, s2);
 
                 return first.CompareTo(second);
             });
 
             match = others[0];
 
-            var distance = LevenshteinDistance.Compute(lowerStr, match);
-            var percentage = (1f - ((float)distance / (float)Mathf.Max(match.Length, lowerStr.Length)));
+            var distance = LevenshteinDistance.Compute(str, match);
+            var percentage = (1f - ((float)distance / (float)Mathf.Max(match.Length, str.Length)));
 
             return percentage >= 0.6f;
         }
