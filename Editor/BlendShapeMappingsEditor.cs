@@ -203,15 +203,24 @@ namespace Unity.Labs.FacialRemote
         {
             Debug.Assert(otherArray.Length > 0);
 
-            var others = new List<string>(otherArray);
+            //Check using contains first
+            foreach (var other in otherArray)
+            {
+                if (other.Contains(str))
+                {
+                    match = other;
+                    return true;
+                }
+            }
 
+            //Check using edit distance
+            var others = new List<string>(otherArray);
             others.Sort( (s1, s2) =>
             {
+                var distance1 = LevenshteinDistance.Compute(str, s1);
+                var distance2 = LevenshteinDistance.Compute(str, s2);
 
-                var first = LevenshteinDistance.Compute(str, s1);
-                var second = LevenshteinDistance.Compute(str, s2);
-
-                return first.CompareTo(second);
+                return distance1.CompareTo(distance2);
             });
 
             match = others[0];
