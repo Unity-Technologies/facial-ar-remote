@@ -89,25 +89,28 @@ namespace Unity.Labs.FacialRemote
 
             var transformName = Path.GetFileName(pathProp.stringValue);
 
-            EditorGUILayout.LabelField(transformName, EditorStyles.boldLabel);
+            pathProp.isExpanded = EditorGUILayout.Foldout (pathProp.isExpanded, transformName);
 
-            ++EditorGUI.indentLevel;
+            if (pathProp.isExpanded)
+            {
+                EditorGUI.indentLevel++;
 
-            for (var i = 0; i < indicesProp.arraySize; ++i)
-            {                
-                var indexProp = indicesProp.GetArrayElementAtIndex(i);
-                var label = default(GUIContent);
+                for (var i = 0; i < indicesProp.arraySize; ++i)
+                {                
+                    var indexProp = indicesProp.GetArrayElementAtIndex(i);
+                    var label = default(GUIContent);
 
-                if (blendShapeNames != null)
-                    label = new GUIContent(blendShapeNames[indexProp.intValue]);
-                else
-                    label = new GUIContent("Index: " + indexProp.intValue.ToString());
+                    if (blendShapeNames != null)
+                        label = new GUIContent(blendShapeNames[indexProp.intValue]);
+                    else
+                        label = new GUIContent("Index: " + indexProp.intValue.ToString());
 
-                var locationProp = locationsProp.GetArrayElementAtIndex(i);
-                locationProp.intValue = EditorGUILayout.Popup(label, locationProp.intValue, m_LocationNames);
+                    var locationProp = locationsProp.GetArrayElementAtIndex(i);
+                    locationProp.intValue = EditorGUILayout.Popup(label, locationProp.intValue, m_LocationNames);
+                }
+
+                EditorGUI.indentLevel--;
             }
-
-            --EditorGUI.indentLevel;
         }
 
         void Build(GameObject prefab)
