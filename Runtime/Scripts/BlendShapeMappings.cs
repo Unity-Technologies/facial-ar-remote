@@ -7,6 +7,9 @@ using UnityEngine.Serialization;
 namespace Unity.Labs.FacialRemote
 {
     [Serializable]
+    /// <summary>
+    /// Stores the mappings between BlendShape indices and BlendShapeLocations of a SkinnedMeshRenderer.
+    /// </summary>
     public class BlendShapeMap : ISerializationCallbackReceiver
     {
         [SerializeField]
@@ -18,17 +21,26 @@ namespace Unity.Labs.FacialRemote
 
         Dictionary<int, BlendShapeLocation> m_Map = new Dictionary<int, BlendShapeLocation>();
 
+        /// <summary>
+        /// Transform path to SkinnedMeshRenderer from the root
+        /// </summary>
         public string path
         {
             get { return m_Path; }
             set { m_Path = value; }
         }
 
+        /// <summary>
+        /// Clear the mappings
+        /// </summary>
         public void Clear()
         {
             m_Map.Clear();
         }
 
+        /// <summary>
+        /// Get the BlendShapeLocation from a BlendShape index
+        /// </summary>
         public BlendShapeLocation Get(int index)
         {
             BlendShapeLocation location;
@@ -38,6 +50,9 @@ namespace Unity.Labs.FacialRemote
             return BlendShapeLocation.Invalid;
         }
 
+        /// <summary>
+        /// Set the BlendShapeLocation of a BlendShape index
+        /// </summary>
         public void Set(int index, BlendShapeLocation location)
         {
             m_Map[index] = location;
@@ -65,7 +80,7 @@ namespace Unity.Labs.FacialRemote
     }
 
     /// <summary>
-    /// Asset defining the mapping of blend shape locations and mappings for a specific rig
+    /// Asset storing a collection of BlendShapeMaps for a specific rig
     /// </summary>
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject, IEnumerable<BlendShapeMap>
@@ -86,7 +101,7 @@ namespace Unity.Labs.FacialRemote
         public BlendShapeMap[] maps
         {
             get { return m_Maps.ToArray(); }
-            private set { m_Maps = new List<BlendShapeMap>(value); }
+            set { m_Maps = new List<BlendShapeMap>(value); }
         }
 
         public IEnumerator<BlendShapeMap> GetEnumerator()

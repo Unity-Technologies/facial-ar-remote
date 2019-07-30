@@ -76,7 +76,7 @@ namespace Unity.Labs.FacialRemote
         public BlendShapeMappings mappings
         {
             get { return m_Mappings; }
-            private set { m_Mappings = value; }
+            set { m_Mappings = value; }
         }
 
         public IStreamReader streamReader { private get; set; }
@@ -88,6 +88,7 @@ namespace Unity.Labs.FacialRemote
 
         /// <summary>
         /// Updates BlendShape calculations and sets the values to the renderers.
+        /// </summary>
         public void UpdateBlendShapes()
         {
             UpdateFromStreamReader();
