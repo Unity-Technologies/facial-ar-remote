@@ -1,5 +1,4 @@
-﻿/*
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -40,6 +39,8 @@ namespace Unity.Labs.FacialRemote
         Transform m_TargetTransform;
         Vector3 m_Position;
         Quaternion m_Rotation;
+        BlendShapeMap[] m_Maps = null;
+        List<SkinnedMeshRenderer> m_SkinnedMeshRenderers = new List<SkinnedMeshRenderer>();
 
         readonly Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>> m_AnimationCurves =
             new Dictionary<UnityObject, Dictionary<string, AnimationClipCurveData>>();
@@ -103,10 +104,10 @@ namespace Unity.Labs.FacialRemote
 
             if (m_BlendShapesController != null)
             {
-                m_BlendShapesController.UpdateBlendShapeIndices();
+                BlendShapesMappingsUtils.Prepare(m_BlendShapesController.transform, m_BlendShapesController.mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
 
                 // Get curve data for blend shapes
-                foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
+                foreach (var skinnedMeshRenderer in m_SkinnedMeshRenderers)
                 {
                     if (skinnedMeshRenderer == null || m_AnimationCurves.ContainsKey(skinnedMeshRenderer)) // Skip duplicates
                         continue;
@@ -305,23 +306,28 @@ namespace Unity.Labs.FacialRemote
             {
                 var blendShapes = m_BlendShapesController.blendShapeOutput;
 
-                foreach (var skinnedMeshRenderer in m_BlendShapesController.skinnedMeshRenderers)
+                for (var i = 0; i < m_SkinnedMeshRenderers.Count; ++i)
                 {
+                    var skinnedMeshRenderer = m_SkinnedMeshRenderers[i];
+
+                    if (skinnedMeshRenderer == null)
+                        continue;
+
+                    var mesh = skinnedMeshRenderer.sharedMesh;
+                    var map = m_Maps[i];
+                    
                     if (m_AnimationCurves.TryGetValue(skinnedMeshRenderer, out var animationCurves))
                     {
-                        if (m_BlendShapesController.blendShapeIndices.TryGetValue(skinnedMeshRenderer, out var shapeIndices))
+                        for (var j = 0; j < mesh.blendShapeCount; ++j)
                         {
-                            var length = shapeIndices.Length;
-                            for (var i = 0; i < length; i++)
-                            {
-                                var datum = shapeIndices[i];
-                                var index = datum.index;
-                                if (index < 0)
-                                    continue;
+                            var name = mesh.GetBlendShapeName(j);
+                            var location = map.Get(j);
 
-                                var curve = animationCurves[string.Format(k_BlendShapeProp, datum.name)].curve;
-                                curve.AddKey(time, blendShapes[index]);
-                            }
+                            if (location == BlendShapeLocation.Invalid)
+                                continue;
+
+                            var curve = animationCurves[string.Format(k_BlendShapeProp, name)].curve;
+                            curve.AddKey(time, blendShapes[(int)location]);
                         }
                     }
                 }
@@ -420,4 +426,3 @@ namespace Unity.Labs.FacialRemote
         }
     }
 }
-*/

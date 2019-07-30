@@ -181,28 +181,9 @@ namespace Unity.Labs.FacialRemote
             if (m_CurrentMappings == mappings)
                 return;
 
-            m_SkinnedMeshRenderers.Clear();
-            m_Maps = null;
-
-            if (mappings != null)
-            {
-                m_Maps = mappings.maps;
-
-                foreach (var map in m_Maps)
-                    m_SkinnedMeshRenderers.Add(GetSkinnedMeshRenderer(map.path));
-            }
+            BlendShapesMappingsUtils.Prepare(transform, mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
 
             m_CurrentMappings = mappings;
-        }
-
-        SkinnedMeshRenderer GetSkinnedMeshRenderer(string path)
-        {
-            var targetTransform = transform.Find(path);
-
-            if (targetTransform == null)
-                return null;
-
-            return targetTransform.GetComponent<SkinnedMeshRenderer>();
         }
 
         /*
