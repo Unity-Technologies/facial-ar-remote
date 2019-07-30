@@ -14,8 +14,8 @@ namespace Unity.Labs.FacialRemote
         bool m_UseOverride;
 
         [SerializeField]
-        [Tooltip("Blend shape name to be overridden.")]
-        string m_Name;
+        [Tooltip("Blend shape location to be overridden.")]
+        BlendShapeLocation m_Location;
 
         [Range(0f, 1)]
         [SerializeField]
@@ -54,7 +54,7 @@ namespace Unity.Labs.FacialRemote
         /// <summary>
         /// Blend shape name to be overridden
         /// </summary>
-        public string name { get { return m_Name; } }
+        public BlendShapeLocation location { get { return m_Location; } }
         
         /// <summary>
         /// Smoothing to apply to blend shape values coming from the stream reader
@@ -87,9 +87,9 @@ namespace Unity.Labs.FacialRemote
 
         BlendShapeOverride(){}
 
-        public BlendShapeOverride(string name)
+        public BlendShapeOverride(BlendShapeLocation location)
         {
-            m_Name = name;
+            m_Location = location;
         }
     }
 }
