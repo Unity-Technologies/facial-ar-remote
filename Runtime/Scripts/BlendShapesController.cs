@@ -87,7 +87,7 @@ namespace Unity.Labs.FacialRemote
         }
 
         /// <summary>
-        /// Updates BlendShape calculations by a time step and sets the values to the renderers.
+        /// Updates BlendShape calculations and sets the values to the renderers.
         public void UpdateBlendShapes()
         {
             UpdateFromStreamReader();
