@@ -177,12 +177,17 @@ namespace Unity.Labs.FacialRemote
         List<string> PrepareNames(List<string> names)
         {
             names = new List<string>(names);
+
+            var commonPrefix = new string(
+                names.First().Substring(0, names.Min(s => s.Length))
+                .TakeWhile((c, i) => names.All(s => s[i] == c)).ToArray());
+
+            var startIndex = Mathf.Max(commonPrefix.LastIndexOf('_'), commonPrefix.LastIndexOf('.')) + 1;
             
             for (var i = 0; i < names.Count; ++i)
             {
                 var name = names[i];
-                var startIndex = name.LastIndexOf('.');
-                names[i] = RemoveSpecialCharacters(name.Substring(startIndex + 1).ToLower());
+                names[i] = RemoveSpecialCharacters(name.Substring(startIndex).ToLower());
             }
 
             return names;
