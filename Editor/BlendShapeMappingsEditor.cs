@@ -13,24 +13,12 @@ namespace Unity.Labs.FacialRemote
     {
         SerializedProperty m_PrefabProp;
         SerializedProperty m_MapsProp;
-        string[] m_LocationNames = {};
+        string[] m_LocationNames = Enum.GetNames(typeof(BlendShapeLocation));
 
         void OnEnable()
         {
             m_PrefabProp = serializedObject.FindProperty("m_Prefab");
             m_MapsProp = serializedObject.FindProperty("m_Maps");
-
-            PrepareLocationNames();
-        }
-
-        void PrepareLocationNames()
-        {
-            var names = new List<string>(53);
-
-            for (var i = 0; i < 53; ++i)
-                names.Add(((BlendShapeLocation)i).ToString());
-
-            m_LocationNames = names.ToArray();
         }
 
         public override void OnInspectorGUI()
@@ -89,7 +77,7 @@ namespace Unity.Labs.FacialRemote
 
             var transformName = Path.GetFileName(pathProp.stringValue);
 
-            pathProp.isExpanded = EditorGUILayout.Foldout (pathProp.isExpanded, transformName);
+            pathProp.isExpanded = EditorGUILayout.Foldout(pathProp.isExpanded, transformName);
 
             if (pathProp.isExpanded)
             {
@@ -103,7 +91,7 @@ namespace Unity.Labs.FacialRemote
                     if (blendShapeNames != null)
                         label = new GUIContent(blendShapeNames[indexProp.intValue]);
                     else
-                        label = new GUIContent("Index: " + indexProp.intValue.ToString());
+                        label = new GUIContent("Index " + indexProp.intValue.ToString());
 
                     var locationProp = locationsProp.GetArrayElementAtIndex(i);
                     locationProp.intValue = EditorGUILayout.Popup(label, locationProp.intValue, m_LocationNames);
@@ -142,7 +130,7 @@ namespace Unity.Labs.FacialRemote
             var locationsProp = mapProp.FindPropertyRelative("m_Locations");
             var indicesProp = mapProp.FindPropertyRelative("m_Indices");
             var blendShapeNames = PrepareNames(GetBlendShapeNames(mesh)).ToArray();
-            var locationNames = PrepareNames(new List<string>(m_LocationNames)).ToArray();
+            var locationNames = PrepareNames(m_LocationNames).ToArray();
 
             indicesProp.arraySize = blendShapeNames.Length;
             locationsProp.arraySize = blendShapeNames.Length;
@@ -168,18 +156,18 @@ namespace Unity.Labs.FacialRemote
         {
             var names = new List<string>(mesh.blendShapeCount);
             
-            if (mesh == null)
-                return names;
-
-            for (var i = 0; i < mesh.blendShapeCount; ++i)
-                names.Add(mesh.GetBlendShapeName(i));
+            if (mesh != null)
+            {
+                for (var i = 0; i < mesh.blendShapeCount; ++i)
+                    names.Add(mesh.GetBlendShapeName(i));
+            }
 
             return names;
         }
 
-        List<string> PrepareNames(List<string> names)
+        List<string> PrepareNames(IEnumerable<string> nameEnumerable)
         {
-            names = new List<string>(names);
+            var names = new List<string>(nameEnumerable);
 
             var commonPrefix = new string(
                 names.First().Substring(0, names.Min(s => s.Length))
