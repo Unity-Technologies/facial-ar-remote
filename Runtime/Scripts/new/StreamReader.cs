@@ -12,7 +12,6 @@ namespace PerformanceRecorder
         public event FaceDataCallback faceDataChanged;
 
         byte[] m_Buffer = new byte[1024];
-        public IStreamSource streamSource { get; set; }
         
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
@@ -20,16 +19,11 @@ namespace PerformanceRecorder
         /// <summary>
         /// Reads stream source and enqueue packets. This can be called from a separate thread.
         /// </summary>
-        public void Read()
+        public void Read(Stream stream)
         {
-            if (streamSource == null)
-                return;
-
-            var stream = streamSource.stream;
-
             if (stream == null)
-                return;
-            
+                throw new NullReferenceException();
+                   
             var memoryStream = m_Manager.GetStream();
 
             try

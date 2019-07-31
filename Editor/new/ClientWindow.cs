@@ -33,7 +33,6 @@ namespace PerformanceRecorder
         public void Start()
         {
             m_Adapter.streamSource = m_NetworkStreamSource;
-            m_StreamReader.streamSource = m_Adapter;
 
             m_NetworkStreamSource.StartServer(9000);
 
@@ -41,7 +40,7 @@ namespace PerformanceRecorder
             {
                 while (true)
                 {
-                    m_StreamReader.Read();
+                    m_StreamReader.Read(m_Adapter.stream);
                     Thread.Sleep(1);
                 };
             });
@@ -69,16 +68,6 @@ namespace PerformanceRecorder
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         StreamWriter m_StreamWriter = new StreamWriter();
 
-        public StreamWriter streamWriter
-        {
-            get { return m_StreamWriter; }
-        }
-
-        public Client()
-        {
-            m_StreamWriter.streamSource = m_NetworkStreamSource;
-        }
-
         public void ConnectToServer(string ip, int port)
         {
             m_NetworkStreamSource.ConnectToServer(ip, port);
@@ -87,6 +76,21 @@ namespace PerformanceRecorder
         public void Disconnect()
         {
             m_NetworkStreamSource.StopConnections();
+        }
+
+        public void Write(FaceData faceData)
+        {
+            m_StreamWriter.Write(faceData);
+        }
+
+        public void Write(byte[] bytes, int count)
+        {
+            m_StreamWriter.Write(bytes, count);
+        }
+
+        public void Send()
+        {
+            m_StreamWriter.Send(m_NetworkStreamSource.stream);
         }
     }
 
@@ -179,7 +183,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.streamWriter.Write(faceData);
+            m_Client.Write(faceData);
             */
             
             var data = new StreamBufferDataV1();
@@ -187,9 +191,8 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.streamWriter.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-            
-            m_Client.streamWriter.Send();
+            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+            m_Client.Send();
         }
     }
 }

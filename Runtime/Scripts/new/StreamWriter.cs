@@ -11,21 +11,9 @@ namespace PerformanceRecorder
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
-        public IStreamSource streamSource { get; set; }
         public int packetCount
         {
             get { return m_Queue.Count; }
-        }
-
-        Stream outputStream
-        {
-            get
-            {
-                if (streamSource != null)
-                    return streamSource.stream;
-                
-                return null;
-            }
         }
 
         /// <summary>
@@ -46,22 +34,23 @@ namespace PerformanceRecorder
         /// <summary>
         /// Flushes queue into the stream. Can be called from a separate thread.
         /// </summary>
-        public void Send()
+        public void Send(Stream stream)
         {
-            var stream = default(MemoryStream);
+            if (stream == null)
+                throw new NullReferenceException();
+            
+            var memoryStream = default(MemoryStream);
 
-            while (m_Queue.TryDequeue(out stream))
+            while (m_Queue.TryDequeue(out memoryStream))
             {
-                var count = (int)stream.Position;
+                var count = (int)memoryStream.Position;
 
-                if (outputStream != null)
-                    outputStream.Write(stream.GetBuffer(), 0 , count);
+                stream.Write(memoryStream.GetBuffer(), 0 , count);
                 
-                stream.Dispose();
+                memoryStream.Dispose();
             }
 
-            if (outputStream != null)
-                outputStream.Flush();
+            stream.Flush();
         }
 
         void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
