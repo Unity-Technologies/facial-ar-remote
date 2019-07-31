@@ -83,7 +83,7 @@ namespace Unity.Labs.FacialRemote
     /// Asset storing a collection of BlendShapeMaps for a specific rig
     /// </summary>
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
-    public class BlendShapeMappings : ScriptableObject, IEnumerable<BlendShapeMap>
+    public class BlendShapeMappings : ScriptableObject
     {
         [SerializeField]
         List<BlendShapeMap> m_Maps = new List<BlendShapeMap>();
@@ -102,16 +102,6 @@ namespace Unity.Labs.FacialRemote
         {
             get { return m_Maps.ToArray(); }
             set { m_Maps = new List<BlendShapeMap>(value); }
-        }
-
-        public IEnumerator<BlendShapeMap> GetEnumerator()
-        {
-            return ((IEnumerable<BlendShapeMap>)m_Maps).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<BlendShapeMap>)m_Maps).GetEnumerator();
         }
     }
 }
