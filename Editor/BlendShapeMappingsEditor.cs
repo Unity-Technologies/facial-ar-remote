@@ -57,15 +57,10 @@ namespace Unity.Labs.FacialRemote
             var prefab = m_PrefabProp.objectReferenceValue as GameObject;
             if (prefab != null)
             {
-                var targetTransform = prefab.transform.Find(pathProp.stringValue);
+                var skinnedMeshRenderer = prefab.transform.GetComponent<SkinnedMeshRenderer>(pathProp.stringValue);
 
-                if (targetTransform != null)
-                {
-                    var skinnedMeshRenderer = targetTransform.GetComponent<SkinnedMeshRenderer>();
-
-                    if (skinnedMeshRenderer != null)
-                        mesh = skinnedMeshRenderer.sharedMesh;
-                }
+                if (skinnedMeshRenderer != null)
+                    mesh = skinnedMeshRenderer.sharedMesh;
             }
 
             var blendShapeNames = default(List<string>);
