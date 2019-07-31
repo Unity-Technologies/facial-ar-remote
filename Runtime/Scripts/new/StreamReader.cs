@@ -23,7 +23,7 @@ namespace PerformanceRecorder
         {
             if (stream == null)
                 throw new NullReferenceException();
-                   
+
             var memoryStream = m_Manager.GetStream();
 
             try
@@ -40,7 +40,7 @@ namespace PerformanceRecorder
         /// <summary>
         /// Dequeue packets into outputs. Call this one from main thread.
         /// </summary>
-        public void Dequeue()
+        public void Receive()
         {
             var memoryStream = default(MemoryStream);
 

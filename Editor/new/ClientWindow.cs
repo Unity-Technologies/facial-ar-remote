@@ -133,7 +133,7 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            m_Server.streamReader.Dequeue();
+            m_Server.streamReader.Receive();
         }
 
         void FaceDataChanged(FaceData faceData)

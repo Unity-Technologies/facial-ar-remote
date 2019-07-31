@@ -76,7 +76,7 @@ namespace PerformanceRecorder
 
         void LateUpdate()
         {
-            m_StreamReader.Dequeue();
+            m_StreamReader.Receive();
         }
 
         void FaceDataChanged(FaceData faceData)
