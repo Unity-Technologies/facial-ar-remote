@@ -12,92 +12,10 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public class Server
-    {
-        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        Thread m_Thread;
-        StreamReader m_StreamReader = new StreamReader();
-        AdapterSource m_Adapter = new AdapterSource();
-
-        public AdapterVersion adapterVersion
-        {
-            get { return m_Adapter.version; }
-            set { m_Adapter.version = value; }
-        }
-
-        public StreamReader streamReader
-        {
-            get { return m_StreamReader; }
-        }
-
-        public void Start()
-        {
-            m_Adapter.streamSource = m_NetworkStreamSource;
-
-            m_NetworkStreamSource.StartServer(9000);
-
-            m_Thread = new Thread(() =>
-            {
-                while (true)
-                {
-                    m_StreamReader.Read(m_Adapter.stream);
-                    Thread.Sleep(1);
-                };
-            });
-            m_Thread.Start();
-        }
-
-        public void Stop()
-        {
-            m_NetworkStreamSource.StopConnections();
-            DisposeThread();
-        }
-
-        void DisposeThread()
-        {
-            if (m_Thread != null)
-            {
-                m_Thread.Abort();
-                m_Thread = null;
-            }
-        }
-    }
-
-    public class Client
-    {
-        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        StreamWriter m_StreamWriter = new StreamWriter();
-
-        public void ConnectToServer(string ip, int port)
-        {
-            m_NetworkStreamSource.ConnectToServer(ip, port);
-        }
-
-        public void Disconnect()
-        {
-            m_NetworkStreamSource.StopConnections();
-        }
-
-        public void Write(FaceData faceData)
-        {
-            m_StreamWriter.Write(faceData);
-        }
-
-        public void Write(byte[] bytes, int count)
-        {
-            m_StreamWriter.Write(bytes, count);
-        }
-
-        public void Send()
-        {
-            m_StreamWriter.Send(m_NetworkStreamSource.stream);
-        }
-    }
-
     public class ClientWindow : EditorWindow
     {
-        Server m_Server = new Server();
-        Client m_Client = new Client();
+        RemoteStream m_Server = new RemoteStream();
+        RemoteStream m_Client = new RemoteStream();
         BlendShapesController m_Controller;
 
         [MenuItem("Window/Test Client")]
@@ -110,17 +28,16 @@ namespace PerformanceRecorder
 
         void OnEnable()
         {
-            m_Server.streamReader.faceDataChanged += FaceDataChanged;
+            m_Server.reader.faceDataChanged += FaceDataChanged;
 
             EditorApplication.update += Update;
         }
 
         void OnDisable()
         {
-            m_Server.streamReader.faceDataChanged -= FaceDataChanged;
+            m_Server.reader.faceDataChanged -= FaceDataChanged;
 
-            m_Server.Stop();
-            m_Client.Disconnect();
+            m_Server.Disconnect();
 
             EditorApplication.update -= Update;
         }
@@ -133,7 +50,7 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            m_Server.streamReader.Receive();
+            m_Server.reader.Receive();
         }
 
         void FaceDataChanged(FaceData faceData)
@@ -153,12 +70,13 @@ namespace PerformanceRecorder
                 {
                     m_Controller = GameObject.FindObjectOfType<BlendShapesController>();
 
-                    m_Server.Start();
+                    m_Server.isServer = true;
+                    m_Server.Connect();
                 }
                 if (GUILayout.Button("Stop"))
-                    m_Server.Stop();
+                    m_Server.Disconnect();
             }
-            m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
+            //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
         void ClientGUI()
@@ -166,7 +84,12 @@ namespace PerformanceRecorder
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("Connect"))
-                    m_Client.ConnectToServer("127.0.0.1", 9000);
+                {
+                    m_Client.ip = "127.0.0.1";
+                    m_Client.port = 9000;
+                    m_Client.isServer = false;
+                    m_Client.Connect();
+                }
                 if (GUILayout.Button("Disconnect"))
                     m_Client.Disconnect();
                 if (GUILayout.Button("Send"))
@@ -191,8 +114,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-            m_Client.Send();
+            m_Client.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
     }
 }
