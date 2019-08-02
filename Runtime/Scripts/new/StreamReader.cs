@@ -48,12 +48,12 @@ namespace PerformanceRecorder
             {
                 memoryStream.Position = 0;
 
-                var packetDescriptor = Read<PacketDescriptor>(memoryStream);
+                var descriptor = memoryStream.Read<PacketDescriptor>(GetBuffer(PacketDescriptor.DescriptorSize));
 
-                switch(packetDescriptor.type)
+                switch(descriptor.type)
                 {
                     case PacketType.Face:
-                        ReadFaceData(memoryStream, packetDescriptor.version);
+                        ReadFaceData(memoryStream, descriptor);
                         break;
                 }
 
@@ -64,55 +64,14 @@ namespace PerformanceRecorder
         void ReadPacket(Stream input, Stream output)
         {
             var bytes = GetBuffer(PacketDescriptor.DescriptorSize);
-            Read(input, bytes, PacketDescriptor.DescriptorSize);
+            input.Read(bytes, PacketDescriptor.DescriptorSize);
             output.Write(bytes, 0, PacketDescriptor.DescriptorSize);
 
             var descriptor = bytes.ToStruct<PacketDescriptor>();
             var payloadSize = descriptor.GetPayloadSize();
             bytes = GetBuffer(payloadSize);
-            Read(input, bytes, payloadSize);
+            input.Read(bytes, payloadSize);
             output.Write(bytes, 0, payloadSize);
-        }
-
-        void Read(Stream stream, byte[] bytes, int count)
-        {
-            if (bytes.Length < count)
-                throw new Exception("Read buffer too small");
-            
-            var offset = 0;
-            
-            do {
-                var readBytes = stream.Read(bytes, offset, count - offset);
-
-                if (readBytes == 0)
-                    throw new Exception("Invalid read byte count");
-
-                offset += readBytes;
-
-            } while(offset < count);
-        }
-
-        T Read<T>(Stream stream) where T : struct
-        {
-            var size = Marshal.SizeOf<T>();
-            var bytes = GetBuffer(size);
-            
-            Read(stream, bytes, size);
-
-            return bytes.ToStruct<T>();
-        }
-
-        void ReadFaceData(Stream stream, int version)
-        {
-            var data = default(FaceData);
-
-            switch (version)
-            {
-                default:
-                    data = Read<FaceData>(stream); break;
-            }
-            
-            faceDataChanged.Invoke(data);
         }
 
         byte[] GetBuffer(int size)
@@ -121,6 +80,12 @@ namespace PerformanceRecorder
                 m_Buffer = new byte[size];
 
             return m_Buffer;
+        }
+
+        void ReadFaceData(Stream stream, PacketDescriptor descriptor)
+        {
+            var faceData = stream.ReadFaceData(descriptor.version, GetBuffer(descriptor.GetPayloadSize()));
+            faceDataChanged(faceData);
         }
     }
 }
