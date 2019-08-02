@@ -67,30 +67,11 @@ namespace PerformanceRecorder
             Read(input, bytes, PacketDescriptor.DescriptorSize);
             output.Write(bytes, 0, PacketDescriptor.DescriptorSize);
 
-            var payloadSize = GetPayloadSize(bytes.ToStruct<PacketDescriptor>());
+            var descriptor = bytes.ToStruct<PacketDescriptor>();
+            var payloadSize = descriptor.GetPayloadSize();
             bytes = GetBuffer(payloadSize);
             Read(input, bytes, payloadSize);
             output.Write(bytes, 0, payloadSize);
-        }
-
-        int GetPayloadSize(PacketDescriptor descriptor)
-        {
-            switch (descriptor.type)
-            {
-                case PacketType.Face:
-                    return GetFacePayloadSize(descriptor.version);
-            }
-
-            return 0;
-        }
-
-        int GetFacePayloadSize(int version)
-        {   
-            switch (version)
-            {
-                default:
-                    return Marshal.SizeOf<FaceData>();
-            }
         }
 
         void Read(Stream stream, byte[] bytes, int count)
