@@ -36,10 +36,17 @@ namespace PerformanceRecorder
             {
                 var size = GetSize();
                 var readBuffer = GetBuffer(size);
-                var readBytes = input.Read(readBuffer, 0, size);
+                var readOffset = 0;
+            
+                do {
+                    var readBytes = input.Read(readBuffer, readOffset, size - readOffset);
 
-                if (readBytes == 0) 
-                    return 0;
+                    if (readBytes == 0)
+                        return 0;
+
+                    readOffset += readBytes;
+
+                } while(readOffset < count);
                 
                 var desc = new PacketDescriptor()
                 {
