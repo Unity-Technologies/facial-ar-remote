@@ -17,18 +17,20 @@ namespace PerformanceRecorder
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-            var memoryStream = new MemoryStream(File.ReadAllBytes(ctx.assetPath));
-            var clip = new AnimationClip();
-            Bake(memoryStream, m_SampleRate, clip);
-            ctx.AddObjectToAsset("clip", clip);
-            ctx.SetMainObject(clip);
+            using (var memoryStream = new MemoryStream(File.ReadAllBytes(ctx.assetPath)))
+            {
+                var clip = new AnimationClip();
+                Bake(memoryStream, m_SampleRate, clip);
+                ctx.AddObjectToAsset("clip", clip);
+                ctx.SetMainObject(clip);
+            }
             
         }
 
         public static void Bake(Stream stream, int sampleRate, AnimationClip clip)
         {
             if (Array.IndexOf(s_SampleRates, sampleRate) == -1)
-                throw new Exception("Invalid SampleRate");
+                return;
 
             var blendShapeCurves = new BlendShapesCurveBinding("", typeof(BlendShapesController), "m_BlendShapeValues");
             var headBonePositionCurves = new Vector3CurveBinding("", typeof(CharacterRigController), "m_HeadPose.position");
@@ -49,50 +51,49 @@ namespace PerformanceRecorder
             if (descriptor.type != PacketType.Face)
                 return;
 
-            var lastData = stream.ReadFaceData(descriptor.version, buffer);
-            var startTime = lastData.timeStamp;
+            var data = default(FaceData);
+            var lastData = default(FaceData);
+            var startTime = 0f;
             var timeStep = 1.0 / (double)sampleRate;
             var timeAcc = 0.0;
             var lastFrameTime = 0.0;
-            var i = 0;
+            var first = true;
 
-            try {
-                while (true)
+            while (stream.ReadFaceData(descriptor.version, out data, buffer))
+            {
+                if (first)
                 {
-                    var data = stream.ReadFaceData(descriptor.version, buffer);
+                    first = false;
+                    lastData = data;
+                    startTime = data.timeStamp;
+                    blendShapeCurves.AddKey(0f, ref data.blendShapeValues);
+                    //faceTrackingStateCurves.AddKey(0f, data.FaceTrackingActiveState != 0);
+                    faceTrackingStateCurves.AddKey(0f, true);
+                }
+                else
+                {
                     var time = data.timeStamp - startTime;
                     var lastTime = lastData.timeStamp - startTime;
+                    var deltaTime = time - lastTime;
+                    timeAcc += deltaTime;
 
-                    if (i == 0)
+                    while (timeAcc >= timeStep)
                     {
-                        blendShapeCurves.AddKey(time, ref data.blendShapeValues);
-                        //faceTrackingStateCurves.AddKey(time, data.FaceTrackingActiveState != 0);
-                        faceTrackingStateCurves.AddKey(time, true);
+                        var frameTime = lastFrameTime + timeStep;
+                        var t = (float)((frameTime - lastTime) / deltaTime);
+                        var blendShapeValues = BlendShapeValues.Lerp(ref lastData.blendShapeValues, ref data.blendShapeValues, t);
+
+                        blendShapeCurves.AddKey((float)frameTime, ref blendShapeValues);
+                        //faceTrackingStateCurves.AddKey((float)frameTime, lastData.FaceTrackingActiveState != 0);
+                        faceTrackingStateCurves.AddKey((float)frameTime, true);
+
+                        timeAcc -= timeStep;
+                        lastFrameTime = frameTime;
                     }
-                    else
-                    {
-                        var deltaTime = time - lastTime;
-                        timeAcc += deltaTime;
-
-                        while (timeAcc >= timeStep)
-                        {
-                            var frameTime = lastFrameTime + timeStep;
-                            var t = (float)((frameTime - lastTime) / deltaTime);
-                            var blendShapeValues = BlendShapeValues.Lerp(ref lastData.blendShapeValues, ref data.blendShapeValues, t);
-
-                            blendShapeCurves.AddKey((float)frameTime, ref blendShapeValues);
-                            //faceTrackingStateCurves.AddKey((float)frameTime, lastData.FaceTrackingActiveState != 0);
-                            faceTrackingStateCurves.AddKey((float)frameTime, true);
-
-                            timeAcc -= timeStep;
-                            lastFrameTime = frameTime;
-                        }
-                    }
-
-                    lastData = data;
-                    ++i;
                 }
-            } catch {}
+
+                lastData = data;
+            }
 
             clip.ClearCurves();
             clip.frameRate = sampleRate;

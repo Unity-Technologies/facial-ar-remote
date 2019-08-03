@@ -40,17 +40,24 @@ namespace PerformanceRecorder
             return buffer.ToStruct<T>();
         }
 
-        public static FaceData ReadFaceData(this Stream stream, int version, byte[] buffer = null)
+        public static bool ReadFaceData(this Stream stream, int version, out FaceData data, byte[] buffer = null)
         {
-            var data = default(FaceData);
-
-            switch (version)
+            data = default(FaceData);
+            
+            try
             {
-                default:
-                    data = Read<FaceData>(stream, buffer); break;
+                switch (version)
+                {
+                    default:
+                        data = Read<FaceData>(stream, buffer); break;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
 
-            return data;
+            return true;
         }
     }
 }
