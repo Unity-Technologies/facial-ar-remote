@@ -95,7 +95,7 @@ namespace PerformanceRecorder
         void ReadFaceData(Stream stream, PacketDescriptor descriptor)
         {
             var faceData = default(FaceData);
-            if (stream.ReadFaceData(descriptor.version, out faceData, GetBuffer(descriptor.GetPayloadSize())))
+            if (stream.TryReadFaceData(descriptor.version, out faceData, GetBuffer(descriptor.GetPayloadSize())))
                 faceDataChanged(faceData);
         }
     }

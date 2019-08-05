@@ -55,6 +55,7 @@ namespace PerformanceRecorder
         public void StartRecoding()
         {
             m_TakeCount++;
+            m_RemoteStream.reader.Clear();
             m_FaceDataRecorder.StartRecording();
         }
 

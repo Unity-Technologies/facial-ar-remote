@@ -39,7 +39,7 @@ namespace PerformanceRecorder
             var buffer = new byte[1024];
             var descriptor = default(PacketDescriptor);
 
-            if (!stream.Read<PacketDescriptor>(out descriptor, buffer))
+            if (!stream.TryRead<PacketDescriptor>(out descriptor, buffer))
                 return;
 
             if (descriptor.type != PacketType.Face)
@@ -53,7 +53,7 @@ namespace PerformanceRecorder
             var lastFrameTime = 0.0;
             var first = true;
 
-            while (stream.ReadFaceData(descriptor.version, out data, buffer))
+            while (stream.TryReadFaceData(descriptor.version, out data, buffer))
             {
                 if (first)
                 {

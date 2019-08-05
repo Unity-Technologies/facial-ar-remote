@@ -43,7 +43,7 @@ namespace PerformanceRecorder
             return bytes.ToStruct<T>();
         }
 
-        public static bool Read<T>(this Stream stream, out T data, byte[] bytes = null) where T : struct
+        public static bool TryRead<T>(this Stream stream, out T data, byte[] bytes = null) where T : struct
         {
             data = default(T);
 
@@ -59,7 +59,7 @@ namespace PerformanceRecorder
             return true;
         }
 
-        public static bool ReadFaceData(this Stream stream, int version, out FaceData data, byte[] bytes = null)
+        public static bool TryReadFaceData(this Stream stream, int version, out FaceData data, byte[] bytes = null)
         {
             data = default(FaceData);
 
