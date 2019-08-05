@@ -17,6 +17,16 @@ namespace PerformanceRecorder
         }
 
         /// <summary>
+        /// Disposes enqueued packets.
+        /// </summary>
+        public void Clear()
+        {
+            var memoryStream = default(MemoryStream);
+            while (m_Queue.TryDequeue(out memoryStream))
+                memoryStream.Dispose();
+        }
+
+        /// <summary>
         /// Enqueues packet's bytes and adds header. Can be called from main thread.
         /// </summary>
         public void Write(FaceData faceData)

@@ -39,14 +39,8 @@ namespace PerformanceRecorder
             var buffer = new byte[1024];
             var descriptor = default(PacketDescriptor);
 
-            try
-            {
-                descriptor = stream.Read<PacketDescriptor>(buffer);
-            }
-            catch
-            {
+            if (!stream.Read<PacketDescriptor>(out descriptor, buffer))
                 return;
-            }
 
             if (descriptor.type != PacketType.Face)
                 return;

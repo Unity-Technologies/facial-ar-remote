@@ -1,14 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
-using Microsoft.IO;
 
 namespace PerformanceRecorder
 {

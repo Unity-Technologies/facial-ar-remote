@@ -10,6 +10,9 @@ namespace PerformanceRecorder
     {
         public static void Read(this Stream stream, byte[] bytes, int count)
         {
+            if (bytes == null)
+                throw new NullReferenceException("Output buffer is null");
+
             if (bytes.Length < count)
                 throw new Exception("Read buffer too small");
             
@@ -26,30 +29,46 @@ namespace PerformanceRecorder
             } while(offset < count);
         }
 
-        public static T Read<T>(this Stream stream, byte[] buffer = null) where T : struct
+        public static T Read<T>(this Stream stream, byte[] bytes = null) where T : struct
         {
             var size = Marshal.SizeOf<T>();
             
-            if (buffer == null)
-                buffer = new byte[size];
-            else if (buffer.Length < size)
+            if (bytes == null)
+                bytes = new byte[size];
+            else if (bytes.Length < size)
                 throw new Exception("The provided buffer is too small");
             
-            Read(stream, buffer, size);
+            Read(stream, bytes, size);
 
-            return buffer.ToStruct<T>();
+            return bytes.ToStruct<T>();
         }
 
-        public static bool ReadFaceData(this Stream stream, int version, out FaceData data, byte[] buffer = null)
+        public static bool Read<T>(this Stream stream, out T data, byte[] bytes = null) where T : struct
+        {
+            data = default(T);
+
+            try
+            {
+                data = Read<T>(stream, bytes);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool ReadFaceData(this Stream stream, int version, out FaceData data, byte[] bytes = null)
         {
             data = default(FaceData);
-            
+
             try
             {
                 switch (version)
                 {
                     default:
-                        data = Read<FaceData>(stream, buffer); break;
+                        data = Read<FaceData>(stream, bytes); break;
                 }
             }
             catch (Exception)

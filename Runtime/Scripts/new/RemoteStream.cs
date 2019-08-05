@@ -62,7 +62,7 @@ namespace PerformanceRecorder
         public void Disconnect()
         {
             m_NetworkStreamSource.StopConnections();
-            DisposeThreads();
+            Dispose();
         }
 
         void SetupThreads()
@@ -94,13 +94,16 @@ namespace PerformanceRecorder
             m_WriteThread.Start();
         }
 
-        void DisposeThreads()
+        void Dispose()
         {
-            DisposeThread(ref m_ReadThread);
-            DisposeThread(ref m_WriteThread);
+            AbortThread(ref m_ReadThread);
+            AbortThread(ref m_WriteThread);
+
+            m_Reader.Clear();
+            m_Writer.Clear();
         }
 
-        void DisposeThread(ref Thread thread)
+        void AbortThread(ref Thread thread)
         {
             if (thread != null)
             {

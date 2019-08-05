@@ -17,6 +17,16 @@ namespace PerformanceRecorder
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
         /// <summary>
+        /// Disposes enqueued packets.
+        /// </summary>
+        public void Clear()
+        {
+            var memoryStream = default(MemoryStream);
+            while (m_Queue.TryDequeue(out memoryStream))
+                memoryStream.Dispose();
+        }
+
+        /// <summary>
         /// Reads stream source and enqueue packets. This can be called from a separate thread.
         /// </summary>
         public void Read(Stream stream)
