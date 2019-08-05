@@ -14,13 +14,29 @@ namespace PerformanceRecorder
 
         [SerializeField]
         int m_SampleRate = 24;
+        [SerializeField]
+        bool m_LoopTime = false;
+        [SerializeField]
+        bool m_LoopPose = false;
+        [SerializeField]
+        float m_CycleOffset = 0f;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
             using (var memoryStream = new MemoryStream(File.ReadAllBytes(ctx.assetPath)))
             {
                 var clip = new AnimationClip();
+                var settings = new AnimationClipSettings()
+                {
+                    loopTime = m_LoopTime,
+                    loopBlend = m_LoopPose,
+                    cycleOffset = m_CycleOffset
+                };
+
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+
                 Bake(memoryStream, m_SampleRate, clip);
+
                 ctx.AddObjectToAsset("clip", clip);
                 ctx.SetMainObject(clip);
             }
@@ -102,6 +118,9 @@ namespace PerformanceRecorder
     class ARStreamImporterEditor : ScriptedImporterEditor
     {
         SerializedProperty m_SampleRateProp;
+        SerializedProperty m_LoopTimeProp;
+        SerializedProperty m_LoopPoseProp;
+        SerializedProperty m_CycleOffsetProp;
         GUIContent[] m_PopupContents;
 
         public override void OnEnable()
@@ -109,6 +128,9 @@ namespace PerformanceRecorder
             base.OnEnable();
 
             m_SampleRateProp = serializedObject.FindProperty("m_SampleRate");
+            m_LoopTimeProp = serializedObject.FindProperty("m_LoopTime");
+            m_LoopPoseProp = serializedObject.FindProperty("m_LoopPose");
+            m_CycleOffsetProp = serializedObject.FindProperty("m_CycleOffset");
 
             m_PopupContents = Array.ConvertAll(ARStreamImporter.s_SampleRates, (sr) => new GUIContent(sr.ToString()));
         }
@@ -121,6 +143,17 @@ namespace PerformanceRecorder
             serializedObject.UpdateIfRequiredOrScript();
 #endif
             EditorGUILayout.IntPopup(m_SampleRateProp, m_PopupContents, ARStreamImporter.s_SampleRates);
+            EditorGUILayout.PropertyField(m_LoopTimeProp);
+            
+            EditorGUI.indentLevel++;
+
+            using (new EditorGUI.DisabledGroupScope(!m_LoopTimeProp.boolValue))
+            {
+                EditorGUILayout.PropertyField(m_LoopPoseProp);
+                EditorGUILayout.PropertyField(m_CycleOffsetProp);
+            }
+
+            EditorGUI.indentLevel--;
 
 #if UNITY_2019_2_OR_NEWER
             serializedObject.ApplyModifiedProperties();
