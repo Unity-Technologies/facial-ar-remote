@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,14 +6,18 @@ using Unity.Labs.FacialRemote;
 
 namespace PerformanceRecorder
 {
-    public class XRStream : MonoBehaviour
+    public class RemoteDevice : MonoBehaviour
     {
         [SerializeField]
-        RemoteStream m_RemoteStream = new RemoteStream();
+        RemoteStream m_Stream = new RemoteStream();
         [SerializeField]
         List<BlendShapesController> m_BlendShapesControllers = new List<BlendShapesController>();
         FaceDataRecorder m_FaceDataRecorder = new FaceDataRecorder();
-        int m_TakeCount;
+
+        public bool isRecording
+        {
+            get { return m_FaceDataRecorder.isRecording; }
+        }
         
         public BlendShapesController[] blendShapesControllers
         {
@@ -23,21 +27,21 @@ namespace PerformanceRecorder
 
         void OnEnable()
         {
-            m_RemoteStream.reader.faceDataChanged += FaceDataChanged;
+            m_Stream.reader.faceDataChanged += FaceDataChanged;
 
-            m_RemoteStream.Connect();
+            m_Stream.Connect();
         }
 
         void OnDisable()
         {
-            m_RemoteStream.Disconnect();
+            m_Stream.Disconnect();
 
-            m_RemoteStream.reader.faceDataChanged -= FaceDataChanged;
+            m_Stream.reader.faceDataChanged -= FaceDataChanged;
         }
 
         void LateUpdate()
         {
-            m_RemoteStream.reader.Receive();
+            m_Stream.reader.Receive();
         }
 
         void FaceDataChanged(FaceData faceData)
@@ -51,35 +55,24 @@ namespace PerformanceRecorder
             }
         }
 
-        [ContextMenu("Start Recording")]
         public void StartRecoding()
         {
-            m_TakeCount++;
-            m_RemoteStream.reader.Clear();
+            m_Stream.reader.Clear();
             m_FaceDataRecorder.StartRecording();
         }
 
-        [ContextMenu("Stop Recording")]
         public void StopRecording()
         {
             m_FaceDataRecorder.StopRecording();
         }
 
-        [ContextMenu("Save Recording")]
-        public void SaveRecording()
+        public void SaveRecording(string path)
         {
-            var path = "Assets/" + GenerateFileName() +".arstream";
-
             using (var fileStream = File.Create(path))
             {
                 var buffer = m_FaceDataRecorder.GetBuffer();
                 fileStream.Write(buffer, 0, buffer.Length);
             }
-        }
-
-        string GenerateFileName()
-        {
-            return string.Format("{0:yyyy_MM_dd_HH_mm}-Take{1:00}", DateTime.Now, m_TakeCount);
         }
     }
 }
