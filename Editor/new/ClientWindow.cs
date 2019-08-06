@@ -56,7 +56,12 @@ namespace PerformanceRecorder
         void Update()
         {
             m_Server.reader.Receive();
-            m_Player.Update();
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                Stop();
+
+            if (m_Player.isPlaying)
+                m_Player.Update();
         }
 
         void FaceDataChanged(FaceData data)
@@ -114,28 +119,66 @@ namespace PerformanceRecorder
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                m_Clip = EditorGUILayout.ObjectField(m_Clip, typeof(AnimationClip), true) as AnimationClip;
+                using (var change = new EditorGUI.ChangeCheckScope())
+                {
+                    m_Clip = EditorGUILayout.ObjectField(m_Clip, typeof(AnimationClip), true) as AnimationClip;
 
+                    if (change.changed)
+                    {
+                        var wasPlaying = m_Player.isPlaying;
+
+                        Stop();
+
+                        if (wasPlaying)
+                            Play();
+                    }
+                }
                 using (new EditorGUI.DisabledGroupScope(m_Player.isPlaying))
                 {
                     if (GUILayout.Button("Play"))
-                    {
-                        m_Player.Play(m_Controller.GetComponent<Animator>(), m_Clip);
-                    }
+                        Play();
+                }
+                using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
+                {
+                    if (GUILayout.Button("Stop"))
+                        Stop();
                 }
                 using (new EditorGUI.DisabledGroupScope(!m_Player.isPlaying))
                 {
-                    if (GUILayout.Button("Stop"))
-                    {
-                        m_Player.Stop();
-                    }
                     if (GUILayout.Button("Pause"))
-                    {
-                        m_Player.Pause();
-                    }
+                        Pause();
                 }
             }
             //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
+        }
+
+        void Play()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+            
+            var animator = m_Controller.GetComponent<Animator>();
+            var bindings = AnimationUtility.GetCurveBindings(m_Clip);
+
+            AnimationMode.StartAnimationMode();
+
+            foreach (var binding in bindings)
+                AnimationMode.AddEditorCurveBinding(animator.gameObject, binding);
+                
+            m_Player.Play(animator, m_Clip);
+        }
+
+        void Stop()
+        {
+            m_Player.Stop();
+
+            if (AnimationMode.InAnimationMode())
+                AnimationMode.StopAnimationMode();
+        }
+
+        void Pause()
+        {
+            m_Player.Pause();
         }
 
         string GenerateFileName()

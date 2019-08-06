@@ -7,6 +7,7 @@ namespace PerformanceRecorder
 {
     public class TakePlayer
     {
+        Animator m_Animator;
         AnimationClip m_Clip;
         PlayableGraph m_Graph;
         AnimationClipPlayable m_ClipPlayable;
@@ -19,6 +20,14 @@ namespace PerformanceRecorder
                     return m_Graph.IsPlaying();
 
                 return false;
+            }
+        }
+
+        public bool isPaused
+        {
+            get
+            {
+                return m_Graph.IsValid() && !m_Graph.IsPlaying();
             }
         }
 
@@ -35,13 +44,11 @@ namespace PerformanceRecorder
 
         public void Play(Animator animator, AnimationClip clip)
         {
-            if (animator == null)
-                throw new NullReferenceException("Animator is null");
-
-            if (m_Clip != clip)
+            if (m_Clip != clip || m_Animator != animator)
             {
                 Stop();
                 m_Clip = clip;
+                m_Animator = animator;
             }
             if (m_Graph.IsValid())
             {
@@ -54,9 +61,9 @@ namespace PerformanceRecorder
                     animator.enabled = true;
                 }
             }
-            else if (m_Clip != null)
+            else if (m_Clip != null && m_Animator != null)
             {
-                m_ClipPlayable = AnimationPlayableUtilities.PlayClip(animator, m_Clip, out m_Graph);
+                m_ClipPlayable = AnimationPlayableUtilities.PlayClip(m_Animator, m_Clip, out m_Graph);
             }
         }
 
@@ -77,7 +84,7 @@ namespace PerformanceRecorder
         {
             if (!m_Graph.IsValid())
                 return;
-
+            
             if (m_Graph.IsPlaying())
                 m_Graph.Evaluate();
         }
