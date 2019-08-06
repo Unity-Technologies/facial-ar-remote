@@ -21,6 +21,10 @@ namespace PerformanceRecorder
             get { return m_Stream; }
         }
 
+        public bool isListening { get; private set; }
+        public bool isConnecting { get; private set; }
+        public bool isConnected { get { return m_Stream != null; } }
+
         public void ConnectToServer(string serverIP, int port)
         {
             Dispose();
@@ -35,6 +39,7 @@ namespace PerformanceRecorder
             {
                 try
                 {
+                    isConnecting = true;
                     Debug.Log("Client: Connecting to " + endPoint.Address.ToString());
                     socket.Connect(endPoint);
                     Debug.Log("Client: Connected");
@@ -48,6 +53,10 @@ namespace PerformanceRecorder
                 catch (Exception e)
                 {
                     Debug.Log("Client: " + e.Message);
+                }
+                finally
+                {
+                    isConnecting = false;
                 }
             });
 
@@ -73,6 +82,8 @@ namespace PerformanceRecorder
 
             foreach (var thread in m_Threads)
                 thread.Start();
+
+            isListening = true;
         }
 
         public void StopConnections()
@@ -97,6 +108,8 @@ namespace PerformanceRecorder
 
             m_Threads.Clear();
             m_ServerSockets.Clear();
+
+            isListening = false;
         }
 
         void DisposeStream()

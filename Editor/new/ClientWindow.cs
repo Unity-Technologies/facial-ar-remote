@@ -9,9 +9,11 @@ namespace PerformanceRecorder
 {
     public class ClientWindow : EditorWindow
     {
+        static string kAssets = "Assets";
         RemoteStream m_Server = new RemoteStream();
         RemoteStream m_Client = new RemoteStream();
         FaceDataRecorder m_Recoder = new FaceDataRecorder();
+        string m_RecorderDirectory = kAssets;
         TakePlayer m_Player = new TakePlayer();
         AnimationClip m_Clip;
         BlendShapesController m_Controller;
@@ -49,6 +51,9 @@ namespace PerformanceRecorder
         void OnGUI()
         {
             FindController();
+
+            EditorGUIUtility.labelWidth = 60f;
+
             using (new GUILayout.VerticalScope("box"))
             {
                 EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
@@ -69,6 +74,8 @@ namespace PerformanceRecorder
                 EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
                 ClientGUI();
             }
+
+            EditorGUIUtility.labelWidth = 0f;
         }
 
         void Update()
@@ -98,34 +105,62 @@ namespace PerformanceRecorder
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Start"))
+                GUILayout.FlexibleSpace();
+
+                using (new EditorGUI.DisabledGroupScope(m_Server.isListening))
                 {
-                    m_Server.isServer = true;
-                    m_Server.Connect();
+                    if (GUILayout.Button("Start", EditorStyles.miniButton))
+                    {
+                        m_Server.isServer = true;
+                        m_Server.Connect();
+                    }
                 }
-                if (GUILayout.Button("Stop"))
-                    m_Server.Disconnect();
+                using (new EditorGUI.DisabledGroupScope(!m_Server.isListening))
+                {
+                    if (GUILayout.Button("Stop", EditorStyles.miniButton))
+                        m_Server.Disconnect();
+                }
             }
             //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
         void DoRecorderGUI()
         {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.TextField("Directory", m_RecorderDirectory);
+
+                if (GUILayout.Button("O", EditorStyles.miniButton, GUILayout.Width(25f)))
+                {
+                    var path = EditorUtility.OpenFolderPanel("Record Directory", m_RecorderDirectory, "");
+
+                    if (path != m_RecorderDirectory)
+                    {
+                        var index = path.IndexOf(kAssets);
+                        
+                        m_RecorderDirectory = path.Substring(index) + "/";
+                    }
+
+                }
+            }
+
             using (new EditorGUI.DisabledGroupScope(!m_Player.isStopped))
             using (new EditorGUILayout.HorizontalScope())
             {
+                GUILayout.FlexibleSpace();
+
                 using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
                 {
-                    if (GUILayout.Button("Record"))
+                    if (GUILayout.Button("Start", EditorStyles.miniButton))
                     {
                         m_Recoder.StartRecording();
                     }
                 }
                 using (new EditorGUI.DisabledGroupScope(!m_Recoder.isRecording))
                 {
-                    if (GUILayout.Button("Stop Recording"))
+                    if (GUILayout.Button("Stop", EditorStyles.miniButton))
                     {
-                        var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath("Assets/" + GenerateFileName());
+                        var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(m_RecorderDirectory + GenerateFileName());
                         var path = uniqueAssetPath + ".arstream";
 
                         m_Recoder.StopRecording();
@@ -137,6 +172,10 @@ namespace PerformanceRecorder
                         }
 
                         AssetDatabase.Refresh();
+
+                        m_Clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+
+                        EditorGUIUtility.PingObject(m_Clip);
                     }
                 }
             }
@@ -145,11 +184,10 @@ namespace PerformanceRecorder
         void DoPlayerGUI()
         {
             using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
-            using (new EditorGUILayout.HorizontalScope())
             {
                 using (var change = new EditorGUI.ChangeCheckScope())
                 {
-                    m_Clip = EditorGUILayout.ObjectField(m_Clip, typeof(AnimationClip), true) as AnimationClip;
+                    m_Clip = EditorGUILayout.ObjectField("Clip", m_Clip, typeof(AnimationClip), true) as AnimationClip;
 
                     if (change.changed)
                     {
@@ -161,24 +199,28 @@ namespace PerformanceRecorder
                             Play();
                     }
                 }
+
+                using (new EditorGUILayout.HorizontalScope())
                 using (new EditorGUI.DisabledGroupScope(m_Clip == null || m_Controller == null))
                 {
+                    GUILayout.FlexibleSpace();
+
                     if (m_Player.isPlaying)
                     {
-                        if (GUILayout.Button("Pause"))
+                        if (GUILayout.Button("Pause", EditorStyles.miniButton, GUILayout.Width(36f)))
                             Pause();
                     }
                     else
                     {
                         using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
                         {
-                            if (GUILayout.Button("Play"))
+                            if (GUILayout.Button("Play", EditorStyles.miniButton, GUILayout.Width(36f)))
                                 Play();
                         }
                     }
                     using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
                     {
-                        if (GUILayout.Button("Stop"))
+                        if (GUILayout.Button("Stop", EditorStyles.miniButton, GUILayout.Width(36f)))
                             Stop();
                     }
                 }
@@ -237,16 +279,18 @@ namespace PerformanceRecorder
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Connect"))
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button("Connect", EditorStyles.miniButton))
                 {
                     m_Client.ip = "127.0.0.1";
                     m_Client.port = 9000;
                     m_Client.isServer = false;
                     m_Client.Connect();
                 }
-                if (GUILayout.Button("Disconnect"))
+                if (GUILayout.Button("Disconnect", EditorStyles.miniButton))
                     m_Client.Disconnect();
-                if (GUILayout.Button("Send"))
+                if (GUILayout.Button("Send", EditorStyles.miniButton))
                     SendPacket();
             }
         }

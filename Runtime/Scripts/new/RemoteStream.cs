@@ -39,6 +39,21 @@ namespace PerformanceRecorder
             set { m_IsServer = value; }
         }
 
+        public bool isListening
+        {
+            get { return m_NetworkStreamSource.isListening; }
+        }
+
+        public bool isConnecting
+        {
+            get { return m_NetworkStreamSource.isConnecting; }
+        }
+
+        public bool isConnected
+        {
+            get { return m_NetworkStreamSource.isConnected; }
+        }
+
         public StreamReader reader
         {
             get { return m_Reader; }
