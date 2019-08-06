@@ -49,8 +49,26 @@ namespace PerformanceRecorder
         void OnGUI()
         {
             FindController();
-            ServerGUI();
-            ClientGUI();
+            using (new GUILayout.VerticalScope("box"))
+            {
+                EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
+                ServerGUI();
+            }
+            using (new GUILayout.VerticalScope("box"))
+            {
+                EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
+                DoRecorderGUI();
+            }
+            using (new GUILayout.VerticalScope("box"))
+            {
+                EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
+                DoPlayerGUI();
+            }
+            using (new GUILayout.VerticalScope("box"))
+            {
+                EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
+                ClientGUI();
+            }
         }
 
         void Update()
@@ -88,6 +106,11 @@ namespace PerformanceRecorder
                 if (GUILayout.Button("Stop"))
                     m_Server.Disconnect();
             }
+            //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
+        }
+
+        void DoRecorderGUI()
+        {
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
@@ -116,7 +139,10 @@ namespace PerformanceRecorder
                     }
                 }
             }
+        }
 
+        void DoPlayerGUI()
+        {
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (var change = new EditorGUI.ChangeCheckScope())
@@ -133,26 +159,28 @@ namespace PerformanceRecorder
                             Play();
                     }
                 }
-                if (m_Player.isPlaying)
+                using (new EditorGUI.DisabledGroupScope(m_Clip == null || m_Controller == null))
                 {
-                    if (GUILayout.Button("Pause"))
-                        Pause();
-                }
-                else
-                {
-                    using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
+                    if (m_Player.isPlaying)
                     {
-                        if (GUILayout.Button("Play"))
-                            Play();
+                        if (GUILayout.Button("Pause"))
+                            Pause();
+                    }
+                    else
+                    {
+                        using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
+                        {
+                            if (GUILayout.Button("Play"))
+                                Play();
+                        }
+                    }
+                    using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
+                    {
+                        if (GUILayout.Button("Stop"))
+                            Stop();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
-                {
-                    if (GUILayout.Button("Stop"))
-                        Stop();
-                }
             }
-            //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
         bool IsAnimationModeInExternalUse()
@@ -162,7 +190,10 @@ namespace PerformanceRecorder
 
         void Play()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || IsAnimationModeInExternalUse())
+            if (EditorApplication.isPlayingOrWillChangePlaymode ||
+                IsAnimationModeInExternalUse() ||
+                m_Clip == null ||
+                m_Controller == null)
                 return;
             
             var animator = m_Controller.GetComponent<Animator>();
