@@ -40,8 +40,15 @@ namespace PerformanceRecorder
             EditorApplication.update -= Update;
         }
 
+        void FindController()
+        {
+            if (m_Controller == null)
+                m_Controller = GameObject.FindObjectOfType<BlendShapesController>();
+        }
+
         void OnGUI()
         {
+            FindController();
             ServerGUI();
             ClientGUI();
         }
@@ -70,8 +77,6 @@ namespace PerformanceRecorder
             {
                 if (GUILayout.Button("Start"))
                 {
-                    m_Controller = GameObject.FindObjectOfType<BlendShapesController>();
-
                     m_Server.isServer = true;
                     m_Server.Connect();
                 }
@@ -107,18 +112,18 @@ namespace PerformanceRecorder
                 }
             }
 
-            m_Clip = EditorGUILayout.ObjectField(m_Clip, typeof(AnimationClip), true) as AnimationClip;
-
             using (new EditorGUILayout.HorizontalScope())
             {
-                //using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
+                m_Clip = EditorGUILayout.ObjectField(m_Clip, typeof(AnimationClip), true) as AnimationClip;
+
+                using (new EditorGUI.DisabledGroupScope(m_Player.isPlaying))
                 {
                     if (GUILayout.Button("Play"))
                     {
                         m_Player.Play(m_Controller.GetComponent<Animator>(), m_Clip);
                     }
                 }
-                //using (new EditorGUI.DisabledGroupScope(!m_Recoder.isRecording))
+                using (new EditorGUI.DisabledGroupScope(!m_Player.isPlaying))
                 {
                     if (GUILayout.Button("Stop"))
                     {

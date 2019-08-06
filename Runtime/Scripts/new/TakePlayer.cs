@@ -7,12 +7,19 @@ namespace PerformanceRecorder
 {
     public class TakePlayer
     {
+        AnimationClip m_Clip;
         PlayableGraph m_Graph;
         AnimationClipPlayable m_ClipPlayable;
 
-        public TakePlayer()
+        public bool isPlaying
         {
-            
+            get
+            {
+                if (m_Graph.IsValid())
+                    return m_Graph.IsPlaying();
+
+                return false;
+            }
         }
 
         ~TakePlayer()
@@ -28,9 +35,29 @@ namespace PerformanceRecorder
 
         public void Play(Animator animator, AnimationClip clip)
         {
-            Stop();
-            m_ClipPlayable = AnimationPlayableUtilities.PlayClip(animator, clip, out m_Graph);
-            //m_Graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+            if (animator == null)
+                throw new NullReferenceException("Animator is null");
+
+            if (m_Clip != clip)
+            {
+                Stop();
+                m_Clip = clip;
+            }
+            if (m_Graph.IsValid())
+            {
+                m_Graph.Play();
+
+                //EditMode needs a little kick in order to resume properly. Works fine in PlayMode.
+                if (!Application.isPlaying)
+                {
+                    animator.enabled = false;
+                    animator.enabled = true;
+                }
+            }
+            else if (m_Clip != null)
+            {
+                m_ClipPlayable = AnimationPlayableUtilities.PlayClip(animator, m_Clip, out m_Graph);
+            }
         }
 
         public void Pause()
