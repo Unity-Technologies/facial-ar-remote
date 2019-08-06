@@ -133,28 +133,36 @@ namespace PerformanceRecorder
                             Play();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(m_Player.isPlaying))
+                if (m_Player.isPlaying)
                 {
-                    if (GUILayout.Button("Play"))
-                        Play();
+                    if (GUILayout.Button("Pause"))
+                        Pause();
+                }
+                else
+                {
+                    using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
+                    {
+                        if (GUILayout.Button("Play"))
+                            Play();
+                    }
                 }
                 using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
                 {
                     if (GUILayout.Button("Stop"))
                         Stop();
                 }
-                using (new EditorGUI.DisabledGroupScope(!m_Player.isPlaying))
-                {
-                    if (GUILayout.Button("Pause"))
-                        Pause();
-                }
             }
             //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
+        bool IsAnimationModeInExternalUse()
+        {
+            return AnimationMode.InAnimationMode() && !m_Player.isPaused;
+        }
+
         void Play()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            if (EditorApplication.isPlayingOrWillChangePlaymode || IsAnimationModeInExternalUse())
                 return;
             
             var animator = m_Controller.GetComponent<Animator>();
@@ -170,10 +178,13 @@ namespace PerformanceRecorder
 
         void Stop()
         {
-            m_Player.Stop();
+            if (m_Player.isPlaying || m_Player.isPaused)
+            {
+                m_Player.Stop();
 
-            if (AnimationMode.InAnimationMode())
-                AnimationMode.StopAnimationMode();
+                if (AnimationMode.InAnimationMode())
+                    AnimationMode.StopAnimationMode();
+            }
         }
 
         void Pause()
