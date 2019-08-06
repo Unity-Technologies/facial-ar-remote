@@ -31,6 +31,14 @@ namespace PerformanceRecorder
             }
         }
 
+        public bool isStopped
+        {
+            get
+            {
+                return !isPlaying && !isPaused;
+            }
+        }
+
         ~TakePlayer()
         {
             Destroy();

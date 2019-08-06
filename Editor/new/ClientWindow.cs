@@ -157,7 +157,7 @@ namespace PerformanceRecorder
 
         bool IsAnimationModeInExternalUse()
         {
-            return AnimationMode.InAnimationMode() && !m_Player.isPaused;
+            return AnimationMode.InAnimationMode() && m_Player.isStopped;
         }
 
         void Play()
@@ -166,19 +166,22 @@ namespace PerformanceRecorder
                 return;
             
             var animator = m_Controller.GetComponent<Animator>();
-            var bindings = AnimationUtility.GetCurveBindings(m_Clip);
 
-            AnimationMode.StartAnimationMode();
+            if (m_Player.isStopped)
+            {
+                AnimationMode.StartAnimationMode();
 
-            foreach (var binding in bindings)
-                AnimationMode.AddEditorCurveBinding(animator.gameObject, binding);
+                var bindings = AnimationUtility.GetCurveBindings(m_Clip);
+                foreach (var binding in bindings)
+                    AnimationMode.AddEditorCurveBinding(animator.gameObject, binding);
+            }
                 
             m_Player.Play(animator, m_Clip);
         }
 
         void Stop()
         {
-            if (m_Player.isPlaying || m_Player.isPaused)
+            if (!m_Player.isStopped)
             {
                 m_Player.Stop();
 
