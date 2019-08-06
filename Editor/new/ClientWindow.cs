@@ -111,6 +111,7 @@ namespace PerformanceRecorder
 
         void DoRecorderGUI()
         {
+            using (new EditorGUI.DisabledGroupScope(!m_Player.isStopped))
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
@@ -143,6 +144,7 @@ namespace PerformanceRecorder
 
         void DoPlayerGUI()
         {
+            using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (var change = new EditorGUI.ChangeCheckScope())
