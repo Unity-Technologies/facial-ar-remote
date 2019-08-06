@@ -55,7 +55,7 @@ namespace PerformanceRecorder
             }
         }
 
-        public void StartRecoding()
+        public void StartRecording()
         {
             m_Stream.reader.Clear();
             m_FaceDataRecorder.StartRecording();

@@ -21,11 +21,13 @@ namespace PerformanceRecorder
 
             using (new EditorGUILayout.HorizontalScope())
             {
+                GUILayout.FlexibleSpace();
+
                 using (new EditorGUI.DisabledGroupScope(m_Device.isRecording))
                 {
                     if (GUILayout.Button("Record"))
                     {
-                        m_Device.StartRecoding();
+                        m_Device.StartRecording();
                     }
                 }
                 using (new EditorGUI.DisabledGroupScope(!m_Device.isRecording))
@@ -41,6 +43,8 @@ namespace PerformanceRecorder
                         AssetDatabase.Refresh();
                     }
                 }
+
+                GUILayout.FlexibleSpace();
             }
         }
 
