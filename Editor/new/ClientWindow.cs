@@ -14,15 +14,19 @@ namespace PerformanceRecorder
         LiveStream
     }
 
+    [Serializable]
     public class RemoteActor
     {
         static readonly string k_DefaultDirectory = "Assets/";
         RemoteStream m_Stream = new RemoteStream();
         FaceDataRecorder m_Recoder = new FaceDataRecorder();
         TakePlayer m_Player = new TakePlayer();
-        BlendShapesController m_Controller;
         PreviewState m_PrevState = PreviewState.None;
+        [SerializeField]
+        BlendShapesController m_Controller;
+        [SerializeField]
         AnimationClip m_Clip;
+        [SerializeField]
         string m_Directory = k_DefaultDirectory;
         bool m_ChangingState = false;
 
@@ -66,7 +70,9 @@ namespace PerformanceRecorder
 
         public void Dispose()
         {
-            Disconnect();
+            m_Recoder.StopRecording();
+            m_Player.Stop();
+            m_Stream.Disconnect();
             m_Stream.reader.faceDataChanged -= FaceDataChanged;
         }
 
@@ -205,6 +211,7 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         static readonly string kAssets = "Assets";
         RemoteStream m_Client = new RemoteStream();
+        [SerializeField]
         RemoteActor m_Actor = new RemoteActor();
 
         [MenuItem("Window/Test Client")]
