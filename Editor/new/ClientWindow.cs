@@ -209,7 +209,7 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonSmall = GUILayout.Width(20f);
         static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
-        static readonly string kAssets = "Assets";
+        static readonly string k_Assets = "Assets";
         RemoteStream m_Client = new RemoteStream();
         [SerializeField]
         RemoteActor m_Actor = new RemoteActor();
@@ -245,27 +245,7 @@ namespace PerformanceRecorder
         {
             FindController();
 
-            EditorGUIUtility.labelWidth = 60f;
-
-            using (new GUILayout.VerticalScope("box"))
-            {
-                EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
-                DeviceGUI();
-
-                EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
-                DoDirectoryGUI();
-
-                using (new EditorGUI.DisabledGroupScope(m_Actor.state != PreviewState.LiveStream))
-                {    
-                    DoRecorderGUI();
-                }
-
-                using (new EditorGUI.DisabledGroupScope(m_Actor.state == PreviewState.LiveStream))
-                {
-                    EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
-                    DoPlayerGUI();
-                }
-            }
+            DoActorGUI(m_Actor);
 
             /*
             using (new GUILayout.VerticalScope("box"))
@@ -274,6 +254,31 @@ namespace PerformanceRecorder
                 ClientGUI();
             }
             */
+        }
+
+        void DoActorGUI(RemoteActor actor)
+        {
+            EditorGUIUtility.labelWidth = 60f;
+
+            using (new GUILayout.VerticalScope("box"))
+            {
+                EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
+                DeviceGUI(actor);
+
+                EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
+                DoDirectoryGUI(actor);
+
+                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
+                {    
+                    DoRecorderGUI(actor);
+                }
+
+                using (new EditorGUI.DisabledGroupScope(actor.state == PreviewState.LiveStream))
+                {
+                    EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
+                    DoPlayerGUI(actor);
+                }
+            }
 
             EditorGUIUtility.labelWidth = 0f;
         }
@@ -283,27 +288,27 @@ namespace PerformanceRecorder
             m_Actor.Update();
         }
 
-        void DeviceGUI()
+        void DeviceGUI(RemoteActor actor)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
 
-                using (new EditorGUI.DisabledGroupScope(m_Actor.state != PreviewState.None))
+                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.None))
                 {
                     if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                     {
-                        m_Actor.Connect();
+                        actor.Connect();
 
                         AnimationMode.StartAnimationMode();
-                        PrepareAnimationModeCurveBindings(m_Actor.controller.gameObject);
+                        PrepareAnimationModeCurveBindings(actor.controller.gameObject);
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(m_Actor.state != PreviewState.LiveStream))
+                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
                 {
                     if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
                     {
-                        m_Actor.Disconnect();
+                        actor.Disconnect();
 
                         AnimationMode.StopAnimationMode();
                     }
@@ -312,121 +317,113 @@ namespace PerformanceRecorder
             //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
-        void DoDirectoryGUI()
+        void DoDirectoryGUI(RemoteActor actor)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.TextField("Directory", m_Actor.directory);
+                EditorGUILayout.TextField("Directory", actor.directory);
 
                 if (GUILayout.Button("o", EditorStyles.miniButton, kButtonSmall))
                 {
-                    var path = EditorUtility.OpenFolderPanel("Record Directory", m_Actor.directory, "");
+                    var path = EditorUtility.OpenFolderPanel("Record Directory", actor.directory, "");
 
-                    if (path != m_Actor.directory)
+                    if (!string.IsNullOrEmpty(path) && path != actor.directory)
                     {
-                        var index = path.IndexOf(kAssets);
+                        var index = path.IndexOf(k_Assets);
                         
-                        m_Actor.directory = path.Substring(index) + "/";
+                        actor.directory = path.Substring(index) + "/";
                     }
                 }
             }
         }
 
-        void DoRecorderGUI()
+        void DoRecorderGUI(RemoteActor actor)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
 
-                using (new EditorGUI.DisabledGroupScope(m_Actor.IsRecording()))
+                using (new EditorGUI.DisabledGroupScope(actor.IsRecording()))
                 {
                     if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
                     {
-                        m_Actor.StartRecording();
+                        actor.StartRecording();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(!m_Actor.IsRecording()))
+                using (new EditorGUI.DisabledGroupScope(!actor.IsRecording()))
                 {
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
-                        m_Actor.StopRecording();
+                        actor.StopRecording();
 
-                        var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(m_Actor.directory + GenerateFileName());
+                        var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(actor.directory + GenerateFileName());
                         var path = uniqueAssetPath + ".arstream";
 
                         using (var fileStream = File.Create(path))
                         {
-                            var buffer = m_Actor.GetRecording();
+                            var buffer = actor.GetRecording();
                             fileStream.Write(buffer, 0, buffer.Length);
                         }
 
                         AssetDatabase.Refresh();
 
-                        m_Actor.clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                        actor.clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
 
-                        EditorGUIUtility.PingObject(m_Actor.clip);
+                        EditorGUIUtility.PingObject(actor.clip);
                     }
                 }
             }
         }
 
-        void DoPlayerGUI()
+        void DoPlayerGUI(RemoteActor actor)
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                m_Actor.clip = EditorGUILayout.ObjectField("Clip", m_Actor.clip, typeof(AnimationClip), true) as AnimationClip;
+                actor.clip = EditorGUILayout.ObjectField("Clip", actor.clip, typeof(AnimationClip), true) as AnimationClip;
 
                 if (change.changed)
                 {
-                    var wasPlaying = m_Actor.state == PreviewState.Playback;
+                    var wasPlaying = actor.state == PreviewState.Playback;
 
-                    m_Actor.StopPlayback();
+                    actor.StopPlayback();
 
                     if (wasPlaying)
-                        m_Actor.StartPlayback();
+                        actor.StartPlayback();
                 }
             }
 
             using (new EditorGUILayout.HorizontalScope())
-            using (new EditorGUI.DisabledGroupScope(m_Actor.clip == null || m_Actor.controller == null))
+            using (new EditorGUI.DisabledGroupScope(actor.clip == null || actor.controller == null))
             {
                 GUILayout.FlexibleSpace();
 
-                if (m_Actor.player.isPlaying)
+                if (actor.player.isPlaying)
                 {
                     if (GUILayout.Button("Pause", EditorStyles.miniButton, kButtonMid))
                     {
-                        m_Actor.PausePlayback();
+                        actor.PausePlayback();
                     }
                 }
                 else
                 {
-                    using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
+                    if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                     {
-                        if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
-                        {
-                            AnimationMode.StartAnimationMode();
-                            PrepareAnimationModeCurveBindings(m_Actor.controller.gameObject);
+                        AnimationMode.StartAnimationMode();
+                        PrepareAnimationModeCurveBindings(actor.controller.gameObject);
 
-                            m_Actor.StartPlayback();
-                        }
+                        actor.StartPlayback();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(!(m_Actor.player.isPlaying || m_Actor.player.isPaused)))
+                using (new EditorGUI.DisabledGroupScope(!(actor.player.isPlaying || actor.player.isPaused)))
                 {
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
-                        m_Actor.StopPlayback();
+                        actor.StopPlayback();
 
                         AnimationMode.StopAnimationMode();
                     }
                 }
             }
-        }
-
-        bool IsAnimationModeInExternalUse()
-        {
-            return AnimationMode.InAnimationMode() && m_Actor.state != PreviewState.None;
         }
 
         string GenerateFileName()
