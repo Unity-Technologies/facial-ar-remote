@@ -9,7 +9,10 @@ namespace PerformanceRecorder
 {
     public class ClientWindow : EditorWindow
     {
-        static string kAssets = "Assets";
+        static readonly GUILayoutOption kButtonSmall = GUILayout.Width(20f);
+        static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
+        static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
+        static readonly string kAssets = "Assets";
         RemoteStream m_Server = new RemoteStream();
         RemoteStream m_Client = new RemoteStream();
         FaceDataRecorder m_Recoder = new FaceDataRecorder();
@@ -56,17 +59,14 @@ namespace PerformanceRecorder
 
             using (new GUILayout.VerticalScope("box"))
             {
-                EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
-                ServerGUI();
-            }
-            using (new GUILayout.VerticalScope("box"))
-            {
+                EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
+                DeviceGUI();
+
                 EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
+                DoDirectoryGUI();
                 DoRecorderGUI();
-            }
-            using (new GUILayout.VerticalScope("box"))
-            {
-                EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
+
+                EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
                 DoPlayerGUI();
             }
             using (new GUILayout.VerticalScope("box"))
@@ -93,6 +93,14 @@ namespace PerformanceRecorder
         {
             if (m_Controller != null)
             {
+                Stop();
+
+                if (!AnimationMode.InAnimationMode())
+                {
+                    AnimationMode.StartAnimationMode();
+                    PrepareAnimationModeCurveBindings(m_Controller.gameObject);
+                }
+
                 m_Controller.blendShapeInput = data.blendShapeValues;
                 m_Controller.UpdateBlendShapes();
             }
@@ -101,7 +109,7 @@ namespace PerformanceRecorder
                 m_Recoder.Record(data);
         }
 
-        void ServerGUI()
+        void DeviceGUI()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -109,7 +117,7 @@ namespace PerformanceRecorder
 
                 using (new EditorGUI.DisabledGroupScope(m_Server.isListening))
                 {
-                    if (GUILayout.Button("Start", EditorStyles.miniButton))
+                    if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                     {
                         m_Server.isServer = true;
                         m_Server.Connect();
@@ -117,20 +125,25 @@ namespace PerformanceRecorder
                 }
                 using (new EditorGUI.DisabledGroupScope(!m_Server.isListening))
                 {
-                    if (GUILayout.Button("Stop", EditorStyles.miniButton))
+                    if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
+                    {
                         m_Server.Disconnect();
+
+                        if (AnimationMode.InAnimationMode())
+                            AnimationMode.StopAnimationMode();
+                    }
                 }
             }
             //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
-        void DoRecorderGUI()
+        void DoDirectoryGUI()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.TextField("Directory", m_RecorderDirectory);
 
-                if (GUILayout.Button("O", EditorStyles.miniButton, GUILayout.Width(25f)))
+                if (GUILayout.Button("o", EditorStyles.miniButton, kButtonSmall))
                 {
                     var path = EditorUtility.OpenFolderPanel("Record Directory", m_RecorderDirectory, "");
 
@@ -140,10 +153,12 @@ namespace PerformanceRecorder
                         
                         m_RecorderDirectory = path.Substring(index) + "/";
                     }
-
                 }
             }
+        }
 
+        void DoRecorderGUI()
+        {
             using (new EditorGUI.DisabledGroupScope(!m_Player.isStopped))
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -151,14 +166,14 @@ namespace PerformanceRecorder
 
                 using (new EditorGUI.DisabledGroupScope(m_Recoder.isRecording))
                 {
-                    if (GUILayout.Button("Start", EditorStyles.miniButton))
+                    if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
                     {
                         m_Recoder.StartRecording();
                     }
                 }
                 using (new EditorGUI.DisabledGroupScope(!m_Recoder.isRecording))
                 {
-                    if (GUILayout.Button("Stop", EditorStyles.miniButton))
+                    if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
                         var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(m_RecorderDirectory + GenerateFileName());
                         var path = uniqueAssetPath + ".arstream";
@@ -207,20 +222,20 @@ namespace PerformanceRecorder
 
                     if (m_Player.isPlaying)
                     {
-                        if (GUILayout.Button("Pause", EditorStyles.miniButton, GUILayout.Width(36f)))
+                        if (GUILayout.Button("Pause", EditorStyles.miniButton, kButtonMid))
                             Pause();
                     }
                     else
                     {
                         using (new EditorGUI.DisabledGroupScope(IsAnimationModeInExternalUse()))
                         {
-                            if (GUILayout.Button("Play", EditorStyles.miniButton, GUILayout.Width(36f)))
+                            if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                                 Play();
                         }
                     }
                     using (new EditorGUI.DisabledGroupScope(!(m_Player.isPlaying || m_Player.isPaused)))
                     {
-                        if (GUILayout.Button("Stop", EditorStyles.miniButton, GUILayout.Width(36f)))
+                        if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                             Stop();
                     }
                 }
@@ -272,7 +287,7 @@ namespace PerformanceRecorder
 
         string GenerateFileName()
         {
-            return string.Format("{0:yyyy_MM_dd_HH_mm}-Take", DateTime.Now);
+            return string.Format("{0:yyyy_MM_dd_HH_mm}", DateTime.Now);
         }
 
         void ClientGUI()
@@ -281,16 +296,16 @@ namespace PerformanceRecorder
             {
                 GUILayout.FlexibleSpace();
 
-                if (GUILayout.Button("Connect", EditorStyles.miniButton))
+                if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                 {
                     m_Client.ip = "127.0.0.1";
                     m_Client.port = 9000;
                     m_Client.isServer = false;
                     m_Client.Connect();
                 }
-                if (GUILayout.Button("Disconnect", EditorStyles.miniButton))
+                if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
                     m_Client.Disconnect();
-                if (GUILayout.Button("Send", EditorStyles.miniButton))
+                if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
                     SendPacket();
             }
         }
@@ -314,6 +329,20 @@ namespace PerformanceRecorder
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_Client.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+        }
+
+        void PrepareAnimationModeCurveBindings(GameObject go)
+        {
+            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            {
+                var binding = new EditorCurveBinding()
+                {
+                    path = "",
+                    type = typeof(BlendShapesController),
+                    propertyName = "m_BlendShapeValues." + ((BlendShapeLocation)i).ToString() 
+                };
+                AnimationMode.AddEditorCurveBinding(go, binding);
+            }
         }
     }
 }
