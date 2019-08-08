@@ -301,7 +301,7 @@ namespace PerformanceRecorder
                         actor.Connect();
 
                         AnimationMode.StartAnimationMode();
-                        PrepareAnimationModeCurveBindings(actor.controller.gameObject);
+                        RegisterBindingsToAnimationMode(actor.controller.gameObject);
                     }
                 }
                 using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
@@ -386,9 +386,14 @@ namespace PerformanceRecorder
                     var wasPlaying = actor.state == PreviewState.Playback;
 
                     actor.StopPlayback();
+                    AnimationMode.StopAnimationMode();
 
                     if (wasPlaying)
+                    {
+                        AnimationMode.StartAnimationMode();
+                        RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
                         actor.StartPlayback();
+                    }
                 }
             }
 
@@ -409,8 +414,7 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                     {
                         AnimationMode.StartAnimationMode();
-                        PrepareAnimationModeCurveBindings(actor.controller.gameObject);
-
+                        RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
                         actor.StartPlayback();
                     }
                 }
@@ -419,7 +423,6 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
                         actor.StopPlayback();
-
                         AnimationMode.StopAnimationMode();
                     }
                 }
@@ -472,7 +475,7 @@ namespace PerformanceRecorder
             m_Client.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
 
-        void PrepareAnimationModeCurveBindings(GameObject go)
+        void RegisterBindingsToAnimationMode(GameObject go)
         {
             for (var i = 0; i < BlendShapeValues.Count; ++i)
             {
@@ -484,6 +487,14 @@ namespace PerformanceRecorder
                 };
                 AnimationMode.AddEditorCurveBinding(go, binding);
             }
+        }
+
+        void RegisterBindingsToAnimationMode(GameObject go, AnimationClip clip)
+        {
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+
+            foreach (var binding in bindings)
+                AnimationMode.AddEditorCurveBinding(go, binding);
         }
     }
 }
