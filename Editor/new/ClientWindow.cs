@@ -173,7 +173,10 @@ namespace PerformanceRecorder
 
         public void StartPlayback()
         {
-            SetPreviewState(PreviewState.Playback);
+            if (state == PreviewState.Playback)
+                m_Player.Play(controller.GetComponent<Animator>(), m_Clip);
+            else
+                SetPreviewState(PreviewState.Playback);
         }
 
         public void StopPlayback()
