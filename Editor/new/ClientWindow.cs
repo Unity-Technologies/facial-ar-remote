@@ -205,6 +205,33 @@ namespace PerformanceRecorder
         }
     }
 
+    [InitializeOnLoad]
+    public class BlendShapeControllerTracker
+    {
+        static List<BlendShapesController> s_Controllers = new List<BlendShapesController>();
+
+        static BlendShapeControllerTracker()
+        {
+            BlendShapesController.controllerEnabled += ControllerEnabled;
+            BlendShapesController.controllerDisabled += ControllerDisabled;
+        }
+
+        static void ControllerEnabled(BlendShapesController controller)
+        {
+            s_Controllers.Add(controller);
+        }
+
+        static void ControllerDisabled(BlendShapesController controller)
+        {
+            s_Controllers.Remove(controller);
+        }
+
+        public static BlendShapesController[] GetControllers()
+        {
+            return s_Controllers.ToArray();
+        }
+    }
+
     public class ClientWindow : EditorWindow
     {
         static readonly GUILayoutOption kButtonSmall = GUILayout.Width(20f);
@@ -228,6 +255,11 @@ namespace PerformanceRecorder
             EditorApplication.update += Update;
             BlendShapesController.controllerEnabled += ControllerEnabled;
             BlendShapesController.controllerDisabled += ControllerDisabled;
+
+            var controllers = BlendShapeControllerTracker.GetControllers();
+
+            foreach (var controller in controllers)
+                ControllerEnabled(controller);
         }
 
         void OnDisable()
@@ -235,6 +267,8 @@ namespace PerformanceRecorder
             foreach (var actor in m_Actors)
                 actor.Dispose();
             
+            m_Actors.Clear();
+
             AnimationMode.StopAnimationMode();
 
             BlendShapesController.controllerEnabled -= ControllerEnabled;
@@ -280,10 +314,18 @@ namespace PerformanceRecorder
 
         void DoActorGUI(RemoteActor actor)
         {
+            if (actor == null || actor.controller == null)
+                return;
+            
             EditorGUIUtility.labelWidth = 60f;
 
             using (new GUILayout.VerticalScope("box"))
             {
+                using (new EditorGUI.DisabledGroupScope(true))
+                {
+                    EditorGUILayout.ObjectField("Target", actor.controller.gameObject, typeof(GameObject), true);
+                }
+
                 EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
                 DeviceGUI(actor);
 
