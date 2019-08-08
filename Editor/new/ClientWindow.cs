@@ -462,7 +462,7 @@ namespace PerformanceRecorder
                     actor.StopPlayback();
                     StopAnimationMode();
 
-                    if (wasPlaying)
+                    if (wasPlaying && actor.clip != null)
                     {
                         StartAnimationMode();
                         RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
