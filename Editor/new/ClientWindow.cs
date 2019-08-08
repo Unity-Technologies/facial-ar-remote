@@ -241,6 +241,8 @@ namespace PerformanceRecorder
         RemoteStream m_Client = new RemoteStream();
         [SerializeField]
         List<RemoteActor> m_Actors = new List<RemoteActor>();
+        [SerializeField]
+        Vector2 m_Scroll;
 
         [MenuItem("Window/Test Client")]
         public static void ShowWindow()
@@ -300,8 +302,13 @@ namespace PerformanceRecorder
 
         void OnGUI()
         {
-            foreach (var actor in m_Actors)
-                DoActorGUI(actor);
+            using (var scrollview = new EditorGUILayout.ScrollViewScope(m_Scroll))
+            {
+                foreach (var actor in m_Actors)
+                    DoActorGUI(actor);
+                
+                m_Scroll = scrollview.scrollPosition;
+            }
 
             /*
             using (new GUILayout.VerticalScope("box"))
