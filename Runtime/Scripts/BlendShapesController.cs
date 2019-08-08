@@ -12,10 +12,26 @@ namespace Unity.Labs.FacialRemote
     [DisallowMultipleComponent]
     public class BlendShapesController : MonoBehaviour, IUsesStreamReader
     {
-        [SerializeField, HideInInspector]
+#if UNITY_EDITOR
+        public delegate void Callback(BlendShapesController contorller);
+        public static event Callback controllerEnabled;
+        public static event Callback controllerDisabled;
+
+        void OnEnable()
+        {
+            controllerEnabled.Invoke(this);
+        }
+
+        void OnDisable()
+        {
+            controllerDisabled.Invoke(this);
+        }
+#endif
+
+        [SerializeField]
         BlendShapeValues m_BlendShapeValues;
 
-        [SerializeField, HideInInspector]
+        [SerializeField]
         bool m_TrackingActive = true;
 
         [SerializeField]

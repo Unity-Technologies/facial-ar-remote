@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -212,7 +213,7 @@ namespace PerformanceRecorder
         static readonly string k_Assets = "Assets";
         RemoteStream m_Client = new RemoteStream();
         [SerializeField]
-        RemoteActor m_Actor = new RemoteActor();
+        List<RemoteActor> m_Actors = new List<RemoteActor>();
 
         [MenuItem("Window/Test Client")]
         public static void ShowWindow()
@@ -225,27 +226,48 @@ namespace PerformanceRecorder
         void OnEnable()
         {
             EditorApplication.update += Update;
+            BlendShapesController.controllerEnabled += ControllerEnabled;
+            BlendShapesController.controllerDisabled += ControllerDisabled;
         }
 
         void OnDisable()
         {
-            m_Actor.Dispose();
+            foreach (var actor in m_Actors)
+                actor.Dispose();
+            
             AnimationMode.StopAnimationMode();
 
+            BlendShapesController.controllerEnabled -= ControllerEnabled;
+            BlendShapesController.controllerDisabled -= ControllerDisabled;
             EditorApplication.update -= Update;
         }
 
-        void FindController()
+        void ControllerEnabled(BlendShapesController controller)
         {
-            if (m_Actor.controller == null)
-                m_Actor.controller = GameObject.FindObjectOfType<BlendShapesController>();
+            var actor = new RemoteActor();
+            actor.controller = controller;
+            m_Actors.Add(actor);
+
+            Repaint();
+        }
+
+        void ControllerDisabled(BlendShapesController controller)
+        {
+            var actor = m_Actors.Find((a) => a.controller == controller);
+
+            if (actor != null)
+            {
+                actor.Dispose();
+                m_Actors.Remove(actor);
+            }
+
+            Repaint();
         }
 
         void OnGUI()
         {
-            FindController();
-
-            DoActorGUI(m_Actor);
+            foreach (var actor in m_Actors)
+                DoActorGUI(actor);
 
             /*
             using (new GUILayout.VerticalScope("box"))
@@ -285,7 +307,8 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            m_Actor.Update();
+            foreach (var actor in m_Actors)
+                actor.Update();
         }
 
         void DeviceGUI(RemoteActor actor)
@@ -300,7 +323,7 @@ namespace PerformanceRecorder
                     {
                         actor.Connect();
 
-                        AnimationMode.StartAnimationMode();
+                        StartAnimationMode();
                         RegisterBindingsToAnimationMode(actor.controller.gameObject);
                     }
                 }
@@ -309,8 +332,7 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
                     {
                         actor.Disconnect();
-
-                        AnimationMode.StopAnimationMode();
+                        StopAnimationMode();
                     }
                 }
             }
@@ -386,11 +408,11 @@ namespace PerformanceRecorder
                     var wasPlaying = actor.state == PreviewState.Playback;
 
                     actor.StopPlayback();
-                    AnimationMode.StopAnimationMode();
+                    StopAnimationMode();
 
                     if (wasPlaying)
                     {
-                        AnimationMode.StartAnimationMode();
+                        StartAnimationMode();
                         RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
                         actor.StartPlayback();
                     }
@@ -413,7 +435,7 @@ namespace PerformanceRecorder
                 {
                     if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                     {
-                        AnimationMode.StartAnimationMode();
+                        StartAnimationMode();
                         RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
                         actor.StartPlayback();
                     }
@@ -423,7 +445,7 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
                         actor.StopPlayback();
-                        AnimationMode.StopAnimationMode();
+                        StopAnimationMode();
                     }
                 }
             }
@@ -473,6 +495,28 @@ namespace PerformanceRecorder
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_Client.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+        }
+
+        void StartAnimationMode()
+        {
+            if (AnimationMode.InAnimationMode())
+                return;
+
+            AnimationMode.StartAnimationMode();
+        }
+
+        void StopAnimationMode()
+        {
+            if (AnimationMode.InAnimationMode())
+            {
+                foreach (var actor in m_Actors)
+                {
+                    if (actor.state != PreviewState.None)
+                        return;
+                }
+
+                AnimationMode.StopAnimationMode();
+            }
         }
 
         void RegisterBindingsToAnimationMode(GameObject go)
