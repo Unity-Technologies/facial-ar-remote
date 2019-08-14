@@ -155,17 +155,10 @@ namespace PerformanceRecorder
 
         public void WriteRecording(Stream stream)
         {
-            var length = default(long);
-            var buffer = m_Recoder.GetBuffer(out length);
-            var descriptor = PacketDescriptor.Get(m_Recoder.packetType);
-            var packetCount = new PacketCount
+            using (var writer = new ARStreamWriter(stream))
             {
-                value = length / descriptor.GetPayloadSize()
-            };
-
-            stream.Write<PacketDescriptor>(descriptor);
-            stream.Write<PacketCount>(packetCount);
-            stream.Write(buffer, 0, (int)length);
+                writer.Write(m_Recoder);
+            }
         }
 
         public void StartLiveStream()

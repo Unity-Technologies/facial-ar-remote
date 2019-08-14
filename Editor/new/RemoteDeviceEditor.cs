@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
@@ -38,7 +39,12 @@ namespace PerformanceRecorder
                         var path = uniqueAssetPath + ".arstream";
 
                         m_Device.StopRecording();
-                        m_Device.SaveRecording(path);
+
+                        using (var fileStream = File.Create(path))
+                        using (var writer = new ARStreamWriter(fileStream))
+                        {
+                            writer.Write(m_Device.GetPacketBuffer());
+                        }
 
                         AssetDatabase.Refresh();
                     }

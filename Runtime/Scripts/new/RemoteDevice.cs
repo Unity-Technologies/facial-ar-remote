@@ -1,5 +1,4 @@
 ﻿
-using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Labs.FacialRemote;
@@ -66,27 +65,9 @@ namespace PerformanceRecorder
             m_FaceDataRecorder.StopRecording();
         }
 
-        public void SaveRecording(string path)
+        public IPacketBuffer GetPacketBuffer()
         {
-            using (var fileStream = File.Create(path))
-            {
-                Write(fileStream, m_FaceDataRecorder);
-            }
-        }
-
-        void Write(Stream stream, IPacketBuffer packetBuffer)
-        {
-            var length = default(long);
-            var buffer = m_FaceDataRecorder.GetBuffer(out length);
-            var descriptor = PacketDescriptor.Get(packetBuffer.packetType);
-            var packetCount = new PacketCount
-            {
-                value = length / descriptor.GetPayloadSize()
-            };
-
-            stream.Write<PacketDescriptor>(descriptor);
-            stream.Write<PacketCount>(packetCount);
-            stream.Write(buffer, 0, (int)length);
+            return m_FaceDataRecorder;
         }
     }
 }

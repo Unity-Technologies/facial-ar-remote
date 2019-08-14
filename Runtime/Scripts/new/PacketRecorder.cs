@@ -5,12 +5,6 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct PacketCount
-    {
-        public long value;
-    }
-
     public interface IPacketBuffer
     {
         PacketType packetType { get; }
