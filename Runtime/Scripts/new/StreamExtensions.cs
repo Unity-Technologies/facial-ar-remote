@@ -78,5 +78,11 @@ namespace PerformanceRecorder
 
             return true;
         }
+
+        public static void Write<T>(this Stream stream, T data) where T : struct
+        {
+            var size = Marshal.SizeOf<T>();
+            stream.Write(data.ToBytes(), 0, size);
+        }
     }
 }

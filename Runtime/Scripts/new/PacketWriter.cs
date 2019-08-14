@@ -31,7 +31,7 @@ namespace PerformanceRecorder
         /// </summary>
         public void Write(FaceData faceData)
         {
-            Write<FaceData>(PacketDescriptor.DescriptorFace, faceData);
+            Write<FaceData>(PacketDescriptor.Get(PacketType.Face), faceData);
         }
 
         public void Write(byte[] bytes, int count)

@@ -51,16 +51,9 @@ namespace PerformanceRecorder
             var blendShapeCurves = new BlendShapesCurveBinding("", typeof(BlendShapesController), "m_BlendShapeValues");
             var headBonePositionCurves = new Vector3CurveBinding("", typeof(CharacterRigController), "m_HeadPose.position");
             var faceTrackingStateCurves = new BoolCurveBinding("", typeof(BlendShapesController), "m_TrackingActive");
-            
             var buffer = new byte[1024];
             var descriptor = default(PacketDescriptor);
-
-            if (!stream.TryRead<PacketDescriptor>(out descriptor, buffer))
-                return;
-
-            if (descriptor.type != PacketType.Face)
-                return;
-
+            var packetCount = default(PacketCount);
             var data = default(FaceData);
             var lastData = default(FaceData);
             var startTime = 0f;
@@ -68,8 +61,19 @@ namespace PerformanceRecorder
             var timeAcc = 0.0;
             var lastFrameTime = 0.0;
             var first = true;
+            var count = (long)0;
 
-            while (stream.TryReadFaceData(descriptor.version, out data, buffer))
+            if (!stream.TryRead<PacketDescriptor>(out descriptor, buffer))
+                return;
+
+            if (descriptor.type != PacketType.Face)
+                return;
+
+            if (!stream.TryRead<PacketCount>(out packetCount, buffer))
+                return;
+
+            while (count < packetCount.value &&
+                stream.TryReadFaceData(descriptor.version, out data, buffer))
             {
                 if (first)
                 {

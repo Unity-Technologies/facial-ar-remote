@@ -5,12 +5,25 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public abstract class PacketRecorder<T> where T : struct
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PacketCount
+    {
+        public long value;
+    }
+
+    public interface IPacketBuffer
+    {
+        PacketType packetType { get; }
+        byte[] GetBuffer(out long length);
+    }
+
+    public abstract class PacketRecorder<T> : IPacketBuffer where T : struct
     {
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         MemoryStream m_MemoryStream;
 
         public bool isRecording { get; private set; }
+        public PacketType packetType { get { return GetPacketType(); } }
 
         public PacketRecorder()
         {
@@ -20,8 +33,7 @@ namespace PerformanceRecorder
         public void StartRecording()
         {
             m_MemoryStream.Seek(0, SeekOrigin.Begin);
-            m_MemoryStream.Write(PacketDescriptor.Get(GetPacketType()).ToBytes(), 0, PacketDescriptor.DescriptorSize);
-
+            
             isRecording = true;
         }
 
@@ -38,11 +50,12 @@ namespace PerformanceRecorder
             isRecording = false;
         }
 
-        public byte[] GetBuffer()
+        public byte[] GetBuffer(out long length)
         {
             if (isRecording)
                 throw new Exception("Can't get buffer while recoding");
 
+            length = m_MemoryStream.Position;
             return m_MemoryStream.GetBuffer();
         }
 

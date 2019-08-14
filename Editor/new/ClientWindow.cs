@@ -153,9 +153,19 @@ namespace PerformanceRecorder
             m_Recoder.StopRecording();
         }
 
-        public byte[] GetRecording()
+        public void WriteRecording(Stream stream)
         {
-            return m_Recoder.GetBuffer();
+            var length = default(long);
+            var buffer = m_Recoder.GetBuffer(out length);
+            var descriptor = PacketDescriptor.Get(m_Recoder.packetType);
+            var packetCount = new PacketCount
+            {
+                value = length / descriptor.GetPayloadSize()
+            };
+
+            stream.Write<PacketDescriptor>(descriptor);
+            stream.Write<PacketCount>(packetCount);
+            stream.Write(buffer, 0, (int)length);
         }
 
         public void StartLiveStream()
@@ -241,7 +251,7 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         static readonly string k_Assets = "Assets";
-        PacketStream m_Client = new PacketStream();
+        PacketStream m_PacketStream = new PacketStream();
         [SerializeField]
         List<RemoteActor> m_Actors = new List<RemoteActor>();
         [SerializeField]
@@ -307,19 +317,19 @@ namespace PerformanceRecorder
         {
             using (var scrollview = new EditorGUILayout.ScrollViewScope(m_Scroll))
             {
+                m_Scroll = scrollview.scrollPosition;
+
                 foreach (var actor in m_Actors)
                     DoActorGUI(actor);
                 
-                m_Scroll = scrollview.scrollPosition;
+                /*
+                using (new GUILayout.VerticalScope("box"))
+                {
+                    EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
+                    ClientGUI();
+                }
+                */
             }
-
-            /*
-            using (new GUILayout.VerticalScope("box"))
-            {
-                EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
-                ClientGUI();
-            }
-            */
         }
 
         void DoActorGUI(RemoteActor actor)
@@ -435,8 +445,7 @@ namespace PerformanceRecorder
 
                         using (var fileStream = File.Create(path))
                         {
-                            var buffer = actor.GetRecording();
-                            fileStream.Write(buffer, 0, buffer.Length);
+                            actor.WriteRecording(fileStream);
                         }
 
                         AssetDatabase.Refresh();
@@ -516,13 +525,13 @@ namespace PerformanceRecorder
 
                 if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                 {
-                    m_Client.ip = "127.0.0.1";
-                    m_Client.port = 9000;
-                    m_Client.isServer = false;
-                    m_Client.Connect();
+                    m_PacketStream.ip = "127.0.0.1";
+                    m_PacketStream.port = 9000;
+                    m_PacketStream.isServer = false;
+                    m_PacketStream.Connect();
                 }
                 if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
-                    m_Client.Disconnect();
+                    m_PacketStream.Disconnect();
                 if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
                     SendPacket();
             }
@@ -537,7 +546,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.Write(faceData);
+            m_PacketStream.writer.Write(faceData);
             */
             
             var data = new StreamBufferDataV1();
@@ -546,7 +555,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+            m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
 
         void StartAnimationMode()
@@ -579,7 +588,7 @@ namespace PerformanceRecorder
                 {
                     path = "",
                     type = typeof(BlendShapesController),
-                    propertyName = "m_BlendShapeValues." + ((BlendShapeLocation)i).ToString() 
+                    propertyName = "m_BlendShapeValues." + ((BlendShapeLocation)i).ToString()
                 };
                 AnimationMode.AddEditorCurveBinding(go, binding);
             }
