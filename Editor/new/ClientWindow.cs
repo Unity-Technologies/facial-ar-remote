@@ -19,7 +19,7 @@ namespace PerformanceRecorder
     public class RemoteActor
     {
         static readonly string k_DefaultDirectory = "Assets/";
-        RemoteStream m_Stream = new RemoteStream();
+        PacketStream m_Stream = new PacketStream();
         FaceDataRecorder m_Recoder = new FaceDataRecorder();
         TakePlayer m_Player = new TakePlayer();
         PreviewState m_PrevState = PreviewState.None;
@@ -241,7 +241,7 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         static readonly string k_Assets = "Assets";
-        RemoteStream m_Client = new RemoteStream();
+        PacketStream m_Client = new PacketStream();
         [SerializeField]
         List<RemoteActor> m_Actors = new List<RemoteActor>();
         [SerializeField]

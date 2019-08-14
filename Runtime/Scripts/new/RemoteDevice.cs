@@ -9,7 +9,7 @@ namespace PerformanceRecorder
     public class RemoteDevice : MonoBehaviour
     {
         [SerializeField]
-        RemoteStream m_Stream = new RemoteStream();
+        PacketStream m_Stream = new PacketStream();
         [SerializeField]
         List<BlendShapesController> m_BlendShapesControllers = new List<BlendShapesController>();
         FaceDataRecorder m_FaceDataRecorder = new FaceDataRecorder();

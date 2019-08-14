@@ -6,7 +6,7 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public class StreamReader
+    public class PacketReader
     {
         public delegate void FaceDataCallback(FaceData faceData);
         public event FaceDataCallback faceDataChanged;

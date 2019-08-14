@@ -5,7 +5,7 @@ using UnityEngine;
 namespace PerformanceRecorder
 {
     [Serializable]
-    public class RemoteStream
+    public class PacketStream
     {
         [SerializeField]
         string m_Ip = "192.168.0.1";
@@ -16,8 +16,8 @@ namespace PerformanceRecorder
 
         Thread m_ReadThread;
         Thread m_WriteThread;
-        StreamReader m_Reader = new StreamReader();
-        StreamWriter m_Writer = new StreamWriter();
+        PacketReader m_Reader = new PacketReader();
+        PacketWriter m_Writer = new PacketWriter();
         AdapterSource m_Adapter = new AdapterSource();
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
 
@@ -54,12 +54,12 @@ namespace PerformanceRecorder
             get { return m_NetworkStreamSource.isConnected; }
         }
 
-        public StreamReader reader
+        public PacketReader reader
         {
             get { return m_Reader; }
         }
 
-        public StreamWriter writer
+        public PacketWriter writer
         {
             get { return m_Writer; }
         }

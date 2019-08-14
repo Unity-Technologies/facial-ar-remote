@@ -6,7 +6,7 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public class StreamWriter
+    public class PacketWriter
     {
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
