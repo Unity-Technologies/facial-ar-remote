@@ -5,12 +5,6 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public interface IPacketBuffer
-    {
-        PacketType packetType { get; }
-        byte[] GetBuffer(out long length);
-    }
-
     public abstract class PacketRecorder<T> : IPacketBuffer where T : struct
     {
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
