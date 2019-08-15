@@ -66,10 +66,9 @@ namespace PerformanceRecorder
         void Write<T>(PacketDescriptor descriptor, T packet) where T : struct
         {
             var stream = m_Manager.GetStream();
-            int size = Marshal.SizeOf<T>();
-
-            stream.Write(descriptor.ToBytes(), 0, PacketDescriptor.DescriptorSize);
-            stream.Write(packet.ToBytes(), 0, size);
+            
+            stream.Write<PacketDescriptor>(descriptor);
+            stream.Write<T>(packet);
             
             m_Queue.Enqueue(stream);
         }
