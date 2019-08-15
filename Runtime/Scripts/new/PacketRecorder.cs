@@ -30,7 +30,7 @@ namespace PerformanceRecorder
             if (!isRecording)
                 throw new Exception("Can't record: Recoding hasn't started");
             
-            m_MemoryStream.Write(data.ToBytes(), 0, Marshal.SizeOf<T>());
+            m_MemoryStream.Write<T>(data);
         }
 
         public void StopRecording()
