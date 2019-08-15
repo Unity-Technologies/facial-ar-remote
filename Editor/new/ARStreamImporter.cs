@@ -20,9 +20,13 @@ namespace PerformanceRecorder
         bool m_LoopPose = false;
         [SerializeField]
         float m_CycleOffset = 0f;
+        byte[] m_Buffer = new byte[1024];
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+            if (!ArrayUtility.Contains(s_SampleRates, m_SampleRate))
+                return;
+
             using (var memoryStream = new MemoryStream(File.ReadAllBytes(ctx.assetPath)))
             {
                 var clip = new AnimationClip();
@@ -34,24 +38,54 @@ namespace PerformanceRecorder
                 };
 
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
+                clip.frameRate = m_SampleRate;
 
                 Bake(memoryStream, m_SampleRate, clip);
 
                 ctx.AddObjectToAsset("clip", clip);
                 ctx.SetMainObject(clip);
             }
-            
         }
 
-        public static void Bake(Stream stream, int sampleRate, AnimationClip clip)
+        void Bake(Stream stream, int sampleRate, AnimationClip clip)
         {
-            if (Array.IndexOf(s_SampleRates, sampleRate) == -1)
+            var descriptor = default(ARStreamDescriptor);
+
+            if (!stream.TryRead<ARStreamDescriptor>(out descriptor, m_Buffer))
                 return;
 
+            switch (descriptor.version)
+            {
+                default:
+                    BakeV0(stream, sampleRate, clip);
+                    break;
+            }
+        }
+
+        void BakeV0(Stream stream, int sampleRate, AnimationClip clip)
+        {
+            var descriptor = default(PacketBufferDescriptor);
+
+            while (stream.TryRead<PacketBufferDescriptor>(out descriptor, m_Buffer))
+            {
+                switch (descriptor.packetDescriptor.type)
+                {
+                    case PacketType.Invalid:
+                        return;
+                    case PacketType.Face:
+                        BakeFaceData(stream, descriptor.packetDescriptor, descriptor.length, sampleRate, clip);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        void BakeFaceData(Stream stream, PacketDescriptor descriptor, int length, int sampleRate, AnimationClip clip)
+        {
             var blendShapeCurves = new BlendShapesCurveBinding("", typeof(BlendShapesController), "m_BlendShapeValues");
-            var headBonePositionCurves = new Vector3CurveBinding("", typeof(CharacterRigController), "m_HeadPose.position");
+            //var headBonePositionCurves = new Vector3CurveBinding("", typeof(CharacterRigController), "m_HeadPose.position");
             var faceTrackingStateCurves = new BoolCurveBinding("", typeof(BlendShapesController), "m_TrackingActive");
-            var buffer = new byte[1024];
             var data = default(FaceData);
             var lastData = default(FaceData);
             var startTime = 0f;
@@ -59,24 +93,16 @@ namespace PerformanceRecorder
             var timeAcc = 0.0;
             var lastFrameTime = 0.0;
             var first = true;
-            var descriptor = default(PacketBufferDescriptor);
-
-            if (!stream.TryRead<PacketBufferDescriptor>(out descriptor, buffer))
-                return;
-            
-            var payloadSize = descriptor.packetDescriptor.GetPayloadSize();
+            var count = (long)0;
+            var payloadSize = descriptor.GetPayloadSize();
 
             if (payloadSize == 0)
                 return;
-            
-            var packetCount = descriptor.length / payloadSize;
-            var count = (long)0;
 
-            if (descriptor.packetDescriptor.type != PacketType.Face)
-                return;
+            var packetCount = length / payloadSize;
 
             while (count < packetCount &&
-                stream.TryReadFaceData(descriptor.packetDescriptor.version, out data, buffer))
+                stream.TryReadFaceData(descriptor.version, out data, m_Buffer))
             {
                 if (first)
                 {
@@ -111,9 +137,6 @@ namespace PerformanceRecorder
 
                 lastData = data;
             }
-
-            clip.ClearCurves();
-            clip.frameRate = sampleRate;
 
             blendShapeCurves.SetCurves(clip);
             faceTrackingStateCurves.SetCurves(clip);

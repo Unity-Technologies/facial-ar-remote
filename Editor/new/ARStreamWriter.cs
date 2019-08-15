@@ -5,9 +5,14 @@ using System.Runtime.InteropServices;
 namespace PerformanceRecorder
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct PacketBufferDescriptor
+    public struct ARStreamDescriptor
     {
         public int version;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PacketBufferDescriptor
+    {
         public PacketDescriptor packetDescriptor;
         public int length;
     }
@@ -15,12 +20,18 @@ namespace PerformanceRecorder
     public class ARStreamWriter : IDisposable
     {
         static readonly int s_Version = 0;
-
         Stream m_Stream;
 
         public ARStreamWriter(Stream stream)
         {
             m_Stream = stream;
+
+            var descriptor = new ARStreamDescriptor
+            {
+                version = s_Version
+            };
+
+            m_Stream.Write<ARStreamDescriptor>(descriptor);
         }
 
         public void Dispose()
@@ -38,7 +49,6 @@ namespace PerformanceRecorder
             var buffer = packetBuffer.GetBuffer(out length);
             var descriptor = new PacketBufferDescriptor
             {
-                version = s_Version,
                 packetDescriptor = PacketDescriptor.Get(packetBuffer.packetType),
                 length = (int)length
             };

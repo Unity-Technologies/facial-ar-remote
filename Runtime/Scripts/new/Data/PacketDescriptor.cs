@@ -47,12 +47,12 @@ namespace PerformanceRecorder
             switch (packet.type)
             {
                 case PacketType.Face:
-                    return GetFacePayloadSize(packet.version);
+                    return GetFaceDataSize(packet.version);
             }
             return 0;
         }
 
-        static int GetFacePayloadSize(int version)
+        static int GetFaceDataSize(int version)
         {
             switch (version)
             {
