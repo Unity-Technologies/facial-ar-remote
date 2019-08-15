@@ -59,8 +59,8 @@ namespace PerformanceRecorder
                 m_RemainingBytes += Marshal.SizeOf<FaceData>();
 
                 Position = 0;
-                Write(desc.ToBytes(), 0, Marshal.SizeOf<PacketDescriptor>());
-                Write(data.ToBytes(), 0, Marshal.SizeOf<FaceData>());
+                this.Write<PacketDescriptor>(desc);
+                this.Write<FaceData>(data);
                 Flush();
                 Position = 0;
             }
