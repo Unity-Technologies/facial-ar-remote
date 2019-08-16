@@ -1,57 +1,28 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using UnityEngine;
 
 namespace PerformanceRecorder
 {
-    [Serializable]
     public class PacketStream
     {
-        [SerializeField]
-        string m_Ip = "192.168.0.1";
-        [SerializeField]
-        int m_Port = 9000;
-        [SerializeField]
-        bool m_IsServer = false;
-
         Thread m_ReadThread;
         Thread m_WriteThread;
         PacketReader m_Reader = new PacketReader();
         PacketWriter m_Writer = new PacketWriter();
-        AdapterSource m_Adapter = new AdapterSource();
-        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
 
-        public string ip
-        {
-            get { return m_Ip; }
-            set { m_Ip = value; }
-        }
+        public IStreamSource streamSource { get; set; }
 
-        public int port
+        Stream stream
         {
-            get { return m_Port; }
-            set { m_Port = value; }
-        }
-
-        public bool isServer
-        {
-            get { return m_IsServer; }
-            set { m_IsServer = value; }
-        }
-
-        public bool isListening
-        {
-            get { return m_NetworkStreamSource.isListening; }
-        }
-
-        public bool isConnecting
-        {
-            get { return m_NetworkStreamSource.isConnecting; }
-        }
-
-        public bool isConnected
-        {
-            get { return m_NetworkStreamSource.isConnected; }
+            get
+            {
+                if (streamSource != null)
+                    return streamSource.stream;
+                
+                return null;
+            }
         }
 
         public PacketReader reader
@@ -64,31 +35,25 @@ namespace PerformanceRecorder
             get { return m_Writer; }
         }
 
-        public void Connect()
+        public void Start()
         {
-            if (isServer)
-                m_NetworkStreamSource.StartServer(port);
-            else
-                m_NetworkStreamSource.ConnectToServer(ip, port);
-            
             SetupThreads();
         }
 
-        public void Disconnect()
+        public void Stop()
         {
-            m_NetworkStreamSource.StopConnections();
             Dispose();
         }
 
         void SetupThreads()
         {
-            m_Adapter.streamSource = m_NetworkStreamSource;
-
             m_ReadThread = new Thread(() =>
             {
                 while (true)
                 {
-                    reader.Read(m_Adapter.stream);
+                    if (stream != null)
+                        reader.Read(stream);
+                    
                     Thread.Sleep(1);
                 };
             });
@@ -98,8 +63,6 @@ namespace PerformanceRecorder
             {
                 while (true)
                 {
-                    var stream = m_NetworkStreamSource.stream;
-
                     if (stream != null)
                         writer.Send(stream);
                     

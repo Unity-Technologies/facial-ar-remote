@@ -19,7 +19,15 @@ namespace PerformanceRecorder
     public class RemoteActor
     {
         static readonly string k_DefaultDirectory = "Assets/";
-        PacketStream m_Stream = new PacketStream();
+        [SerializeField]
+        string m_Ip = "192.168.0.1";
+        [SerializeField]
+        int m_Port = 9000;
+        [SerializeField]
+        bool m_IsServer = false;
+        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
+        AdapterSource m_AdapterSource = new AdapterSource();
+        PacketStream m_PacketStream = new PacketStream();
         FaceDataRecorder m_Recoder = new FaceDataRecorder();
         TakePlayer m_Player = new TakePlayer();
         PreviewState m_PrevState = PreviewState.None;
@@ -30,6 +38,24 @@ namespace PerformanceRecorder
         [SerializeField]
         string m_Directory = k_DefaultDirectory;
         bool m_ChangingState = false;
+
+        public string ip
+        {
+            get { return m_Ip; }
+            set { m_Ip = value; }
+        }
+
+        public int port
+        {
+            get { return m_Port; }
+            set { m_Port = value; }
+        }
+
+        public bool isServer
+        {
+            get { return m_IsServer; }
+            set { m_IsServer = value; }
+        }
 
         public TakePlayer player
         {
@@ -61,7 +87,7 @@ namespace PerformanceRecorder
 
         public RemoteActor()
         {
-            m_Stream.reader.faceDataChanged += FaceDataChanged;
+            m_PacketStream.reader.faceDataChanged += FaceDataChanged;
         }
 
         ~RemoteActor()
@@ -73,8 +99,9 @@ namespace PerformanceRecorder
         {
             m_Recoder.StopRecording();
             m_Player.Stop();
-            m_Stream.Disconnect();
-            m_Stream.reader.faceDataChanged -= FaceDataChanged;
+            m_NetworkStreamSource.StopConnections();
+            m_PacketStream.Stop();
+            m_PacketStream.reader.faceDataChanged -= FaceDataChanged;
         }
 
         void SetPreviewState(PreviewState newState)
@@ -113,20 +140,29 @@ namespace PerformanceRecorder
 
         public void Connect()
         {
-            m_Stream.isServer = true;
-            m_Stream.Connect();
+            isServer = true;
+            
+            if (isServer)
+                m_NetworkStreamSource.StartServer(port);
+            else
+                m_NetworkStreamSource.ConnectToServer(ip, port);
+            
+            m_AdapterSource.streamSource = m_NetworkStreamSource;
+            m_PacketStream.streamSource = m_AdapterSource;
+            m_PacketStream.Start();
             SetPreviewState(PreviewState.LiveStream);
         }
 
         public void Disconnect()
         {
-            m_Stream.Disconnect();
+            m_NetworkStreamSource.StopConnections();
+            m_PacketStream.Stop();
             SetPreviewState(PreviewState.None);
         }
 
         public void Update()
         {
-            m_Stream.reader.Receive();
+            m_PacketStream.reader.Receive();
             
             if (m_PrevState == PreviewState.Playback)
                 m_Player.Update();    
@@ -244,7 +280,6 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         static readonly string k_Assets = "Assets";
-        PacketStream m_PacketStream = new PacketStream();
         [SerializeField]
         List<RemoteActor> m_Actors = new List<RemoteActor>();
         [SerializeField]
@@ -510,6 +545,8 @@ namespace PerformanceRecorder
             return string.Format("{0:yyyy_MM_dd_HH_mm}", DateTime.Now);
         }
 
+        /*
+        PacketStream m_PacketStream = new PacketStream();
         void ClientGUI()
         {
             using (new EditorGUILayout.HorizontalScope())
@@ -529,7 +566,9 @@ namespace PerformanceRecorder
                     SendPacket();
             }
         }
+        */
 
+        /*
         void SendPacket()
         {
             /*
@@ -541,7 +580,7 @@ namespace PerformanceRecorder
             
             m_PacketStream.writer.Write(faceData);
             */
-            
+            /*
             var data = new StreamBufferDataV1();
             data.FrameTime = Time.realtimeSinceStartup;
 
@@ -550,6 +589,7 @@ namespace PerformanceRecorder
 
             m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
+        */
 
         void StartAnimationMode()
         {
