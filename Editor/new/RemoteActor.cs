@@ -19,6 +19,9 @@ namespace PerformanceRecorder
     public class RemoteActor
     {
         static readonly string k_DefaultDirectory = "Assets/";
+        public delegate void RecordingStateCallback(RemoteActor actor);
+        public static event RecordingStateCallback recordingStateChanged;
+
         [SerializeField]
         string m_Ip = "192.168.0.1";
         [SerializeField]
@@ -88,6 +91,7 @@ namespace PerformanceRecorder
         public RemoteActor()
         {
             m_PacketStream.reader.faceDataChanged += FaceDataChanged;
+            m_PacketStream.reader.commandChanged += CommandChanged;
         }
 
         ~RemoteActor()
@@ -102,6 +106,7 @@ namespace PerformanceRecorder
             m_NetworkStreamSource.StopConnections();
             m_PacketStream.Stop();
             m_PacketStream.reader.faceDataChanged -= FaceDataChanged;
+            m_PacketStream.reader.commandChanged -= CommandChanged;
         }
 
         void SetPreviewState(PreviewState newState)
@@ -147,8 +152,8 @@ namespace PerformanceRecorder
             else
                 m_NetworkStreamSource.ConnectToServer(ip, port);
             
-            m_AdapterSource.streamSource = m_NetworkStreamSource;
-            m_PacketStream.streamSource = m_AdapterSource;
+            //m_AdapterSource.streamSource = m_NetworkStreamSource;
+            m_PacketStream.streamSource = m_NetworkStreamSource;
             m_PacketStream.Start();
             SetPreviewState(PreviewState.LiveStream);
         }
@@ -174,6 +179,8 @@ namespace PerformanceRecorder
                 return;
 
             m_Recoder.StartRecording();
+
+            recordingStateChanged(this);
         }
 
         public bool IsRecording()
@@ -187,6 +194,8 @@ namespace PerformanceRecorder
                 return;
             
             m_Recoder.StopRecording();
+
+            recordingStateChanged(this);
         }
 
         public void WriteRecording(Stream stream)
@@ -244,6 +253,19 @@ namespace PerformanceRecorder
 
             if (m_Recoder.isRecording)
                 m_Recoder.Record(data);
+        }
+
+        void CommandChanged(Command data)
+        {
+            switch (data.type)
+            {
+                case CommandType.StartRecording:
+                    StartRecording();
+                    break;
+                case CommandType.StopRecording:
+                    StopRecording();
+                    break;
+            }
         }
     }
 }

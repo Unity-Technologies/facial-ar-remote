@@ -59,6 +59,7 @@ namespace PerformanceRecorder
             EditorApplication.update += Update;
             BlendShapesController.controllerEnabled += ControllerEnabled;
             BlendShapesController.controllerDisabled += ControllerDisabled;
+            RemoteActor.recordingStateChanged += RecordingStateChanged;
 
             var controllers = BlendShapeControllerTracker.GetControllers();
 
@@ -75,6 +76,7 @@ namespace PerformanceRecorder
 
             AnimationMode.StopAnimationMode();
 
+            RemoteActor.recordingStateChanged -= RecordingStateChanged;
             BlendShapesController.controllerEnabled -= ControllerEnabled;
             BlendShapesController.controllerDisabled -= ControllerDisabled;
             EditorApplication.update -= Update;
@@ -99,6 +101,11 @@ namespace PerformanceRecorder
                 m_Actors.Remove(actor);
             }
 
+            Repaint();
+        }
+
+        void RecordingStateChanged(RemoteActor actor)
+        {
             Repaint();
         }
 
@@ -305,52 +312,6 @@ namespace PerformanceRecorder
         {
             return string.Format("{0:yyyy_MM_dd_HH_mm}", DateTime.Now);
         }
-
-        /*
-        PacketStream m_PacketStream = new PacketStream();
-        void ClientGUI()
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.FlexibleSpace();
-
-                if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
-                {
-                    m_PacketStream.ip = "127.0.0.1";
-                    m_PacketStream.port = 9000;
-                    m_PacketStream.isServer = false;
-                    m_PacketStream.Connect();
-                }
-                if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
-                    m_PacketStream.Disconnect();
-                if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
-                    SendPacket();
-            }
-        }
-        */
-
-        /*
-        void SendPacket()
-        {
-            /*
-            var faceData = new FaceData();
-            faceData.timeStamp = Time.realtimeSinceStartup;
-
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
-                faceData.blendShapeValues[i] = UnityEngine.Random.value;
-            
-            m_PacketStream.writer.Write(faceData);
-            */
-            /*
-            var data = new StreamBufferDataV1();
-            data.FrameTime = Time.realtimeSinceStartup;
-
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
-                data.BlendshapeValues[i] = UnityEngine.Random.value;
-
-            m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-        }
-        */
 
         void StartAnimationMode()
         {

@@ -79,6 +79,26 @@ namespace PerformanceRecorder
             return true;
         }
 
+        public static bool TryReadCommand(this Stream stream, int version, out Command data, byte[] bytes = null)
+        {
+            data = default(Command);
+
+            try
+            {
+                switch (version)
+                {
+                    default:
+                        data = Read<Command>(stream, bytes); break;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public static void Write<T>(this Stream stream, T data) where T : struct
         {
             var size = Marshal.SizeOf<T>();

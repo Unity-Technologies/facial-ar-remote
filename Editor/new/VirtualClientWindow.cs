@@ -60,13 +60,14 @@ namespace PerformanceRecorder
                 }
 
                 if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
-                    SendPacket();
+                    SendFaceData();
+                if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
+                    SendStartRecording();
             }
         }
 
-        void SendPacket()
+        void SendFaceData()
         {
-            /*
             var faceData = new FaceData();
             faceData.timeStamp = Time.realtimeSinceStartup;
 
@@ -74,8 +75,8 @@ namespace PerformanceRecorder
                 faceData.blendShapeValues[i] = UnityEngine.Random.value;
             
             m_PacketStream.writer.Write(faceData);
-            */
 
+            /*
             var data = new StreamBufferDataV1();
             data.FrameTime = Time.realtimeSinceStartup;
 
@@ -83,6 +84,12 @@ namespace PerformanceRecorder
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+            */
+        }
+
+        void SendStartRecording()
+        {
+            m_PacketStream.writer.Write(new Command(CommandType.StartRecording));
         }
     }
 }
