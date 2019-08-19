@@ -35,6 +35,11 @@ namespace PerformanceRecorder
             set { m_IsServer = value; }
         }
 
+        public bool isConnected
+        {
+            get { return m_NetworkStreamSource.isConnected || m_NetworkStreamSource.isConnecting; }
+        }
+
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         PacketStream m_PacketStream = new PacketStream();
 

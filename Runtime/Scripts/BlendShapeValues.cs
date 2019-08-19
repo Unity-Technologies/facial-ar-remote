@@ -8,58 +8,58 @@ namespace Unity.Labs.FacialRemote
 {
     public enum BlendShapeLocation
     {
-        BrowDownLeft        ,
-        BrowDownRight       ,
-        BrowInnerUp         ,
-        BrowOuterUpLeft     ,
-        BrowOuterUpRight    ,
-        CheekPuff           ,
-        CheekSquintLeft     ,
-        CheekSquintRight    ,
-        EyeBlinkLeft        ,
-        EyeBlinkRight       ,
-        EyeLookDownLeft     ,
-        EyeLookDownRight    ,
-        EyeLookInLeft       ,
-        EyeLookInRight      ,
-        EyeLookOutLeft      ,
-        EyeLookOutRight     ,
-        EyeLookUpLeft       ,
-        EyeLookUpRight      ,
-        EyeSquintLeft       ,
-        EyeSquintRight      ,
-        EyeWideLeft         ,
-        EyeWideRight        ,
-        JawForward          ,
-        JawLeft             ,
-        JawOpen             ,
-        JawRight            ,
-        MouthClose          ,
-        MouthDimpleLeft     ,
-        MouthDimpleRight    ,
-        MouthFrownLeft      ,
-        MouthFrownRight     ,
-        MouthFunnel         ,
-        MouthLeft           ,
-        MouthLowerDownLeft  ,
-        MouthLowerDownRight ,
-        MouthPressLeft      ,
-        MouthPressRight     ,
-        MouthPucker         ,
-        MouthRight          ,
-        MouthRollLower      ,
-        MouthRollUpper      ,
-        MouthShrugLower     ,
-        MouthShrugUpper     ,
-        MouthSmileLeft      ,
-        MouthSmileRight     ,
-        MouthStretchLeft    ,
-        MouthStretchRight   ,
-        MouthUpperUpLeft    ,
-        MouthUpperUpRight   ,
-        NoseSneerLeft       ,
-        NoseSneerRight      ,
-        TongueOut
+        BrowDownLeft = 0,
+        BrowDownRight = 1,
+        BrowInnerUp = 2,
+        BrowOuterUpLeft = 3,
+        BrowOuterUpRight = 4,
+        CheekPuff = 5,
+        CheekSquintLeft = 6,
+        CheekSquintRight = 7,
+        EyeBlinkLeft = 8,
+        EyeBlinkRight = 9,
+        EyeLookDownLeft = 10,
+        EyeLookDownRight = 11,
+        EyeLookInLeft = 12,
+        EyeLookInRight = 13,
+        EyeLookOutLeft = 14,
+        EyeLookOutRight = 15,
+        EyeLookUpLeft = 16,
+        EyeLookUpRight = 17,
+        EyeSquintLeft = 18,
+        EyeSquintRight = 19,
+        EyeWideLeft = 20,
+        EyeWideRight = 21,
+        JawForward = 22,
+        JawLeft = 23,
+        JawOpen = 24,
+        JawRight = 25,
+        MouthClose = 26,
+        MouthDimpleLeft = 27,
+        MouthDimpleRight = 28,
+        MouthFrownLeft = 29,
+        MouthFrownRight = 30,
+        MouthFunnel = 31,
+        MouthLeft = 32,
+        MouthLowerDownLeft = 33,
+        MouthLowerDownRight = 34,
+        MouthPressLeft = 35,
+        MouthPressRight = 36,
+        MouthPucker = 37,
+        MouthRight = 38,
+        MouthRollLower = 39,
+        MouthRollUpper = 40,
+        MouthShrugLower = 41,
+        MouthShrugUpper = 42,
+        MouthSmileLeft = 43,
+        MouthSmileRight = 44,
+        MouthStretchLeft = 45,
+        MouthStretchRight = 46,
+        MouthUpperUpLeft = 47,
+        MouthUpperUpRight = 48,
+        NoseSneerLeft = 49,
+        NoseSneerRight = 50,
+        TongueOut = 51
     }
 
 
@@ -131,6 +131,11 @@ namespace Unity.Labs.FacialRemote
             set { SetValue(index, value); }
         }
 
+        public float GetValue(BlendShapeLocation location)
+        {
+            return GetValue((int)location);
+        }
+
         float GetValue(int index)
         {
             switch (index)
@@ -190,6 +195,11 @@ namespace Unity.Labs.FacialRemote
                 default:
                     throw new IndexOutOfRangeException("Invalid index!");
             }
+        }
+
+        public void SetValue(BlendShapeLocation location, float value)
+        {
+            SetValue((int)location, value);
         }
 
         void SetValue(int index, float value)
