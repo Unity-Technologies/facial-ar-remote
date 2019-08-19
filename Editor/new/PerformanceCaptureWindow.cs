@@ -235,20 +235,6 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
                         actor.StopRecording();
-
-                        var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(actor.directory + GenerateFileName());
-                        var path = uniqueAssetPath + ".arstream";
-
-                        using (var fileStream = File.Create(path))
-                        {
-                            actor.WriteRecording(fileStream);
-                        }
-
-                        AssetDatabase.Refresh();
-
-                        actor.clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-
-                        EditorGUIUtility.PingObject(actor.clip);
                     }
                 }
             }
@@ -306,11 +292,6 @@ namespace PerformanceRecorder
                     }
                 }
             }
-        }
-
-        string GenerateFileName()
-        {
-            return string.Format("{0:yyyy_MM_dd_HH_mm}", DateTime.Now);
         }
 
         void StartAnimationMode()

@@ -15,8 +15,8 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         [SerializeField]
         Vector2 m_Scroll;
-        NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        PacketStream m_PacketStream = new PacketStream();
+        [SerializeField]
+        Client m_Client = new Client();
 
         [MenuItem("Window/Virtual Client")]
         public static void ShowWindow()
@@ -24,6 +24,18 @@ namespace PerformanceRecorder
             var window = GetWindow(typeof(VirtualClientWindow));
             window.titleContent = new GUIContent("Virtual Client");;
             window.minSize = new Vector2(300, 100);
+        }
+
+        void OnEnable()
+        {
+            m_Client.ip = "127.0.0.1";
+            m_Client.port = 9000;
+            m_Client.isServer = false;
+        }
+
+        void OnDisable()
+        {
+            m_Client.Disconnect();
         }
 
         void OnGUI()
@@ -48,48 +60,43 @@ namespace PerformanceRecorder
 
                 if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                 {
-                    m_NetworkStreamSource.ConnectToServer("127.0.0.1", 9000);
-                    m_PacketStream.streamSource = m_NetworkStreamSource;
-                    m_PacketStream.Start();
+                    m_Client.Connect();
                 }
 
                 if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
                 {
-                    m_PacketStream.Stop();
-                    m_NetworkStreamSource.StopConnections();
+                    m_Client.Disconnect();
                 }
 
                 if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
                     SendFaceData();
                 if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
-                    SendStartRecording();
+                    m_Client.SendStartRecording();
+                if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonWide))
+                    m_Client.SendStopRecording();
             }
         }
 
         void SendFaceData()
         {
-            var faceData = new FaceData();
-            faceData.timeStamp = Time.realtimeSinceStartup;
+            var data = new FaceData();
+            data.timeStamp = Time.realtimeSinceStartup;
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
-                faceData.blendShapeValues[i] = UnityEngine.Random.value;
+                data.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_PacketStream.writer.Write(faceData);
+            m_Client.SendFaceData(data);
+        }
 
-            /*
+        void SendFaceDataV1()
+        {
             var data = new StreamBufferDataV1();
             data.FrameTime = Time.realtimeSinceStartup;
 
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
-            */
-        }
-
-        void SendStartRecording()
-        {
-            m_PacketStream.writer.Write(new Command(CommandType.StartRecording));
+            m_Client.SendFaceData(data);
         }
     }
 }

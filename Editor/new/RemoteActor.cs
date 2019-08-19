@@ -195,15 +195,27 @@ namespace PerformanceRecorder
             
             m_Recoder.StopRecording();
 
-            recordingStateChanged(this);
-        }
+            var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(directory + GenerateFileName());
+            var path = uniqueAssetPath + ".arstream";
 
-        public void WriteRecording(Stream stream)
-        {
+            using (var stream = File.Create(path))
             using (var writer = new ARStreamWriter(stream))
             {
                 writer.Write(m_Recoder);
             }
+
+            AssetDatabase.Refresh();
+
+            clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+
+            EditorGUIUtility.PingObject(clip);
+
+            recordingStateChanged(this);
+        }
+
+        string GenerateFileName()
+        {
+            return string.Format("{0:yyyy_MM_dd_HH_mm}", DateTime.Now);
         }
 
         public void StartLiveStream()
