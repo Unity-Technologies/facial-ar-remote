@@ -27,7 +27,7 @@ namespace PerformanceRecorder
             if (!ArrayUtility.Contains(s_SampleRates, m_SampleRate))
                 return;
 
-            using (var memoryStream = new MemoryStream(File.ReadAllBytes(ctx.assetPath)))
+            using (var stream = new FileStream(ctx.assetPath, FileMode.Open, FileAccess.Read))
             {
                 var clip = new AnimationClip();
                 var settings = new AnimationClipSettings()
@@ -40,7 +40,7 @@ namespace PerformanceRecorder
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
                 clip.frameRate = m_SampleRate;
 
-                Bake(memoryStream, m_SampleRate, clip);
+                Bake(stream, m_SampleRate, clip);
 
                 ctx.AddObjectToAsset("clip", clip);
                 ctx.SetMainObject(clip);
@@ -136,6 +136,7 @@ namespace PerformanceRecorder
                 }
 
                 lastData = data;
+                ++count;
             }
 
             positionCurves.SetCurves(clip);
@@ -197,6 +198,7 @@ namespace PerformanceRecorder
                 }
 
                 lastData = data;
+                ++count;
             }
 
             blendShapeCurves.SetCurves(clip);

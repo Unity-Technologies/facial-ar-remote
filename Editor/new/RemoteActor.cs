@@ -218,6 +218,8 @@ namespace PerformanceRecorder
 
             EditorGUIUtility.PingObject(clip);
 
+            m_IsRecording = false;
+            
             recordingStateChanged(this);
         }
 
