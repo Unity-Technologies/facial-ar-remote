@@ -59,6 +59,26 @@ namespace PerformanceRecorder
             return true;
         }
 
+        public static bool TryReadPoseData(this Stream stream, int version, out PoseData data, byte[] bytes = null)
+        {
+            data = default(PoseData);
+
+            try
+            {
+                switch (version)
+                {
+                    default:
+                        data = Read<PoseData>(stream, bytes); break;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public static bool TryReadFaceData(this Stream stream, int version, out FaceData data, byte[] bytes = null)
         {
             data = default(FaceData);

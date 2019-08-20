@@ -50,11 +50,24 @@ namespace PerformanceRecorder
         {
             switch (packet.type)
             {
+                case PacketType.Pose:
+                    return GetPoseDataSize(packet.version);
                 case PacketType.Face:
                     return GetFaceDataSize(packet.version);
                 case PacketType.Command:
                     return GetCommandSize(packet.version);
             }
+            return 0;
+        }
+
+        static int GetPoseDataSize(int version)
+        {
+            switch (version)
+            {
+                case 0:
+                    return Marshal.SizeOf<PoseData>();
+            }
+
             return 0;
         }
 

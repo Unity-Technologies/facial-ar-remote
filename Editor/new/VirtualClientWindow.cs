@@ -17,6 +17,9 @@ namespace PerformanceRecorder
         Vector2 m_Scroll;
         [SerializeField]
         Client m_Client = new Client();
+        [SerializeField]
+        Transform m_TrackedObject;
+        Pose m_CurrentPose = new Pose(Vector3.positiveInfinity, Quaternion.identity);
 
         [MenuItem("Window/Virtual Client")]
         public static void ShowWindow()
@@ -31,11 +34,23 @@ namespace PerformanceRecorder
             m_Client.ip = "127.0.0.1";
             m_Client.port = 9000;
             m_Client.isServer = false;
+
+            EditorApplication.update += Update;
         }
 
         void OnDisable()
         {
             m_Client.Disconnect();
+
+            EditorApplication.update -= Update;
+        }
+
+        void Update()
+        {
+            if (m_Client.isConnected)
+            {
+                SendPoseData();
+            }
         }
 
         void OnGUI()
@@ -75,6 +90,29 @@ namespace PerformanceRecorder
                 if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonWide))
                     m_Client.SendStopRecording();
             }
+
+            m_TrackedObject = EditorGUILayout.ObjectField(m_TrackedObject, typeof(Transform), true) as Transform;
+        }
+
+        void SendPoseData()
+        {
+            if (m_TrackedObject == null)
+                return;
+            
+            var pose = new Pose(m_TrackedObject.localPosition, m_TrackedObject.localRotation);
+
+            if (pose != m_CurrentPose)
+            {
+                m_CurrentPose = pose;
+
+                var data = new PoseData()
+                {
+                    timeStamp = Time.realtimeSinceStartup,
+                    pose = pose
+                };
+
+                m_Client.Send(data);
+            }
         }
 
         void SendFaceData()
@@ -85,7 +123,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.blendShapeValues[i] = UnityEngine.Random.value;
             
-            m_Client.SendFaceData(data);
+            m_Client.Send(data);
         }
 
         void SendFaceDataV1()
@@ -96,7 +134,7 @@ namespace PerformanceRecorder
             for (var i = 0; i < BlendShapeValues.Count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
-            m_Client.SendFaceData(data);
+            m_Client.Send(data);
         }
     }
 }

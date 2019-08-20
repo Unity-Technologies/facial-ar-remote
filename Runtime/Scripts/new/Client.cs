@@ -66,17 +66,22 @@ namespace PerformanceRecorder
             m_PacketStream.writer.Write(new Command(CommandType.StopRecording));
         }
 
-        public void SendFaceData(FaceData data)
+        public void Send(PoseData data)
         {
             m_PacketStream.writer.Write(data);
         }
 
-        public void SendFaceData(StreamBufferDataV1 data)
+        public void Send(FaceData data)
+        {
+            m_PacketStream.writer.Write(data);
+        }
+
+        public void Send(StreamBufferDataV1 data)
         {
             m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
 
-        public void SendFaceData(StreamBufferDataV2 data)
+        public void Send(StreamBufferDataV2 data)
         {
             m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
         }

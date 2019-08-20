@@ -72,6 +72,9 @@ namespace PerformanceRecorder
                 {
                     case PacketType.Invalid:
                         return;
+                    case PacketType.Pose:
+                        BakePoseData(stream, descriptor.packetDescriptor, descriptor.length, sampleRate, clip);
+                        break;
                     case PacketType.Face:
                         BakeFaceData(stream, descriptor.packetDescriptor, descriptor.length, sampleRate, clip);
                         break;
@@ -79,6 +82,64 @@ namespace PerformanceRecorder
                         break;
                 }
             }
+        }
+
+        void BakePoseData(Stream stream, PacketDescriptor descriptor, int length, int sampleRate, AnimationClip clip)
+        {
+            var positionCurves = new Vector3CurveBinding("", typeof(Transform), "m_LocalPosition");
+            var rotationCurves = new QuaternionCurveBinding("", typeof(Transform), "m_LocalRotation");
+            var data = default(PoseData);
+            var lastData = default(PoseData);
+            var startTime = 0f;
+            var timeStep = 1.0 / (double)sampleRate;
+            var timeAcc = 0.0;
+            var lastFrameTime = 0.0;
+            var first = true;
+            var count = (long)0;
+            var payloadSize = descriptor.GetPayloadSize();
+
+            if (payloadSize == 0)
+                return;
+
+            var packetCount = length / payloadSize;
+
+            while (count < packetCount &&
+                stream.TryReadPoseData(descriptor.version, out data, m_Buffer))
+            {
+                if (first)
+                {
+                    first = false;
+                    lastData = data;
+                    startTime = data.timeStamp;
+                    positionCurves.AddKey(0f, data.pose.position);
+                    rotationCurves.AddKey(0f, data.pose.rotation);
+                }
+                else
+                {
+                    var time = data.timeStamp - startTime;
+                    var lastTime = lastData.timeStamp - startTime;
+                    var deltaTime = time - lastTime;
+                    timeAcc += deltaTime;
+
+                    while (timeAcc >= timeStep)
+                    {
+                        var frameTime = lastFrameTime + timeStep;
+                        var t = (float)((frameTime - lastTime) / deltaTime);
+                        var position = Vector3.Lerp(lastData.pose.position, data.pose.position, t);
+                        var rotation = Quaternion.Slerp(lastData.pose.rotation, data.pose.rotation, t);
+                        positionCurves.AddKey((float)frameTime, position);
+                        rotationCurves.AddKey((float)frameTime, rotation);
+                        
+                        timeAcc -= timeStep;
+                        lastFrameTime = frameTime;
+                    }
+                }
+
+                lastData = data;
+            }
+
+            positionCurves.SetCurves(clip);
+            rotationCurves.SetCurves(clip);
         }
 
         void BakeFaceData(Stream stream, PacketDescriptor descriptor, int length, int sampleRate, AnimationClip clip)

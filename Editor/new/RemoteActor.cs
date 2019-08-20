@@ -31,7 +31,8 @@ namespace PerformanceRecorder
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         AdapterSource m_AdapterSource = new AdapterSource();
         PacketStream m_PacketStream = new PacketStream();
-        FaceDataRecorder m_Recoder = new FaceDataRecorder();
+        PoseDataRecorder m_PoseDataRecoder = new PoseDataRecorder();
+        FaceDataRecorder m_FaceDataRecoder = new FaceDataRecorder();
         TakePlayer m_Player = new TakePlayer();
         PreviewState m_PrevState = PreviewState.None;
         [SerializeField]
@@ -41,6 +42,7 @@ namespace PerformanceRecorder
         [SerializeField]
         string m_Directory = k_DefaultDirectory;
         bool m_ChangingState = false;
+        bool m_IsRecording = false;
 
         public string ip
         {
@@ -90,6 +92,7 @@ namespace PerformanceRecorder
 
         public RemoteActor()
         {
+            m_PacketStream.reader.poseDataChanged += PoseDataChanged;
             m_PacketStream.reader.faceDataChanged += FaceDataChanged;
             m_PacketStream.reader.commandChanged += CommandChanged;
         }
@@ -101,7 +104,7 @@ namespace PerformanceRecorder
 
         public void Dispose()
         {
-            m_Recoder.StopRecording();
+            m_FaceDataRecoder.StopRecording();
             m_Player.Stop();
             m_NetworkStreamSource.StopConnections();
             m_PacketStream.Stop();
@@ -178,22 +181,26 @@ namespace PerformanceRecorder
             if (m_PrevState != PreviewState.LiveStream)
                 return;
 
-            m_Recoder.StartRecording();
+            m_PoseDataRecoder.StartRecording();
+            m_FaceDataRecoder.StartRecording();
+
+            m_IsRecording = true;
 
             recordingStateChanged(this);
         }
 
         public bool IsRecording()
         {
-            return m_Recoder.isRecording;
+            return m_IsRecording;
         }
 
         public void StopRecording()
         {
-            if (!m_Recoder.isRecording)
+            if (!m_IsRecording)
                 return;
             
-            m_Recoder.StopRecording();
+            m_PoseDataRecoder.StopRecording();
+            m_FaceDataRecoder.StopRecording();
 
             var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(directory + GenerateFileName());
             var path = uniqueAssetPath + ".arstream";
@@ -201,7 +208,8 @@ namespace PerformanceRecorder
             using (var stream = File.Create(path))
             using (var writer = new ARStreamWriter(stream))
             {
-                writer.Write(m_Recoder);
+                writer.Write(m_PoseDataRecoder);
+                writer.Write(m_FaceDataRecoder);
             }
 
             AssetDatabase.Refresh();
@@ -252,6 +260,23 @@ namespace PerformanceRecorder
             m_Player.Pause();
         }
 
+        void PoseDataChanged(PoseData data)
+        {
+            if (m_Controller == null)
+                return;
+
+            if (state != PreviewState.LiveStream)
+                return;
+
+            var transform = m_Controller.transform;
+
+            transform.localPosition = data.pose.position;
+            transform.localRotation = data.pose.rotation;
+
+            if (m_PoseDataRecoder.isRecording)
+                m_PoseDataRecoder.Record(data);
+        }
+
         void FaceDataChanged(FaceData data)
         {
             if (m_Controller == null)
@@ -263,8 +288,8 @@ namespace PerformanceRecorder
             m_Controller.blendShapeInput = data.blendShapeValues;
             m_Controller.UpdateBlendShapes();
 
-            if (m_Recoder.isRecording)
-                m_Recoder.Record(data);
+            if (m_FaceDataRecoder.isRecording)
+                m_FaceDataRecoder.Record(data);
         }
 
         void CommandChanged(Command data)

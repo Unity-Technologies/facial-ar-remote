@@ -8,8 +8,10 @@ namespace PerformanceRecorder
 {
     public class PacketReader
     {
+        public delegate void PoseDataCallback(PoseData data);
         public delegate void FaceDataCallback(FaceData data);
         public delegate void CommandCallback(Command data);
+        public event PoseDataCallback poseDataChanged;
         public event FaceDataCallback faceDataChanged;
         public event CommandCallback commandChanged;
 
@@ -64,6 +66,9 @@ namespace PerformanceRecorder
 
                 switch(descriptor.type)
                 {
+                    case PacketType.Pose:
+                        ReadPoseData(memoryStream, descriptor);
+                        break;
                     case PacketType.Face:
                         ReadFaceData(memoryStream, descriptor);
                         break;
@@ -95,6 +100,13 @@ namespace PerformanceRecorder
                 m_Buffer = new byte[size];
 
             return m_Buffer;
+        }
+
+        void ReadPoseData(Stream stream, PacketDescriptor descriptor)
+        {
+            var data = default(PoseData);
+            if (stream.TryReadPoseData(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
+                poseDataChanged(data);
         }
 
         void ReadFaceData(Stream stream, PacketDescriptor descriptor)

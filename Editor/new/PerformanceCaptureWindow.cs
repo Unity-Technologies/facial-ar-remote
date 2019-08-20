@@ -328,6 +328,28 @@ namespace PerformanceRecorder
                 };
                 AnimationMode.AddEditorCurveBinding(go, binding);
             }
+
+            foreach (var axis in new string [] { "x", "y", "z" })
+            {
+                var binding = new EditorCurveBinding()
+                {
+                    path = "",
+                    type = typeof(Transform),
+                    propertyName = "m_LocalPosition." + axis
+                };
+                AnimationMode.AddEditorCurveBinding(go, binding);
+            }
+
+            foreach (var q in new string [] { "x", "y", "z", "w" })
+            {
+                var binding = new EditorCurveBinding()
+                {
+                    path = "",
+                    type = typeof(Transform),
+                    propertyName = "m_LocalRotation." + q
+                };
+                AnimationMode.AddEditorCurveBinding(go, binding);
+            }
         }
 
         void RegisterBindingsToAnimationMode(GameObject go, AnimationClip clip)

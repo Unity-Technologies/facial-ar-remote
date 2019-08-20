@@ -53,8 +53,11 @@ namespace PerformanceRecorder
                 length = (int)length
             };
 
-            m_Stream.Write<PacketBufferDescriptor>(descriptor);
-            m_Stream.Write(buffer, 0, (int)length);
+            if (length > 0)
+            {
+                m_Stream.Write<PacketBufferDescriptor>(descriptor);
+                m_Stream.Write(buffer, 0, (int)length);
+            }
         }
     }
 }

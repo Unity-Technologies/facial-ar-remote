@@ -18,9 +18,14 @@ namespace PerformanceRecorder
             m_MemoryStream = m_Manager.GetStream();
         }
 
-        public void StartRecording()
+        public void Clear()
         {
             m_MemoryStream.Seek(0, SeekOrigin.Begin);
+        }
+
+        public void StartRecording()
+        {
+            Clear();
             
             isRecording = true;
         }
@@ -48,6 +53,14 @@ namespace PerformanceRecorder
         }
 
         protected abstract PacketType GetPacketType();
+    }
+
+    public class PoseDataRecorder : PacketRecorder<PoseData>
+    {
+        protected override PacketType GetPacketType()
+        {
+            return PacketType.Pose;
+        }
     }
 
     public class FaceDataRecorder : PacketRecorder<FaceData>

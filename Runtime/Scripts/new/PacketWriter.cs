@@ -29,6 +29,11 @@ namespace PerformanceRecorder
         /// <summary>
         /// Enqueues packet's bytes and adds header. Can be called from main thread.
         /// </summary>
+        public void Write(PoseData data)
+        {
+            Write<PoseData>(PacketDescriptor.Get(PacketType.Pose), data);
+        }
+
         public void Write(FaceData data)
         {
             Write<FaceData>(PacketDescriptor.Get(PacketType.Face), data);
