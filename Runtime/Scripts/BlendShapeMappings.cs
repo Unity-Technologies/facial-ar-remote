@@ -18,7 +18,6 @@ namespace Unity.Labs.FacialRemote
         List<int> m_Indices = new List<int>();
         [SerializeField]
         List<BlendShapeLocation> m_Locations = new List<BlendShapeLocation>();
-
         Dictionary<int, BlendShapeLocation> m_Map = new Dictionary<int, BlendShapeLocation>();
 
         /// <summary>
@@ -60,7 +59,8 @@ namespace Unity.Labs.FacialRemote
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
-
+            m_Indices = new List<int>(m_Map.Keys);
+            m_Locations = new List<BlendShapeLocation>(m_Map.Values);
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
@@ -68,14 +68,7 @@ namespace Unity.Labs.FacialRemote
             m_Map.Clear();
 
             for (var i = 0; i < Math.Min(m_Locations.Count, m_Indices.Count); i++)
-            {
-                var location = m_Locations[i];
-                
-                if (location == BlendShapeLocation.Invalid)
-                    continue;
-
-                Set(m_Indices[i], location);
-            }
+                Set(m_Indices[i], m_Locations[i]);
         }
     }
 
@@ -85,19 +78,26 @@ namespace Unity.Labs.FacialRemote
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject
     {
-        [SerializeField]
+        [SerializeField, HideInInspector]
         List<BlendShapeMap> m_Maps = new List<BlendShapeMap>();
 
 #if UNITY_EDITOR
         [SerializeField]
+        [Tooltip("Select the source Prefab to build the BlendShapeMappings from.")]
         GameObject m_Prefab;
 
+        /// <summary>
+        /// Prefab associated with this mappings file. Editor only.
+        /// </summary>
         public GameObject prefab
         {
             get { return m_Prefab; }
             private set { m_Prefab = value; }
         }
 #endif
+        /// <summary>
+        /// Array of BlendShapeMap that this BlendShapeMappings object contains.
+        /// </summary>
         public BlendShapeMap[] maps
         {
             get { return m_Maps.ToArray(); }

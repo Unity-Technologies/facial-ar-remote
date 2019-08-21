@@ -121,7 +121,7 @@ namespace Unity.Labs.FacialRemote
         [FieldOffset(200)] public float NoseSneerRight;
         [FieldOffset(204)] public float TongueOut;
 
-        public static int Count
+        public static int count
         {
             get { return 52; }
         }
@@ -258,7 +258,7 @@ namespace Unity.Labs.FacialRemote
         {
             var values = new BlendShapeValues();
 
-            for (var i = 0; i < Count; ++i)
+            for (var i = 0; i < count; ++i)
                 values[i] = Mathf.Lerp(values1[i], values2[i], t);
             
             return values;

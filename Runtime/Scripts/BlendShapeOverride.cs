@@ -52,7 +52,7 @@ namespace Unity.Labs.FacialRemote
         }
 
         /// <summary>
-        /// Blend shape name to be overridden
+        /// BlendShapeLocation to be overridden
         /// </summary>
         public BlendShapeLocation location { get { return m_Location; } }
         
@@ -87,6 +87,10 @@ namespace Unity.Labs.FacialRemote
 
         BlendShapeOverride(){}
 
+        /// <summary>
+        /// Constructor
+        /// <param name="location">BlendShapeLocation to override</param>
+        /// </summary>
         public BlendShapeOverride(BlendShapeLocation location)
         {
             m_Location = location;

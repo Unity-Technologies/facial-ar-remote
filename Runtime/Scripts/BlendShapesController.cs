@@ -49,7 +49,7 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [Tooltip("Overrides settings for individual blend shapes.")]
-        BlendShapeOverride[] m_Overrides = new BlendShapeOverride[BlendShapeValues.Count];
+        BlendShapeOverride[] m_Overrides = new BlendShapeOverride[BlendShapeValues.count];
         BlendShapeMappings m_CurrentMappings;
         BlendShapeMap[] m_Maps = null;
         List<SkinnedMeshRenderer> m_SkinnedMeshRenderers = new List<SkinnedMeshRenderer>();
@@ -110,7 +110,7 @@ namespace Unity.Labs.FacialRemote
             var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
             {
-                if (i >= BlendShapeValues.Count)
+                if (i >= BlendShapeValues.count)
                     break;
                 
                 m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
@@ -119,7 +119,7 @@ namespace Unity.Labs.FacialRemote
 
         void PostProcessValues()
         {
-            for (var i = 0; i < BlendShapeValues.Count; i++)
+            for (var i = 0; i < BlendShapeValues.count; i++)
             {
                 var targetValue = m_BlendShapeValues[i];
                 var hasOverride = HasOverride(i);
@@ -183,11 +183,11 @@ namespace Unity.Labs.FacialRemote
 
         void OnValidate()
         {
-            if (m_Overrides.Length != BlendShapeValues.Count)
+            if (m_Overrides.Length != BlendShapeValues.count)
             {
-                var overridesCopy = new BlendShapeOverride[BlendShapeValues.Count];
+                var overridesCopy = new BlendShapeOverride[BlendShapeValues.count];
 
-                for (var i = 0; i < BlendShapeValues.Count; i++)
+                for (var i = 0; i < BlendShapeValues.count; i++)
                 {
                     var location = (BlendShapeLocation)i;
                     var blendShapeOverride = Array.Find(m_Overrides, f => f.location == location)
