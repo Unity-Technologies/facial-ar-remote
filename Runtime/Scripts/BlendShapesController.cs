@@ -97,7 +97,9 @@ namespace Unity.Labs.FacialRemote
             get { return m_Mappings; }
             private set { m_Mappings = value; }
         }
-
+		/// <summary>
+        /// All renderers with blend shape values being driven.
+        /// </summary>
         public SkinnedMeshRenderer[] skinnedMeshRenderers
         {
             get { return m_SkinnedMeshRenderers; }

@@ -13,7 +13,7 @@ namespace Unity.Labs.FacialRemote
     public class StreamReader : MonoBehaviour, IStreamReader
     {
         [SerializeField]
-        [Tooltip("Root of character to be be driven.")]
+        [Tooltip("Root game object of character to be be driven.")]
         GameObject m_Character;
 
         [SerializeField]
@@ -58,22 +58,20 @@ namespace Unity.Labs.FacialRemote
         public Pose headPose { get { return m_HeadPose; } }
         public Pose cameraPose { get { return m_CameraPose; } }
         public bool verboseLogging { get { return m_VerboseLogging; } private set { m_VerboseLogging = value; } }
+
+        /// <summary>
+        /// The set of all stream sources connected to this stream reader
+        /// </summary>
         public HashSet<IStreamSource> sources { get { return m_Sources; } }
-        public HashSet<IUsesStreamReader> consumers => m_Consumers;
         
-        public TouchPhase touchPhase => m_TouchPhase;
+        /// <summary>
+        /// The set of all stream consumers connected to this stream reader
+        /// </summary>
+        public HashSet<IUsesStreamReader> consumers { get { return m_Consumers; } }
 
-        public Vector2 touchPosition => m_TouchPosition;
-        
-        public void SetInitialHeadPose(Pose pose)
-        {
-            m_HeadPose = pose;
-        }
+        public TouchPhase touchPhase { get { return m_TouchPhase; } }
 
-        public void SetInitialCameraPose(Pose pose)
-        {
-            m_CameraPose = pose;
-        }
+        public Vector2 touchPosition { get { return m_TouchPosition; } }
 
         public IStreamSource streamSource
         {
@@ -94,6 +92,9 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
+        /// <summary>
+        /// The root game object of character to be be driven
+        /// </summary>
         public GameObject character
         {
             get { return m_Character; }
@@ -104,6 +105,16 @@ namespace Unity.Labs.FacialRemote
         {
             get { return m_FaceTrackingLost; }
             set { m_FaceTrackingLost = value; }
+        }
+        
+        public void SetInitialHeadPose(Pose pose) 
+        {
+            m_HeadPose = pose;
+        }
+
+        public void SetInitialCameraPose(Pose pose)
+        {
+            m_CameraPose = pose;
         }
 
         public void UpdateStreamData(byte[] buffer, int offset = 0)
@@ -117,7 +128,7 @@ namespace Unity.Labs.FacialRemote
             {
                 Buffer.BlockCopy(buffer, offset + settings.FrameNumberOffset, m_FrameNumArray, 0, settings.FrameNumberSize);
                 Buffer.BlockCopy(buffer, offset + settings.FrameTimeOffset, m_FrameTimeArray, 0, settings.FrameTimeSize);
-                Debug.Log($"{m_FrameNumArray[0]} : {m_FrameTimeArray[0]}");
+                Debug.Log(m_FrameNumArray[0] + " " + m_FrameTimeArray[0]);
             }
 
             if (m_FaceTrackingEnabled)
@@ -141,6 +152,9 @@ namespace Unity.Labs.FacialRemote
             m_TouchPosition.y = m_TouchPositionArray[1];
         }
 
+        /// <summary>
+        /// Connects all stream sources and stream consumers to this stream reader.
+        /// </summary>
         public void ConnectDependencies()
         {
             sources.Clear();

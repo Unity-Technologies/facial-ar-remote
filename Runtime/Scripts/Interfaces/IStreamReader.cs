@@ -18,7 +18,7 @@ namespace Unity.Labs.FacialRemote
         bool verboseLogging { get; }
 
         /// <summary>
-        /// True when currently getting valid pose tracking data
+        /// True when the head position is static between frames
         /// </summary>
         bool faceTrackingLost { get; }
 
