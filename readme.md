@@ -116,7 +116,7 @@ This is the core component responsible for processing the stream data from the s
 
 ## Components for Driving Character Animation
 ### Blend Shapes Controller
-Updates blend shape values from the `Stream Reader` to the skinned mesh renderers referenced in this script.
+Updates blend shape values from the `Stream Reader` to the SkinnedMeshRenderers referenced by the `BlendShapeMappings` asset.
 
 ### Character Rig Controller
 Applies pose values from the `Stream Reader` to transforms controlling the head, neck, and eyes.
@@ -130,6 +130,9 @@ Asset for storing recorded sessions.
 
 *** 
 Why are these separate components? The core reason is to make all this more modular and separate out the functions more. Some of the idea was possibly needing wanting to switch network streams easier for implementing multiple devices. In having both the `Network Stream` and `Playback Stream` be providers of the stream data conceptually makes it a little cleaner to know what is going on. You are also able to switch between recording and playback without needing to stop any of the internal stream updating. I also was working on driving multiple characters from the same stream provider. This was to better test a control capture across several characters or versions of the same character all together. Also, the idea is that you could extend just the stream source or stream reader without having to reinvent/extend one master class
+
+### BlendShapeMappings
+Asset that stores associations bewtween blend shape indices and blend shape locations. Each SkinnedMeshRenderer can reference a Mesh that might contain blend shapes. Each blend shape needs to be associated with an ARKit location (JawOpen, EyeBlinkLeft, etc) so we can set the coefficient into the right place. In order to auto-generate the maps, select your created BlendShapeMappings asset (Assets/Create/AR Face Capture/BlendShape Mappings), set your character's prefab into the `Prefab` field and click the `Build` button. Check the generated associations and manually change them if the auto-association algorithm failed.
 
 ### Known Issues
 

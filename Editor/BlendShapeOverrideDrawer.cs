@@ -10,9 +10,10 @@ namespace Unity.Labs.FacialRemote.Unity.Labs.FacialRemote
         {
             using (new EditorGUI.PropertyScope(position, label, property))
             {
+                var location = (BlendShapeLocation)property.FindPropertyRelative("m_Location").enumValueIndex;
+                
                 // Draw label
-                position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive),
-                    new GUIContent(property.FindPropertyRelative("m_Name").stringValue));
+                position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), new GUIContent(location.ToString()));
 
                 var lineHeight = EditorGUIUtility.singleLineHeight;
 

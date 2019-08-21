@@ -21,10 +21,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Asset that contains the bindings between blend-shape values and SkinnnedMeshRenderer's blend-shape indices.")]
         BlendShapeMappings m_Mappings;
-    
-        [SerializeField]
-        [Tooltip("Skinned Mesh Renders that contain the blend shapes that will be driven by this controller.")]
-        SkinnedMeshRenderer[] m_SkinnedMeshRenderers = {};
 
         [Range(0f, 1)]
         [SerializeField]
@@ -53,9 +49,10 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [Tooltip("Overrides settings for individual blend shapes.")]
-        BlendShapeOverride[] m_Overrides;
-
-        Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> m_Indices = new Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]>();
+        BlendShapeOverride[] m_Overrides = new BlendShapeOverride[BlendShapeValues.count];
+        BlendShapeMappings m_CurrentMappings;
+        BlendShapeMap[] m_Maps = null;
+        List<SkinnedMeshRenderer> m_SkinnedMeshRenderers = new List<SkinnedMeshRenderer>();
         BlendShapeValues m_SmoothedBlendShapes;
         BlendShapeValues m_BlendShapeOutput;
 
@@ -79,30 +76,10 @@ namespace Unity.Labs.FacialRemote
         public BlendShapeMappings mappings
         {
             get { return m_Mappings; }
-            private set { m_Mappings = value; }
-        }
-		/// <summary>
-        /// All renderers with blend shape values being driven.
-        /// </summary>
-        public SkinnedMeshRenderer[] skinnedMeshRenderers
-        {
-            get { return m_SkinnedMeshRenderers; }
-        }
-
-        public Dictionary<SkinnedMeshRenderer, BlendShapeIndexData[]> blendShapeIndices
-        {
-            get { return m_Indices; }
+            set { m_Mappings = value; }
         }
 
         public IStreamReader streamReader { private get; set; }
-
-        void Awake()
-        {
-            UpdateBlendShapeIndices();
-
-            if (m_Overrides.Length != m_BlendShapeValues.Count)
-                Array.Resize(ref m_Overrides, m_BlendShapeValues.Count);
-        }
 
         void LateUpdate()
         {
@@ -110,9 +87,8 @@ namespace Unity.Labs.FacialRemote
         }
 
         /// <summary>
-        /// Updates BlendShape calculations by a time step and sets the values to the renderers.
+        /// Updates BlendShape calculations and sets the values to the renderers.
         /// </summary>
-        /// <param name="deltaTime">Time step to advance.</param>
         public void UpdateBlendShapes()
         {
             UpdateFromStreamReader();
@@ -134,57 +110,16 @@ namespace Unity.Labs.FacialRemote
             var streamSettings = streamReader.streamSource.streamSettings;
             for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
             {
-                if (i >= m_BlendShapeValues.Count)
+                if (i >= BlendShapeValues.count)
                     break;
                 
                 m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
             }
         }
 
-        /// <summary>
-        /// Update the blend shape indices based on the incoming data stream.
-        /// </summary>
-        public void UpdateBlendShapeIndices()
-        {
-            m_Indices.Clear();
-
-            if (mappings == null)
-                return;
-            
-            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
-            {
-                var mesh = meshRenderer.sharedMesh;
-                var count = mesh.blendShapeCount;
-                var indices = new BlendShapeIndexData[count];
-                for (var i = 0; i < count; i++)
-                {
-                    var shapeName = mesh.GetBlendShapeName(i);
-                    var index = -1;
-                    for (var j = 0; j < mappings.blendShapeNames.Length; j++)
-                    {
-                        // Check using 'contains' rather than a direct comparison so that multiple blend shapes can 
-                        // easily be driven by the same driver e.g. jaw and teeth
-                        if (!string.IsNullOrEmpty(mappings.blendShapeNames[j]) 
-                            && shapeName.Contains(mappings.blendShapeNames[j]))
-                        {
-                            index = j;
-                            break;
-                        }
-                    }
-
-                    indices[i] = new BlendShapeIndexData(index, shapeName);
-
-                    if (index < 0)
-                        Debug.LogWarningFormat("Blend shape {0} is not a valid AR blend shape", shapeName);
-                }
-
-                m_Indices.Add(meshRenderer, indices);
-            });
-        }
-
         void PostProcessValues()
         {
-            for (var i = 0; i < m_BlendShapeValues.Count; i++)
+            for (var i = 0; i < BlendShapeValues.count; i++)
             {
                 var targetValue = m_BlendShapeValues[i];
                 var hasOverride = HasOverride(i);
@@ -212,57 +147,50 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateSkinnedMeshRenderers()
         {
-            ForeachRenderer((SkinnedMeshRenderer meshRenderer) =>
+            PrepareMappings();
+
+            for (var i = 0; i < m_SkinnedMeshRenderers.Count; ++i)
             {
-                var blendShapeIndexData = default(BlendShapeIndexData[]);
+                var skinnedMeshRenderer = m_SkinnedMeshRenderers[i];
 
-                if (m_Indices.TryGetValue(meshRenderer, out blendShapeIndexData))
-                {
-                    var indices = m_Indices[meshRenderer];
-                    var length = indices.Length;
-                    for (var i = 0; i < length; i++)
-                    {
-                        var datum = indices[i];
-                        if (datum.index < 0)
-                            continue;
-
-                        meshRenderer.SetBlendShapeWeight(i, m_BlendShapeOutput[datum.index]);
-                    }
-                }
-            });
-        }
-
-        void ForeachRenderer(Action<SkinnedMeshRenderer> action)
-        {
-            foreach (var skinnedMeshRenderer in m_SkinnedMeshRenderers)
-            {
                 if (skinnedMeshRenderer == null)
                     continue;
 
-                if (skinnedMeshRenderer.sharedMesh == null)
-                    continue;
+                var mesh = skinnedMeshRenderer.sharedMesh;
+                var map = m_Maps[i];
 
-                if (action != null)
-                    action.Invoke(skinnedMeshRenderer);
+                for (var j = 0; j < mesh.blendShapeCount; j++)
+                {
+                    var location = map.Get(j);
+
+                    if (location == BlendShapeLocation.Invalid)
+                        continue;
+
+                    skinnedMeshRenderer.SetBlendShapeWeight(j, m_BlendShapeOutput[(int)location]);
+                }
             }
+        }
+
+        void PrepareMappings()
+        {
+            if (m_CurrentMappings == mappings)
+                return;
+
+            BlendShapesMappingsUtils.Prepare(transform, mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
+
+            m_CurrentMappings = mappings;
         }
 
         void OnValidate()
         {
-            UpdateBlendShapeIndices();
-
-            if (mappings == null)
-                return;
-            
-            var blendShapeCount = m_BlendShapeValues.Count;
-            if (m_Overrides.Length != blendShapeCount)
+            if (m_Overrides.Length != BlendShapeValues.count)
             {
-                var overridesCopy = new BlendShapeOverride[blendShapeCount];
+                var overridesCopy = new BlendShapeOverride[BlendShapeValues.count];
 
-                for (var i = 0; i < blendShapeCount; i++)
+                for (var i = 0; i < BlendShapeValues.count; i++)
                 {
-                    var location = mappings.blendShapeNames[i];
-                    var blendShapeOverride = Array.Find(m_Overrides, f => f.name == location)
+                    var location = (BlendShapeLocation)i;
+                    var blendShapeOverride = Array.Find(m_Overrides, f => f.location == location)
                                             ?? new BlendShapeOverride(location);
                     overridesCopy[i] = blendShapeOverride;
                 }

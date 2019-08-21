@@ -1,75 +1,107 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.Labs.FacialRemote
 {
-    /// <summary>
-    /// Asset defining the mapping of blend shape locations and mappings for a specific rig
-    /// </summary>
     [Serializable]
+    /// <summary>
+    /// Stores the mappings between BlendShape indices and BlendShapeLocations of a SkinnedMeshRenderer.
+    /// </summary>
+    public class BlendShapeMap : ISerializationCallbackReceiver
+    {
+        [SerializeField]
+        string m_Path;
+        [SerializeField]
+        List<int> m_Indices = new List<int>();
+        [SerializeField]
+        List<BlendShapeLocation> m_Locations = new List<BlendShapeLocation>();
+        Dictionary<int, BlendShapeLocation> m_Map = new Dictionary<int, BlendShapeLocation>();
+
+        /// <summary>
+        /// Transform path to SkinnedMeshRenderer from the root
+        /// </summary>
+        public string path
+        {
+            get { return m_Path; }
+            set { m_Path = value; }
+        }
+
+        /// <summary>
+        /// Clear the mappings
+        /// </summary>
+        public void Clear()
+        {
+            m_Map.Clear();
+        }
+
+        /// <summary>
+        /// Get the BlendShapeLocation from a BlendShape index
+        /// </summary>
+        public BlendShapeLocation Get(int index)
+        {
+            BlendShapeLocation location;
+            if (m_Map.TryGetValue(index, out location))
+                return location;
+            
+            return BlendShapeLocation.Invalid;
+        }
+
+        /// <summary>
+        /// Set the BlendShapeLocation of a BlendShape index
+        /// </summary>
+        public void Set(int index, BlendShapeLocation location)
+        {
+            m_Map[index] = location;
+        }
+
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+            m_Indices = new List<int>(m_Map.Keys);
+            m_Locations = new List<BlendShapeLocation>(m_Map.Values);
+        }
+
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            m_Map.Clear();
+
+            for (var i = 0; i < Math.Min(m_Locations.Count, m_Indices.Count); i++)
+                Set(m_Indices[i], m_Locations[i]);
+        }
+    }
+
+    /// <summary>
+    /// Asset storing a collection of BlendShapeMaps for a specific rig
+    /// </summary>
     [CreateAssetMenu(fileName = "BlendShape Mappings", menuName = "AR Face Capture/BlendShape Mappings")]
     public class BlendShapeMappings : ScriptableObject
     {
-#pragma warning disable 649
-        [SerializeField]
-        StreamSettings m_StreamSettings;
-#pragma warning restore 649
+        [SerializeField, HideInInspector]
+        List<BlendShapeMap> m_Maps = new List<BlendShapeMap>();
 
+#if UNITY_EDITOR
         [SerializeField]
-        [Tooltip("Names of the data streams with their index in the array being their relative location")]
-        string[] m_LocationIdentifiers;
-
-        [SerializeField]
-        [Tooltip("Blend shape names from the rig. These must be row/index aligned with the location identifiers")]
-        string[] m_BlendShapeNames;
+        [Tooltip("Select the source Prefab to build the BlendShapeMappings from.")]
+        GameObject m_Prefab;
 
         /// <summary>
-        /// Blend shape names from the rig.
+        /// Prefab associated with this mappings file. Editor only.
         /// </summary>
-        public string[] blendShapeNames { get { return m_BlendShapeNames; }}
-        public StreamSettings streamSettings
+        public GameObject prefab
         {
-            get { return m_StreamSettings; }
-            set { m_StreamSettings = value; }
-        }
-        
-#if UNITY_EDITOR
-        void OnValidate()
-        {
-            UnityEditor.EditorUtility.SetDirty(this);
-
-            if (m_StreamSettings == null)
-                return;
-            
-            if (m_LocationIdentifiers.Length == 0 && m_StreamSettings.locations.Length != 0 
-                || m_LocationIdentifiers.Length != m_StreamSettings.BlendShapeCount)
-            {
-                var locs = new List<string>();
-                foreach (var location in m_StreamSettings.locations)
-                {
-                    locs.Add(location);
-                }
-
-                m_LocationIdentifiers = locs.ToArray();
-            }
-            
-            if (blendShapeNames.Length != m_LocationIdentifiers.Length)
-            {
-                var maps = new List<string>();
-                foreach (var bsn in blendShapeNames)
-                {
-                    maps.Add(bsn);
-                }
-
-                for (var i = maps.Count; i < m_LocationIdentifiers.Length; i++)
-                {
-                    maps.Add("");
-                }
-
-                m_BlendShapeNames = maps.ToArray();
-            }
+            get { return m_Prefab; }
+            private set { m_Prefab = value; }
         }
 #endif
+        /// <summary>
+        /// Array of BlendShapeMap that this BlendShapeMappings object contains.
+        /// </summary>
+        public BlendShapeMap[] maps
+        {
+            get { return m_Maps.ToArray(); }
+            set { m_Maps = new List<BlendShapeMap>(value); }
+        }
     }
 }
