@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Collections;
 using System.Collections.Generic;
@@ -59,7 +59,8 @@ namespace Unity.Labs.FacialRemote
         MouthUpperUpRight = 48,
         NoseSneerLeft = 49,
         NoseSneerRight = 50,
-        TongueOut = 51
+        TongueOut = 51,
+        Invalid = 0x7FFFFFFF
     }
 
 
@@ -120,7 +121,7 @@ namespace Unity.Labs.FacialRemote
         public float NoseSneerRight;
         public float TongueOut;
 
-        public static int Count
+        public static int count
         {
             get { return 52; }
         }
@@ -267,7 +268,7 @@ namespace Unity.Labs.FacialRemote
         {
             var values = new BlendShapeValues();
 
-            for (var i = 0; i < Count; ++i)
+            for (var i = 0; i < count; ++i)
                 values[i] = Mathf.Lerp(values1[i], values2[i], t);
             
             return values;

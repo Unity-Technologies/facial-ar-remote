@@ -318,7 +318,7 @@ namespace PerformanceRecorder
 
         void RegisterBindingsToAnimationMode(GameObject go)
         {
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            for (var i = 0; i < BlendShapeValues.count; ++i)
             {
                 var binding = new EditorCurveBinding()
                 {

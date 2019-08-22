@@ -120,7 +120,7 @@ namespace PerformanceRecorder
             var data = new FaceData();
             data.timeStamp = Time.realtimeSinceStartup;
 
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            for (var i = 0; i < BlendShapeValues.count; ++i)
                 data.blendShapeValues[i] = UnityEngine.Random.value;
             
             m_Client.Send(data);
@@ -131,7 +131,7 @@ namespace PerformanceRecorder
             var data = new StreamBufferDataV1();
             data.FrameTime = Time.realtimeSinceStartup;
 
-            for (var i = 0; i < BlendShapeValues.Count; ++i)
+            for (var i = 0; i < BlendShapeValues.count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;
 
             m_Client.Send(data);
