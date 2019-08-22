@@ -23,6 +23,8 @@ namespace Unity.Labs.FacialRemote
 
         public override void OnInspectorGUI()
         {
+            var rebind = false;
+
             serializedObject.Update();
 
             using (new EditorGUILayout.HorizontalScope())
@@ -38,7 +40,7 @@ namespace Unity.Labs.FacialRemote
                         if (prefab != null)
                         {
                             Build(prefab);
-                            Rebind();
+                            rebind |= true;
                         }
                     }
                 }
@@ -49,11 +51,13 @@ namespace Unity.Labs.FacialRemote
                 for (var i = 0; i < m_MapsProp.arraySize; ++i)
                     DoMapGUI(m_MapsProp.GetArrayElementAtIndex(i));
 
-                if (changeCheck.changed)
-                    Rebind();
+                rebind |= changeCheck.changed;
             }
 
             serializedObject.ApplyModifiedProperties();
+
+            if (rebind)
+                Rebind();
         }
 
         void DoMapGUI(SerializedProperty mapProp)
