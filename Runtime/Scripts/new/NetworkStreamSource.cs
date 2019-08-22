@@ -15,15 +15,25 @@ namespace PerformanceRecorder
         List<Socket> m_ServerSockets = new List<Socket>();
         List<Thread> m_Threads = new List<Thread>();
         Stream m_Stream;
+        Socket m_StreamSocket;
 
         public Stream stream
         {
-            get { return m_Stream; }
+            get
+            {
+                if (isConnected)
+                    return m_Stream;
+
+                return null;
+            }
         }
 
         public bool isListening { get; private set; }
         public bool isConnecting { get; private set; }
-        public bool isConnected { get { return m_Stream != null; } }
+        public bool isConnected
+        {
+            get { return m_StreamSocket != null && m_StreamSocket.Connected; }
+        }
 
         public void ConnectToServer(string serverIP, int port)
         {
@@ -34,7 +44,7 @@ namespace PerformanceRecorder
                 return;
 
             var endPoint = new IPEndPoint(ip, port);
-            var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             var thread = new Thread(() =>
             {
                 try
@@ -97,7 +107,11 @@ namespace PerformanceRecorder
 
             foreach (var socket in m_ServerSockets)
             {
-                socket.Close(1);
+                if (socket.Connected)
+                {
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close(1);
+                }
                 socket.Dispose();
             }
 
@@ -118,6 +132,7 @@ namespace PerformanceRecorder
             {
                 m_Stream.Close();
                 m_Stream = null;
+                m_StreamSocket = null;
             }
         }
 
@@ -212,6 +227,7 @@ namespace PerformanceRecorder
 
         Stream CreateBufferedNetworkStream(Socket socket)
         {
+            m_StreamSocket = socket;
             return new BufferedStream(new NetworkStream(socket, true));
         }
     }

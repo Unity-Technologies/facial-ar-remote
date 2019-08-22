@@ -11,6 +11,7 @@ namespace PerformanceRecorder
         Thread m_WriteThread;
         PacketReader m_Reader = new PacketReader();
         PacketWriter m_Writer = new PacketWriter();
+        bool m_Running = false;
 
         public IStreamSource streamSource { get; set; }
 
@@ -37,21 +38,37 @@ namespace PerformanceRecorder
 
         public void Start()
         {
-            SetupThreads();
+            if (!m_Running)
+            {
+                m_Running = true;
+                SetupThreads();
+            }
         }
 
         public void Stop()
         {
-            Dispose();
+            if (m_Running)
+            {
+                m_Running = false;
+
+                m_Reader.Clear();
+                m_Writer.Clear();
+
+                m_ReadThread.Join();
+                m_WriteThread.Join();
+                
+                m_ReadThread = null;
+                m_WriteThread = null;
+            }
         }
 
         void SetupThreads()
         {
             m_ReadThread = new Thread(() =>
             {
-                while (true)
+                while (m_Running)
                 {
-                    if (stream != null)
+                    if (stream != null && stream.CanRead)
                         reader.Read(stream);
                     
                     Thread.Sleep(1);
@@ -61,33 +78,15 @@ namespace PerformanceRecorder
 
             m_WriteThread = new Thread(() =>
             {
-                while (true)
+                while (m_Running)
                 {
-                    if (stream != null)
+                    if (stream != null && stream.CanWrite)
                         writer.Send(stream);
                     
                     Thread.Sleep(1);
                 };
             });
             m_WriteThread.Start();
-        }
-
-        void Dispose()
-        {
-            AbortThread(ref m_ReadThread);
-            AbortThread(ref m_WriteThread);
-
-            m_Reader.Clear();
-            m_Writer.Clear();
-        }
-
-        void AbortThread(ref Thread thread)
-        {
-            if (thread != null)
-            {
-                thread.Abort();
-                thread = null;
-            }
         }
     }
 }

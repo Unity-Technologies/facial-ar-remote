@@ -45,9 +45,9 @@ namespace PerformanceRecorder
 
         public void Connect()
         {
-            m_NetworkStreamSource.ConnectToServer(ip, port);
             m_PacketStream.streamSource = m_NetworkStreamSource;
             m_PacketStream.Start();
+            m_NetworkStreamSource.ConnectToServer(ip, port);
         }
 
         public void Disconnect()
