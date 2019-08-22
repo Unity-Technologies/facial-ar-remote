@@ -58,32 +58,38 @@ namespace PerformanceRecorder
 
         public void SendStartRecording()
         {
-            m_PacketStream.writer.Write(new Command(CommandType.StartRecording));
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(new Command(CommandType.StartRecording));
         }
 
         public void SendStopRecording()
         {
-            m_PacketStream.writer.Write(new Command(CommandType.StopRecording));
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(new Command(CommandType.StopRecording));
         }
 
         public void Send(PoseData data)
         {
-            m_PacketStream.writer.Write(data);
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(data);
         }
 
         public void Send(FaceData data)
         {
-            m_PacketStream.writer.Write(data);
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(data);
         }
 
         public void Send(StreamBufferDataV1 data)
         {
-            m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
 
         public void Send(StreamBufferDataV2 data)
         {
-            m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
+            if (m_NetworkStreamSource.isConnected)
+                m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
         }
     }
 }
