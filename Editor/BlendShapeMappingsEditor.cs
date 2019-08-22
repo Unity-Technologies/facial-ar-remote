@@ -36,13 +36,22 @@ namespace Unity.Labs.FacialRemote
                     if (GUILayout.Button("Build", EditorStyles.miniButton, GUILayout.Width(35f)))
                     {
                         if (prefab != null)
+                        {
                             Build(prefab);
+                            Rebind();
+                        }
                     }
                 }
             }
+        
+            using (var changeCheck = new EditorGUI.ChangeCheckScope())
+            {
+                for (var i = 0; i < m_MapsProp.arraySize; ++i)
+                    DoMapGUI(m_MapsProp.GetArrayElementAtIndex(i));
 
-            for (var i = 0; i < m_MapsProp.arraySize; ++i)
-                DoMapGUI(m_MapsProp.GetArrayElementAtIndex(i));
+                if (changeCheck.changed)
+                    Rebind();
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -88,8 +97,7 @@ namespace Unity.Labs.FacialRemote
                     else
                         label = new GUIContent("Index " + indexProp.intValue.ToString());
 
-                    var locationProp = locationsProp.GetArrayElementAtIndex(i);
-                    locationProp.intValue = EditorGUILayout.Popup(label, locationProp.intValue, m_LocationNames);
+                    EditorGUILayout.PropertyField(locationsProp.GetArrayElementAtIndex(i), label);
                 }
 
                 EditorGUI.indentLevel--;
@@ -140,10 +148,7 @@ namespace Unity.Labs.FacialRemote
                 if (FindMatch(blendShapeNames[i], locationNames, out match))
                     matchIndex = Array.IndexOf(locationNames, match);
 
-                if (matchIndex == -1)
-                    matchIndex = (int)BlendShapeLocation.Invalid;
-
-                locationsProp.GetArrayElementAtIndex(i).enumValueIndex = matchIndex;
+                locationsProp.GetArrayElementAtIndex(i).intValue = matchIndex;
             }
         }
 
@@ -220,6 +225,17 @@ namespace Unity.Labs.FacialRemote
             var percentage = (1f - ((float)distance / (float)Mathf.Max(match.Length, str.Length)));
 
             return percentage >= 0.6f;
+        }
+
+        void Rebind()
+        {
+            var controllers = PerformanceRecorder.BlendShapeControllerTracker.GetControllers();
+
+            foreach (var controller in controllers)
+            {
+                if (controller.mappings == target)
+                    controller.Rebind();
+            }
         }
     }
 }

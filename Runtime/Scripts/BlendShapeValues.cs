@@ -8,6 +8,7 @@ namespace Unity.Labs.FacialRemote
 {
     public enum BlendShapeLocation
     {
+        Invalid = -1,
         BrowDownLeft = 0,
         BrowDownRight = 1,
         BrowInnerUp = 2,
@@ -59,8 +60,7 @@ namespace Unity.Labs.FacialRemote
         MouthUpperUpRight = 48,
         NoseSneerLeft = 49,
         NoseSneerRight = 50,
-        TongueOut = 51,
-        Invalid = 0x7FFFFFFF
+        TongueOut = 51
     }
 
 

@@ -112,6 +112,14 @@ namespace Unity.Labs.FacialRemote
             UpdateSkinnedMeshRenderers();
         }
 
+        /// <summary>
+        /// Updates internal references from the mappings asset.
+        /// </summary>
+        public void Rebind()
+        {
+            BlendShapesMappingsUtils.Prepare(transform, mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
+        }
+
         void UpdateFromStreamReader()
         {
             if (streamReader == null)
@@ -163,7 +171,11 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateSkinnedMeshRenderers()
         {
-            PrepareMappings();
+            if (m_CurrentMappings != mappings)
+            {
+                Rebind();
+                m_CurrentMappings = mappings;
+            }
 
             for (var i = 0; i < m_SkinnedMeshRenderers.Count; ++i)
             {
@@ -182,19 +194,9 @@ namespace Unity.Labs.FacialRemote
                     if (location == BlendShapeLocation.Invalid)
                         continue;
 
-                    skinnedMeshRenderer.SetBlendShapeWeight(j, m_BlendShapeOutput[(int)location]);
+                    skinnedMeshRenderer.SetBlendShapeWeight(j, m_BlendShapeOutput.GetValue(location));
                 }
             }
-        }
-
-        void PrepareMappings()
-        {
-            if (m_CurrentMappings == mappings)
-                return;
-
-            BlendShapesMappingsUtils.Prepare(transform, mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
-
-            m_CurrentMappings = mappings;
         }
 
         void OnValidate()

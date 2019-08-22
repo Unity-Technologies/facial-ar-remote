@@ -327,7 +327,7 @@ namespace Unity.Labs.FacialRemote
                                 continue;
 
                             var curve = animationCurves[string.Format(k_BlendShapeProp, name)].curve;
-                            curve.AddKey(time, blendShapes[(int)location]);
+                            curve.AddKey(time, blendShapes.GetValue(location));
                         }
                     }
                 }
