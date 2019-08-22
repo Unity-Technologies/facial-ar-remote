@@ -4,13 +4,12 @@ using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
-    /// <inheritdoc cref="IUsesStreamReader" />
     /// <summary>
     /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    public class BlendShapesController : MonoBehaviour, IUsesStreamReader
+    public class BlendShapesController : MonoBehaviour
     {
 #if UNITY_EDITOR
         public delegate void Callback(BlendShapesController contorller);
@@ -95,8 +94,6 @@ namespace Unity.Labs.FacialRemote
             set { m_Mappings = value; }
         }
 
-        public IStreamReader streamReader { private get; set; }
-
         void LateUpdate()
         {
             UpdateBlendShapes();
@@ -107,7 +104,6 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         public void UpdateBlendShapes()
         {
-            UpdateFromStreamReader();
             PostProcessValues();
             UpdateSkinnedMeshRenderers();
         }
@@ -118,27 +114,6 @@ namespace Unity.Labs.FacialRemote
         public void Rebind()
         {
             BlendShapesMappingsUtils.Prepare(transform, mappings, ref m_SkinnedMeshRenderers, ref m_Maps);
-        }
-
-        void UpdateFromStreamReader()
-        {
-            if (streamReader == null)
-                return;
-            
-            var streamSource = streamReader.streamSource;
-            if (streamSource == null || !streamSource.isActive)
-                return;
-            
-            isTrackingActive = !streamReader.faceTrackingLost;
-
-            var streamSettings = streamReader.streamSource.streamSettings;
-            for (var i = 0; i < streamSettings.BlendShapeCount; ++i)
-            {
-                if (i >= BlendShapeValues.count)
-                    break;
-                
-                m_BlendShapeValues[i] = streamReader.blendShapesBuffer[i];
-            }
         }
 
         void PostProcessValues()
