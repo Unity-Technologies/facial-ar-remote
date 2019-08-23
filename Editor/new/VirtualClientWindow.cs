@@ -20,6 +20,7 @@ namespace PerformanceRecorder
         [SerializeField]
         Transform m_TrackedObject;
         Pose m_CurrentPose = new Pose(Vector3.positiveInfinity, Quaternion.identity);
+        bool m_WasConnected = false;
 
         [MenuItem("Window/Virtual Client")]
         public static void ShowWindow()
@@ -49,7 +50,15 @@ namespace PerformanceRecorder
         {
             if (m_Client.isConnected)
             {
+                m_WasConnected = true;
+
                 SendPoseData();
+            }
+            else if (m_WasConnected)
+            {
+                m_WasConnected = false;
+
+                m_Client.Disconnect();
             }
         }
 

@@ -52,8 +52,8 @@ namespace PerformanceRecorder
 
         public void Disconnect()
         {
-            m_PacketStream.Stop();
             m_NetworkStreamSource.StopConnections();
+            m_PacketStream.Stop();
         }
 
         public void SendStartRecording()
