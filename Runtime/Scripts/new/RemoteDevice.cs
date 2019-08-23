@@ -14,11 +14,8 @@ namespace PerformanceRecorder
         [SerializeField]
         bool m_IsServer = false;
         [SerializeField]
-        AdapterVersion m_AdapterVersion = AdapterVersion.V1;
-        [SerializeField]
         List<BlendShapesController> m_BlendShapesControllers = new List<BlendShapesController>();
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        AdapterSource m_AdapterSource = new AdapterSource();
         PacketStream m_PacketStream = new PacketStream();
         FaceDataRecorder m_FaceDataRecorder = new FaceDataRecorder();
 
@@ -60,16 +57,14 @@ namespace PerformanceRecorder
             else
                 m_NetworkStreamSource.ConnectToServer(ip, port);
             
-            m_AdapterSource.version = m_AdapterVersion;
-            m_AdapterSource.streamSource = m_NetworkStreamSource;
-            m_PacketStream.streamSource = m_AdapterSource;
+            m_PacketStream.streamSource = m_NetworkStreamSource;
             m_PacketStream.Start();
         }
 
         void OnDisable()
         {
-            m_NetworkStreamSource.StopConnections();
             m_PacketStream.Stop();
+            m_NetworkStreamSource.StopConnections();
             m_PacketStream.reader.faceDataChanged -= FaceDataChanged;
         }
 
