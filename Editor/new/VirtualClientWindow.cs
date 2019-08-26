@@ -21,6 +21,7 @@ namespace PerformanceRecorder
         Transform m_TrackedObject;
         Pose m_CurrentPose = new Pose(Vector3.positiveInfinity, Quaternion.identity);
         bool m_WasConnected = false;
+        float m_StartTime = 0f;
 
         [MenuItem("Window/Virtual Client")]
         public static void ShowWindow()
@@ -95,12 +96,20 @@ namespace PerformanceRecorder
                 if (GUILayout.Button("Send", EditorStyles.miniButton, kButtonMid))
                     SendFaceData();
                 if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
+                {
+                    m_StartTime = Time.realtimeSinceStartup;
                     m_Client.SendStartRecording();
+                } 
                 if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonWide))
                     m_Client.SendStopRecording();
             }
 
             m_TrackedObject = EditorGUILayout.ObjectField(m_TrackedObject, typeof(Transform), true) as Transform;
+        }
+
+        float GetTimeStamp()
+        {
+            return Time.realtimeSinceStartup - m_StartTime;
         }
 
         void SendPoseData()
@@ -116,7 +125,7 @@ namespace PerformanceRecorder
 
                 var data = new PoseData()
                 {
-                    timeStamp = Time.realtimeSinceStartup,
+                    timeStamp = GetTimeStamp(),
                     pose = pose
                 };
 
@@ -127,7 +136,7 @@ namespace PerformanceRecorder
         void SendFaceData()
         {
             var data = new FaceData();
-            data.timeStamp = Time.realtimeSinceStartup;
+            data.timeStamp = GetTimeStamp();
 
             for (var i = 0; i < BlendShapeValues.count; ++i)
                 data.blendShapeValues[i] = UnityEngine.Random.value;
@@ -138,7 +147,7 @@ namespace PerformanceRecorder
         void SendFaceDataV1()
         {
             var data = new StreamBufferDataV1();
-            data.FrameTime = Time.realtimeSinceStartup;
+            data.FrameTime = GetTimeStamp();
 
             for (var i = 0; i < BlendShapeValues.count; ++i)
                 data.BlendshapeValues[i] = UnityEngine.Random.value;

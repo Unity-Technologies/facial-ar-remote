@@ -26,12 +26,31 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        public void AddKey(float time, ref BlendShapeValues value)
+        public void AddKey(float time, ref BlendShapeValues value, bool stepped = false)
         {
             for (var i = 0; i < kBlendShapeCount; ++i)
             {
                 var curve = m_Curves[i];
-                curve.AddKey(time, value[i]);
+                var keyframe = new Keyframe
+                {
+                    time = time,
+                    value = value[i]
+                };
+
+                if (stepped)
+                {
+                    keyframe.outTangent = Mathf.Infinity;
+                    keyframe.inTangent = Mathf.Infinity;
+                }
+
+                curve.AddKey(keyframe);
+
+                if (stepped)
+                {
+                    AnimationUtility.SetKeyBroken(curve, curve.length - 1, true);
+                    AnimationUtility.SetKeyRightTangentMode(curve, curve.length - 1, AnimationUtility.TangentMode.Constant);
+                    AnimationUtility.SetKeyRightTangentMode(curve, curve.length - 1, AnimationUtility.TangentMode.Constant);
+                }
             }
         }
 
