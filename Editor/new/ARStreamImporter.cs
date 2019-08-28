@@ -96,7 +96,7 @@ namespace PerformanceRecorder
                 var position = stream.Position;
 
                 if (descriptor.length < descriptor.packetDescriptor.GetPayloadSize())
-                    throw new Exception("Cant' read stored data");
+                    throw new Exception("Can't read stored data");
 
                 switch (descriptor.packetDescriptor.type)
                 {
