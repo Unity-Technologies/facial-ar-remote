@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using Microsoft.IO;
 
 namespace PerformanceRecorder
@@ -11,6 +10,7 @@ namespace PerformanceRecorder
         public event Action<PoseData> poseDataChanged;
         public event Action<FaceData> faceDataChanged;
         public event Action<Command> commandChanged;
+        public event Action<CommandInt> commandIntChanged;
         public event Action<VirtualCameraState> virtualCameraStateChanged;
 
         byte[] m_Buffer = new byte[1024];
@@ -73,6 +73,9 @@ namespace PerformanceRecorder
                     case PacketType.Command:
                         ReadCommand(memoryStream, descriptor);
                         break;
+                    case PacketType.CommandInt:
+                        ReadCommandInt(memoryStream, descriptor);
+                        break;
                     case PacketType.VirtualCameraState:
                         ReadVirtualCameraState(memoryStream, descriptor);
                         break;
@@ -122,6 +125,13 @@ namespace PerformanceRecorder
             var data = default(Command);
             if (stream.TryReadCommand(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
                 commandChanged(data);
+        }
+        
+        void ReadCommandInt(Stream stream, PacketDescriptor descriptor)
+        {
+            var data = default(CommandInt);
+            if (stream.TryReadCommandInt(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
+                commandIntChanged(data);
         }
 
         void ReadVirtualCameraState(Stream stream, PacketDescriptor descriptor)

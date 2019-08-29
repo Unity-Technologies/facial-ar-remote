@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using Microsoft.IO;
 using UnityEngine;
 using StreamBufferDataV1 = Unity.Labs.FacialRemote.StreamBufferDataV1;
 using StreamBufferDataV2 = Unity.Labs.FacialRemote.StreamBufferDataV2;
@@ -40,56 +39,58 @@ namespace PerformanceRecorder
             get { return m_NetworkStreamSource.isConnected || m_NetworkStreamSource.isConnecting; }
         }
 
+        public PacketStream packetStream => m_PacketStream;
+
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         PacketStream m_PacketStream = new PacketStream();
 
         public void Connect()
         {
-            m_PacketStream.streamSource = m_NetworkStreamSource;
-            m_PacketStream.Start();
+            packetStream.streamSource = m_NetworkStreamSource;
+            packetStream.Start();
             m_NetworkStreamSource.ConnectToServer(ip, port);
         }
 
         public void Disconnect()
         {
             m_NetworkStreamSource.StopConnections();
-            m_PacketStream.Stop();
+            packetStream.Stop();
         }
 
-        public void SendStartRecording()
+        public void SendCommand(CommandType command)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(new Command(CommandType.StartRecording));
+                packetStream.writer.Write(new Command(command));
         }
-
-        public void SendStopRecording()
+        
+        public void SendCommandInt(CommandIntType command, int i)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(new Command(CommandType.StopRecording));
+                packetStream.writer.Write(new CommandInt(command, i));
         }
 
         public void Send(PoseData data)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(data);
+                packetStream.writer.Write(data);
         }
 
         public void Send(FaceData data)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(data);
+                packetStream.writer.Write(data);
         }
 
         public void Send(StreamBufferDataV1 data)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
+                packetStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV1>());
         }
 
         public void Send(StreamBufferDataV2 data)
         {
             if (m_NetworkStreamSource.isConnected)
-                m_PacketStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
+                packetStream.writer.Write(data.ToBytes(), Marshal.SizeOf<StreamBufferDataV2>());
         }
     }
 }

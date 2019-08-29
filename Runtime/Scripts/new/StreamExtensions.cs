@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
@@ -109,6 +107,26 @@ namespace PerformanceRecorder
                 {
                     default:
                         data = Read<Command>(stream, bytes); break;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
+        public static bool TryReadCommandInt(this Stream stream, int version, out CommandInt data, byte[] bytes = null)
+        {
+            data = default(CommandInt);
+
+            try
+            {
+                switch (version)
+                {
+                    default:
+                        data = Read<CommandInt>(stream, bytes); break;
                 }
             }
             catch (Exception)

@@ -1,12 +1,19 @@
 ﻿using System.Runtime.InteropServices;
-using Unity.Labs.FacialRemote;
 
 namespace PerformanceRecorder
 {
     public enum CommandType
     {
         StartRecording,
-        StopRecording
+        StopRecording,
+        FreezeCamera,
+        UnfreezeCamera
+    }
+
+    public enum CommandIntType
+    {
+        SetCameraRig,
+        SetLensSize
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -17,6 +24,19 @@ namespace PerformanceRecorder
         public Command(CommandType t)
         {
             type = t;
+        }
+    }
+    
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CommandInt
+    {
+        public CommandIntType type;
+        public int i;
+
+        public CommandInt(CommandIntType t, int i)
+        {
+            type = t;
+            this.i = i;
         }
     }
 }

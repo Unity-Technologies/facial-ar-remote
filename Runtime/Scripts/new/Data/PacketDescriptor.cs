@@ -9,6 +9,7 @@ namespace PerformanceRecorder
         Face,
         HeadPose,
         Command,
+        CommandInt,
         VirtualCameraState
     }
 
@@ -21,6 +22,7 @@ namespace PerformanceRecorder
         static readonly PacketDescriptor FaceDescriptor = new PacketDescriptor() { type = PacketType.Face, version = 0 };
         static readonly PacketDescriptor HeadPoseDescriptor = new PacketDescriptor() { type = PacketType.HeadPose, version = 0 };
         static readonly PacketDescriptor CommandDescriptor = new PacketDescriptor() { type = PacketType.Command, version = 0 };
+        static readonly PacketDescriptor CommandIntDescriptor = new PacketDescriptor() { type = PacketType.CommandInt, version = 0 };
         static readonly PacketDescriptor VirtualCameraStateDescriptor = new PacketDescriptor() { type = PacketType.VirtualCameraState, version = 0 };
 
         public static PacketDescriptor Get(PacketType type)
@@ -37,6 +39,8 @@ namespace PerformanceRecorder
                     return HeadPoseDescriptor;
                 case PacketType.Command:
                     return CommandDescriptor;
+                case PacketType.CommandInt:
+                    return CommandIntDescriptor;
                 case PacketType.VirtualCameraState:
                     return VirtualCameraStateDescriptor;
             }
@@ -45,7 +49,7 @@ namespace PerformanceRecorder
         }
 
         public PacketType type;
-        public int version;
+        public int version; 
     }
 
     public static class PacketDescriptorExtensions
@@ -60,6 +64,8 @@ namespace PerformanceRecorder
                     return GetFaceDataSize(packet.version);
                 case PacketType.Command:
                     return GetCommandSize(packet.version);
+                case PacketType.CommandInt:
+                    return GetCommandIntSize(packet.version);
                 case PacketType.VirtualCameraState:
                     return GetVirtualCameraStateSize(packet.version);
             }
@@ -94,6 +100,17 @@ namespace PerformanceRecorder
             {
                 case 0:
                     return Marshal.SizeOf<Command>();
+            }
+
+            return 0;
+        }
+        
+        static int GetCommandIntSize(int version)
+        {
+            switch (version)
+            {
+                case 0:
+                    return Marshal.SizeOf<CommandInt>();
             }
 
             return 0;

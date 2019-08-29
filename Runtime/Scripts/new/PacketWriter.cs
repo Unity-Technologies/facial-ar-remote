@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using Microsoft.IO;
 
 namespace PerformanceRecorder
@@ -11,17 +10,14 @@ namespace PerformanceRecorder
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         ConcurrentQueue<MemoryStream> m_Queue = new ConcurrentQueue<MemoryStream>();
 
-        public int packetCount
-        {
-            get { return m_Queue.Count; }
-        }
+        public int packetCount => m_Queue.Count;
 
         /// <summary>
         /// Disposes enqueued packets.
         /// </summary>
         public void Clear()
         {
-            var memoryStream = default(MemoryStream);
+            MemoryStream memoryStream;
             while (m_Queue.TryDequeue(out memoryStream))
                 memoryStream.Dispose();
         }
@@ -31,22 +27,27 @@ namespace PerformanceRecorder
         /// </summary>
         public void Write(PoseData data)
         {
-            Write<PoseData>(PacketDescriptor.Get(PacketType.Pose), data);
+            Write(PacketDescriptor.Get(PacketType.Pose), data);
         }
 
         public void Write(FaceData data)
         {
-            Write<FaceData>(PacketDescriptor.Get(PacketType.Face), data);
+            Write(PacketDescriptor.Get(PacketType.Face), data);
         }
 
         public void Write(Command data)
         {
-            Write<Command>(PacketDescriptor.Get(PacketType.Command), data);
+            Write(PacketDescriptor.Get(PacketType.Command), data);
+        }
+
+        public void Write(CommandInt data)
+        {
+            Write(PacketDescriptor.Get(PacketType.CommandInt), data);
         }
 
         public void Write(VirtualCameraState data)
         {
-            Write<VirtualCameraState>(PacketDescriptor.Get(PacketType.VirtualCameraState), data);
+            Write(PacketDescriptor.Get(PacketType.VirtualCameraState), data);
         }
 
         public void Write(byte[] bytes, int count)

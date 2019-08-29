@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
@@ -98,10 +95,10 @@ namespace PerformanceRecorder
                 if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
                 {
                     m_StartTime = Time.realtimeSinceStartup;
-                    m_Client.SendStartRecording();
+                    m_Client.SendCommand(CommandType.StartRecording);
                 } 
                 if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonWide))
-                    m_Client.SendStopRecording();
+                    m_Client.SendCommand(CommandType.StopRecording);
             }
 
             m_TrackedObject = EditorGUILayout.ObjectField(m_TrackedObject, typeof(Transform), true) as Transform;
