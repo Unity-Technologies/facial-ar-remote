@@ -45,7 +45,7 @@ namespace PerformanceRecorder
             Write(PacketDescriptor.Get(PacketType.CommandInt), data);
         }
 
-        public void Write(VirtualCameraState data)
+        public void Write(VirtualCameraStateData data)
         {
             Write(PacketDescriptor.Get(PacketType.VirtualCameraState), data);
         }

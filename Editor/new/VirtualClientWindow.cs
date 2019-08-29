@@ -46,7 +46,7 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            if (m_Client.isConnected)
+            if (m_Client.IsConnected())
             {
                 m_WasConnected = true;
 

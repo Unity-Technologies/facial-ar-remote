@@ -121,7 +121,7 @@ namespace PerformanceRecorder
             switch (version)
             {
                 case 0:
-                    return Marshal.SizeOf<VirtualCameraState>();
+                    return Marshal.SizeOf<VirtualCameraStateData>();
             }
 
             return 0;

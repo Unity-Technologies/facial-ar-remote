@@ -11,7 +11,7 @@ namespace PerformanceRecorder
         public event Action<FaceData> faceDataChanged;
         public event Action<Command> commandChanged;
         public event Action<CommandInt> commandIntChanged;
-        public event Action<VirtualCameraState> virtualCameraStateChanged;
+        public event Action<VirtualCameraStateData> virtualCameraStateChanged;
 
         byte[] m_Buffer = new byte[1024];
         
@@ -136,7 +136,7 @@ namespace PerformanceRecorder
 
         void ReadVirtualCameraState(Stream stream, PacketDescriptor descriptor)
         {
-            var data = default(VirtualCameraState);
+            var data = default(VirtualCameraStateData);
             if (stream.TryReadVirtualCameraState(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
                 virtualCameraStateChanged(data);
         }

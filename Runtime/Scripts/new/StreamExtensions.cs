@@ -137,16 +137,16 @@ namespace PerformanceRecorder
             return true;
         }
 
-        public static bool TryReadVirtualCameraState(this Stream stream, int version, out VirtualCameraState data, byte[] bytes = null)
+        public static bool TryReadVirtualCameraState(this Stream stream, int version, out VirtualCameraStateData data, byte[] bytes = null)
         {
-            data = default(VirtualCameraState);
+            data = default(VirtualCameraStateData);
 
             try
             {
                 switch (version)
                 {
                     default:
-                        data = Read<VirtualCameraState>(stream, bytes); break;
+                        data = Read<VirtualCameraStateData>(stream, bytes); break;
                 }
             }
             catch (Exception)

@@ -34,15 +34,15 @@ namespace PerformanceRecorder
             set { m_IsServer = value; }
         }
 
-        public bool isConnected
-        {
-            get { return m_NetworkStreamSource.isConnected || m_NetworkStreamSource.isConnecting; }
-        }
-
         public PacketStream packetStream => m_PacketStream;
 
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         PacketStream m_PacketStream = new PacketStream();
+        
+        public bool IsConnected()
+        {
+            return m_NetworkStreamSource.isConnected || m_NetworkStreamSource.isConnecting;
+        }
 
         public void Connect()
         {
@@ -76,6 +76,12 @@ namespace PerformanceRecorder
         }
 
         public void Send(FaceData data)
+        {
+            if (m_NetworkStreamSource.isConnected)
+                packetStream.writer.Write(data);
+        }
+
+        public void Send(VirtualCameraStateData data)
         {
             if (m_NetworkStreamSource.isConnected)
                 packetStream.writer.Write(data);
