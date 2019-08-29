@@ -8,7 +8,8 @@ namespace PerformanceRecorder
         Pose,
         Face,
         HeadPose,
-        Command
+        Command,
+        VirtualCameraState
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -20,6 +21,7 @@ namespace PerformanceRecorder
         static readonly PacketDescriptor FaceDescriptor = new PacketDescriptor() { type = PacketType.Face, version = 0 };
         static readonly PacketDescriptor HeadPoseDescriptor = new PacketDescriptor() { type = PacketType.HeadPose, version = 0 };
         static readonly PacketDescriptor CommandDescriptor = new PacketDescriptor() { type = PacketType.Command, version = 0 };
+        static readonly PacketDescriptor VirtualCameraStateDescriptor = new PacketDescriptor() { type = PacketType.VirtualCameraState, version = 0 };
 
         public static PacketDescriptor Get(PacketType type)
         {
@@ -35,6 +37,8 @@ namespace PerformanceRecorder
                     return HeadPoseDescriptor;
                 case PacketType.Command:
                     return CommandDescriptor;
+                case PacketType.VirtualCameraState:
+                    return VirtualCameraStateDescriptor;
             }
 
             return InvalidDescriptor;
@@ -56,6 +60,8 @@ namespace PerformanceRecorder
                     return GetFaceDataSize(packet.version);
                 case PacketType.Command:
                     return GetCommandSize(packet.version);
+                case PacketType.VirtualCameraState:
+                    return GetVirtualCameraStateSize(packet.version);
             }
             return 0;
         }
@@ -88,6 +94,17 @@ namespace PerformanceRecorder
             {
                 case 0:
                     return Marshal.SizeOf<Command>();
+            }
+
+            return 0;
+        }
+
+        static int GetVirtualCameraStateSize(int version)
+        {
+            switch (version)
+            {
+                case 0:
+                    return Marshal.SizeOf<VirtualCameraState>();
             }
 
             return 0;

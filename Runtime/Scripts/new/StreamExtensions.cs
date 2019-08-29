@@ -119,6 +119,26 @@ namespace PerformanceRecorder
             return true;
         }
 
+        public static bool TryReadVirtualCameraState(this Stream stream, int version, out VirtualCameraState data, byte[] bytes = null)
+        {
+            data = default(VirtualCameraState);
+
+            try
+            {
+                switch (version)
+                {
+                    default:
+                        data = Read<VirtualCameraState>(stream, bytes); break;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public static void Write<T>(this Stream stream, T data) where T : struct
         {
             var size = Marshal.SizeOf<T>();

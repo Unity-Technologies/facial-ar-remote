@@ -8,12 +8,10 @@ namespace PerformanceRecorder
 {
     public class PacketReader
     {
-        public delegate void PoseDataCallback(PoseData data);
-        public delegate void FaceDataCallback(FaceData data);
-        public delegate void CommandCallback(Command data);
-        public event PoseDataCallback poseDataChanged;
-        public event FaceDataCallback faceDataChanged;
-        public event CommandCallback commandChanged;
+        public event Action<PoseData> poseDataChanged;
+        public event Action<FaceData> faceDataChanged;
+        public event Action<Command> commandChanged;
+        public event Action<VirtualCameraState> virtualCameraStateChanged;
 
         byte[] m_Buffer = new byte[1024];
         
@@ -75,6 +73,9 @@ namespace PerformanceRecorder
                     case PacketType.Command:
                         ReadCommand(memoryStream, descriptor);
                         break;
+                    case PacketType.VirtualCameraState:
+                        ReadVirtualCameraState(memoryStream, descriptor);
+                        break;
                 }
 
                 memoryStream.Dispose();
@@ -121,6 +122,13 @@ namespace PerformanceRecorder
             var data = default(Command);
             if (stream.TryReadCommand(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
                 commandChanged(data);
+        }
+
+        void ReadVirtualCameraState(Stream stream, PacketDescriptor descriptor)
+        {
+            var data = default(VirtualCameraState);
+            if (stream.TryReadVirtualCameraState(descriptor.version, out data, GetBuffer(descriptor.GetPayloadSize())))
+                virtualCameraStateChanged(data);
         }
     }
 }
