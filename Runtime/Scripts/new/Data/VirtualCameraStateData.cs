@@ -33,6 +33,26 @@ namespace PerformanceRecorder
         public bool frozen;
         public bool recording;
         
+        public override string ToString()
+        {
+            return string.Format("({0}, {1}, {2}, {3}, {4})", 
+                (object) this.cameraRig.ToString(), 
+                (object) this.axisLock.ToString(),
+                (object) this.focalLength.ToString(),
+                (object) this.frozen.ToString(),
+                (object) this.recording.ToString());
+        }
+
+        public string ToString(string format)
+        {
+            return string.Format("({0}, {1}, {2}, {3}, {4})", 
+                (object) this.cameraRig.ToString(format), 
+                (object) this.axisLock.ToString(format),
+                (object) this.focalLength.ToString(format),
+                (object) this.frozen.ToString(),
+                (object) this.recording.ToString());
+        }
+        
         public override bool Equals(object obj)
         {
             if (!(obj is VirtualCameraStateData))
