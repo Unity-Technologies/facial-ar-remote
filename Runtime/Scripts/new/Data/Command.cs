@@ -5,15 +5,12 @@ namespace PerformanceRecorder
     public enum CommandType
     {
         StartRecording,
-        StopRecording,
-        FreezeCamera,
-        UnfreezeCamera
+        StopRecording
     }
 
     public enum CommandIntType
     {
-        SetCameraRig,
-        SetLensSize
+
     }
 
     [StructLayout(LayoutKind.Sequential)]
