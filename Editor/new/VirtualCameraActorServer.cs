@@ -17,6 +17,7 @@ namespace PerformanceRecorder
             AddRecorder(m_PoseDataRecorder);
             
             GetReader().poseDataChanged += PoseDataChanged;
+            GetReader().virtualCameraStateChanged += OnVirtualCameraStateChanged;
         }
 
         void PoseDataChanged(PoseData data)
@@ -33,6 +34,18 @@ namespace PerformanceRecorder
 
             if (IsRecording())
                 m_PoseDataRecorder.Record(data);
+        }
+
+        void OnVirtualCameraStateChanged(VirtualCameraStateData data)
+        {
+            Debug.Log(data);
+
+            var virtualCamera = actor as VirtualCameraActor;
+
+            if (virtualCamera == null)
+                return;
+
+            virtualCamera.SetVirtualCameraState(data);
         }
     }
 }

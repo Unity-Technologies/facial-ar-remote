@@ -20,9 +20,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField, Range(1,100)]
         float m_InputScale = 3f;
 
-        [SerializeField]
-        Transform m_RawTrackedTransform;
-
         bool m_CameraFrozen;
         Pose m_CameraPoseOnFreeze = Pose.identity;
         Pose m_CachedCameraOffset = Pose.identity;
@@ -62,15 +59,15 @@ namespace Unity.Labs.FacialRemote
             if (m_CameraFrozen)
                 return;
 
-            var localInputVector = m_RawTrackedTransform.TransformDirection(horizontalMoveInput);
+            var localInputVector = transform.TransformDirection(horizontalMoveInput);
             Translate(m_InputScale * Time.deltaTime * (localInputVector + Vector3.up * verticalMoveInput));
 
             Pose trackedPose; 
             trackedPose.position = remoteCameraPose.position * movementScale + m_CachedCameraOffset.position;
             trackedPose.rotation = remoteCameraPose.rotation * m_CachedCameraOffset.rotation;
 
-            m_RawTrackedTransform.localPosition = trackedPose.position;
-            m_RawTrackedTransform.localRotation = trackedPose.rotation;
+            transform.localPosition = trackedPose.position;
+            transform.localRotation = trackedPose.rotation;
 
             m_LastRemoteCameraPose = remoteCameraPose;
         }
@@ -88,8 +85,8 @@ namespace Unity.Labs.FacialRemote
 
             if (on)
             {
-                m_CameraPoseOnFreeze = new Pose(m_RawTrackedTransform.localPosition, 
-                    m_RawTrackedTransform.localRotation);
+                m_CameraPoseOnFreeze = new Pose(transform.localPosition, 
+                    transform.localRotation);
             }
             else
             {
@@ -116,6 +113,7 @@ namespace Unity.Labs.FacialRemote
 
         void SetFocalLength(int i)
         {
+            //TODO: Set using ICameraRig interface
             /*
             foreach (var cameraRig in m_CameraRigs)
             {
