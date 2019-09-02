@@ -48,7 +48,7 @@ namespace Unity.Labs.FacialRemote
                 return;
             
             SetCameraFrozenState(data.frozen);
-            SetCameraRig((int)data.cameraRig);
+            SetCameraRig(data.cameraRig);
             SetFocalLength(data.focalLength);
 
             m_VCamStateData = data;
@@ -100,8 +100,9 @@ namespace Unity.Labs.FacialRemote
             m_CachedCameraOffset.position += translateBy;
         }
 
-        void SetCameraRig(int cameraRigIndex)
+        void SetCameraRig(CameraRig cameraRig)
         {
+            var cameraRigIndex = (int)cameraRig;
             Debug.Assert(cameraRigIndex < m_CameraRigs.Count);
             Debug.Assert(cameraRigIndex >= 0);
 
@@ -111,7 +112,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void SetFocalLength(int i)
+        void SetFocalLength(float focalLength)
         {
             //TODO: Set using ICameraRig interface
             /*
