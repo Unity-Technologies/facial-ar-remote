@@ -9,24 +9,8 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    public class BlendShapesController : MonoBehaviour
+    public sealed class BlendShapesController : Actor
     {
-#if UNITY_EDITOR
-        public delegate void Callback(BlendShapesController contorller);
-        public static event Callback controllerEnabled;
-        public static event Callback controllerDisabled;
-
-        void OnEnable()
-        {
-            controllerEnabled.Invoke(this);
-        }
-
-        void OnDisable()
-        {
-            controllerDisabled.Invoke(this);
-        }
-#endif
-
         [SerializeField]
         BlendShapeValues m_BlendShapeValues;
 

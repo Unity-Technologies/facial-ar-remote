@@ -16,11 +16,10 @@ namespace PerformanceRecorder
     }
 
     [Serializable]
-    public class RemoteActor
+    public abstract class ActorServer
     {
         static readonly string k_DefaultDirectory = "Assets/";
-        public delegate void RecordingStateCallback(RemoteActor actor);
-        public static event RecordingStateCallback recordingStateChanged;
+        public static event Action<ActorServer> recordingStateChanged;
 
         [SerializeField]
         string m_Ip = "192.168.0.1";
@@ -28,15 +27,13 @@ namespace PerformanceRecorder
         int m_Port = 9000;
         [SerializeField]
         bool m_IsServer = false;
+        HashSet<IPacketRecorder> m_Recorders = new HashSet<IPacketRecorder>();
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
-        AdapterSource m_AdapterSource = new AdapterSource();
         PacketStream m_PacketStream = new PacketStream();
-        PoseDataRecorder m_PoseDataRecoder = new PoseDataRecorder();
-        FaceDataRecorder m_FaceDataRecoder = new FaceDataRecorder();
         TakePlayer m_Player = new TakePlayer();
         PreviewState m_PrevState = PreviewState.None;
         [SerializeField]
-        BlendShapesController m_Controller;
+        Actor m_Actor;
         [SerializeField]
         AnimationClip m_Clip;
         [SerializeField]
@@ -72,10 +69,10 @@ namespace PerformanceRecorder
             get { return m_PrevState; }
         }
 
-        public BlendShapesController controller
+        public Actor actor
         {
-            get { return m_Controller; }
-            set { m_Controller = value; }
+            get { return m_Actor; }
+            set { m_Actor = value; }
         }
 
         public AnimationClip clip
@@ -90,26 +87,45 @@ namespace PerformanceRecorder
             set { m_Directory = value; }
         }
 
-        public RemoteActor()
+        protected PacketReader GetReader()
         {
-            m_PacketStream.reader.poseDataChanged += PoseDataChanged;
-            m_PacketStream.reader.faceDataChanged += FaceDataChanged;
+            return m_PacketStream.reader;
+        }
+
+        protected void AddRecorder(IPacketRecorder recorder)
+        {
+            m_Recorders.Add(recorder);
+        }
+
+        public ActorServer()
+        {
             m_PacketStream.reader.commandChanged += CommandChanged;
         }
 
-        ~RemoteActor()
+        ~ActorServer()
         {
             Dispose();
         }
 
         public void Dispose()
         {
-            m_FaceDataRecoder.StopRecording();
+            StopRecorders();
+
             m_Player.Stop();
             m_NetworkStreamSource.StopConnections();
             m_PacketStream.Stop();
-            m_PacketStream.reader.faceDataChanged -= FaceDataChanged;
-            m_PacketStream.reader.commandChanged -= CommandChanged;
+        }
+
+        void StartRecorders()
+        {
+            foreach (var recorder in m_Recorders)
+                recorder.StartRecording();
+        }
+
+        void StopRecorders()
+        {
+            foreach (var recorder in m_Recorders)
+                recorder.StopRecording();
         }
 
         void SetPreviewState(PreviewState newState)
@@ -138,7 +154,7 @@ namespace PerformanceRecorder
             }
             else if (newState == PreviewState.Playback)
             {
-                var animator = m_Controller.GetComponent<Animator>();
+                var animator = m_Actor.GetComponent<Animator>();
                 m_Player.Play(animator, m_Clip);
             }
 
@@ -155,7 +171,6 @@ namespace PerformanceRecorder
             else
                 m_NetworkStreamSource.ConnectToServer(ip, port);
             
-            //m_AdapterSource.streamSource = m_NetworkStreamSource;
             m_PacketStream.streamSource = m_NetworkStreamSource;
             m_PacketStream.Start();
             SetPreviewState(PreviewState.LiveStream);
@@ -181,8 +196,7 @@ namespace PerformanceRecorder
             if (m_PrevState != PreviewState.LiveStream)
                 return;
 
-            m_PoseDataRecoder.StartRecording();
-            m_FaceDataRecoder.StartRecording();
+            StartRecorders();
 
             m_IsRecording = true;
 
@@ -199,8 +213,7 @@ namespace PerformanceRecorder
             if (!m_IsRecording)
                 return;
             
-            m_PoseDataRecoder.StopRecording();
-            m_FaceDataRecoder.StopRecording();
+            StopRecorders();
 
             var uniqueAssetPath = AssetDatabase.GenerateUniqueAssetPath(directory + GenerateFileName());
             var path = uniqueAssetPath + ".arstream";
@@ -208,8 +221,8 @@ namespace PerformanceRecorder
             using (var stream = File.Create(path))
             using (var writer = new ARStreamWriter(stream))
             {
-                writer.Write(m_PoseDataRecoder);
-                writer.Write(m_FaceDataRecoder);
+                foreach (var recorder in m_Recorders)
+                    writer.Write(recorder);
             }
 
             AssetDatabase.Refresh();
@@ -244,7 +257,7 @@ namespace PerformanceRecorder
         public void StartPlayback()
         {
             if (state == PreviewState.Playback)
-                m_Player.Play(controller.GetComponent<Animator>(), m_Clip);
+                m_Player.Play(actor.GetComponent<Animator>(), m_Clip);
             else
                 SetPreviewState(PreviewState.Playback);
         }
@@ -260,38 +273,6 @@ namespace PerformanceRecorder
         public void PausePlayback()
         {
             m_Player.Pause();
-        }
-
-        void PoseDataChanged(PoseData data)
-        {
-            if (m_Controller == null)
-                return;
-
-            if (state != PreviewState.LiveStream)
-                return;
-
-            var transform = m_Controller.transform;
-
-            transform.localPosition = data.pose.position;
-            transform.localRotation = data.pose.rotation;
-
-            if (m_PoseDataRecoder.isRecording)
-                m_PoseDataRecoder.Record(data);
-        }
-
-        void FaceDataChanged(FaceData data)
-        {
-            if (m_Controller == null)
-                return;
-
-            if (state != PreviewState.LiveStream)
-                return;
-
-            m_Controller.blendShapeInput = data.blendShapeValues;
-            m_Controller.UpdateBlendShapes();
-
-            if (m_FaceDataRecoder.isRecording)
-                m_FaceDataRecoder.Record(data);
         }
 
         void CommandChanged(Command data)
