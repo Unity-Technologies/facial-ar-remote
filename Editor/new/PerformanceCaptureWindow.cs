@@ -9,29 +9,29 @@ using Unity.Labs.FacialRemote;
 namespace PerformanceRecorder
 {
     [InitializeOnLoad]
-    public class BlendShapeControllerTracker
+    public class ActorTracker
     {
-        static List<BlendShapesController> s_Controllers = new List<BlendShapesController>();
+        static List<Actor> s_Actors = new List<Actor>();
 
-        static BlendShapeControllerTracker()
+        static ActorTracker()
         {
-            BlendShapesController.controllerEnabled += ControllerEnabled;
-            BlendShapesController.controllerDisabled += ControllerDisabled;
+            Actor.actorEnabled += ActorEnabled;
+            Actor.actorDisabled += ActorDisabled;
         }
 
-        static void ControllerEnabled(BlendShapesController controller)
+        static void ActorEnabled(Actor actor)
         {
-            s_Controllers.Add(controller);
+            s_Actors.Add(actor);
         }
 
-        static void ControllerDisabled(BlendShapesController controller)
+        static void ActorDisabled(Actor actor)
         {
-            s_Controllers.Remove(controller);
+            s_Actors.Remove(actor);
         }
 
-        public static BlendShapesController[] GetControllers()
+        public static Actor[] GetActors()
         {
-            return s_Controllers.ToArray();
+            return s_Actors.ToArray();
         }
     }
 
@@ -42,7 +42,7 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
         static readonly string k_Assets = "Assets";
         [SerializeField]
-        List<RemoteActor> m_Actors = new List<RemoteActor>();
+        List<ActorServer> m_ActorServers = new List<ActorServer>();
         [SerializeField]
         Vector2 m_Scroll;
 
@@ -57,54 +57,61 @@ namespace PerformanceRecorder
         void OnEnable()
         {
             EditorApplication.update += Update;
-            BlendShapesController.controllerEnabled += ControllerEnabled;
-            BlendShapesController.controllerDisabled += ControllerDisabled;
-            RemoteActor.recordingStateChanged += RecordingStateChanged;
+            Actor.actorEnabled += ActorEnabled;
+            Actor.actorDisabled += ActorDisabled;
+            ActorServer.recordingStateChanged += RecordingStateChanged;
 
-            var controllers = BlendShapeControllerTracker.GetControllers();
+            var controllers = ActorTracker.GetActors();
 
             foreach (var controller in controllers)
-                ControllerEnabled(controller);
+                ActorEnabled(controller);
         }
 
         void OnDisable()
         {
-            foreach (var actor in m_Actors)
-                actor.Dispose();
+            foreach (var actorServer in m_ActorServers)
+                actorServer.Dispose();
             
-            m_Actors.Clear();
+            m_ActorServers.Clear();
 
             AnimationMode.StopAnimationMode();
 
-            RemoteActor.recordingStateChanged -= RecordingStateChanged;
-            BlendShapesController.controllerEnabled -= ControllerEnabled;
-            BlendShapesController.controllerDisabled -= ControllerDisabled;
+            ActorServer.recordingStateChanged -= RecordingStateChanged;
+            Actor.actorEnabled -= ActorEnabled;
+            Actor.actorDisabled -= ActorDisabled;
             EditorApplication.update -= Update;
         }
 
-        void ControllerEnabled(BlendShapesController controller)
+        void ActorEnabled(Actor actor)
         {
-            var actor = new RemoteActor();
-            actor.controller = controller;
-            m_Actors.Add(actor);
+            ActorServer actorServer = null;
 
-            Repaint();
-        }
+            if (actor is BlendShapesController)
+                actorServer = new FaceActorServer();
 
-        void ControllerDisabled(BlendShapesController controller)
-        {
-            var actor = m_Actors.Find((a) => a.controller == controller);
-
-            if (actor != null)
+            if (actorServer != null)
             {
-                actor.Dispose();
-                m_Actors.Remove(actor);
+                actorServer.actor = actor;
+                m_ActorServers.Add(actorServer);
             }
 
             Repaint();
         }
 
-        void RecordingStateChanged(RemoteActor actor)
+        void ActorDisabled(Actor actor)
+        {
+            var remoteActor = m_ActorServers.Find((a) => a.actor == actor);
+
+            if (remoteActor != null)
+            {
+                remoteActor.Dispose();
+                m_ActorServers.Remove(remoteActor);
+            }
+
+            Repaint();
+        }
+
+        void RecordingStateChanged(ActorServer actor)
         {
             Repaint();
         }
@@ -115,22 +122,14 @@ namespace PerformanceRecorder
             {
                 m_Scroll = scrollview.scrollPosition;
 
-                foreach (var actor in m_Actors)
+                foreach (var actor in m_ActorServers)
                     DoActorGUI(actor);
-                
-                /*
-                using (new GUILayout.VerticalScope("box"))
-                {
-                    EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
-                    ClientGUI();
-                }
-                */
             }
         }
 
-        void DoActorGUI(RemoteActor actor)
+        void DoActorGUI(ActorServer actorServer)
         {
-            if (actor == null || actor.controller == null)
+            if (actorServer == null || actorServer.actor == null)
                 return;
             
             EditorGUIUtility.labelWidth = 60f;
@@ -139,24 +138,24 @@ namespace PerformanceRecorder
             {
                 using (new EditorGUI.DisabledGroupScope(true))
                 {
-                    EditorGUILayout.ObjectField("Target", actor.controller.gameObject, typeof(GameObject), true);
+                    EditorGUILayout.ObjectField("Target", actorServer.actor.gameObject, typeof(GameObject), true);
                 }
 
                 EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
-                DeviceGUI(actor);
+                DeviceGUI(actorServer);
 
                 EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
-                DoDirectoryGUI(actor);
+                DoDirectoryGUI(actorServer);
 
-                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
+                using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.LiveStream))
                 {    
-                    DoRecorderGUI(actor);
+                    DoRecorderGUI(actorServer);
                 }
 
-                using (new EditorGUI.DisabledGroupScope(actor.state == PreviewState.LiveStream))
+                using (new EditorGUI.DisabledGroupScope(actorServer.state == PreviewState.LiveStream))
                 {
                     EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
-                    DoPlayerGUI(actor);
+                    DoPlayerGUI(actorServer);
                 }
             }
 
@@ -165,11 +164,11 @@ namespace PerformanceRecorder
 
         void Update()
         {
-            foreach (var actor in m_Actors)
+            foreach (var actor in m_ActorServers)
                 actor.Update();
         }
 
-        void DeviceGUI(RemoteActor actor)
+        void DeviceGUI(ActorServer actor)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -182,7 +181,7 @@ namespace PerformanceRecorder
                         actor.Connect();
 
                         StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actor.controller.gameObject);
+                        RegisterBindingsToAnimationMode(actor.actor.gameObject);
                     }
                 }
                 using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
@@ -194,10 +193,9 @@ namespace PerformanceRecorder
                     }
                 }
             }
-            //m_Server.adapterVersion = (AdapterVersion)EditorGUILayout.EnumPopup("Adapter Version", m_Server.adapterVersion);
         }
 
-        void DoDirectoryGUI(RemoteActor actor)
+        void DoDirectoryGUI(ActorServer actor)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -217,61 +215,61 @@ namespace PerformanceRecorder
             }
         }
 
-        void DoRecorderGUI(RemoteActor actor)
+        void DoRecorderGUI(ActorServer actorServer)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
 
-                using (new EditorGUI.DisabledGroupScope(actor.IsRecording()))
+                using (new EditorGUI.DisabledGroupScope(actorServer.IsRecording()))
                 {
                     if (GUILayout.Button("Record", EditorStyles.miniButton, kButtonWide))
                     {
-                        actor.StartRecording();
+                        actorServer.StartRecording();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(!actor.IsRecording()))
+                using (new EditorGUI.DisabledGroupScope(!actorServer.IsRecording()))
                 {
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
-                        actor.StopRecording();
+                        actorServer.StopRecording();
                     }
                 }
             }
         }
 
-        void DoPlayerGUI(RemoteActor actor)
+        void DoPlayerGUI(ActorServer actorServer)
         {
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                actor.clip = EditorGUILayout.ObjectField("Clip", actor.clip, typeof(AnimationClip), true) as AnimationClip;
+                actorServer.clip = EditorGUILayout.ObjectField("Clip", actorServer.clip, typeof(AnimationClip), true) as AnimationClip;
 
                 if (change.changed)
                 {
-                    var wasPlaying = actor.state == PreviewState.Playback;
+                    var wasPlaying = actorServer.state == PreviewState.Playback;
 
-                    actor.StopPlayback();
+                    actorServer.StopPlayback();
                     StopAnimationMode();
 
-                    if (wasPlaying && actor.clip != null)
+                    if (wasPlaying && actorServer.clip != null)
                     {
                         StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
-                        actor.StartPlayback();
+                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
+                        actorServer.StartPlayback();
                     }
                 }
             }
 
             using (new EditorGUILayout.HorizontalScope())
-            using (new EditorGUI.DisabledGroupScope(actor.clip == null || actor.controller == null))
+            using (new EditorGUI.DisabledGroupScope(actorServer.clip == null || actorServer.actor == null))
             {
                 GUILayout.FlexibleSpace();
 
-                if (actor.player.isPlaying)
+                if (actorServer.player.isPlaying)
                 {
                     if (GUILayout.Button("Pause", EditorStyles.miniButton, kButtonMid))
                     {
-                        actor.PausePlayback();
+                        actorServer.PausePlayback();
                     }
                 }
                 else
@@ -279,15 +277,15 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                     {
                         StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actor.controller.gameObject, actor.clip);
-                        actor.StartPlayback();
+                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
+                        actorServer.StartPlayback();
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(!(actor.player.isPlaying || actor.player.isPaused)))
+                using (new EditorGUI.DisabledGroupScope(!(actorServer.player.isPlaying || actorServer.player.isPaused)))
                 {
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
-                        actor.StopPlayback();
+                        actorServer.StopPlayback();
                         StopAnimationMode();
                     }
                 }
@@ -306,7 +304,7 @@ namespace PerformanceRecorder
         {
             if (AnimationMode.InAnimationMode())
             {
-                foreach (var actor in m_Actors)
+                foreach (var actor in m_ActorServers)
                 {
                     if (actor.state != PreviewState.None)
                         return;

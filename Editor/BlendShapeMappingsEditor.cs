@@ -233,12 +233,17 @@ namespace Unity.Labs.FacialRemote
 
         void Rebind()
         {
-            var controllers = PerformanceRecorder.BlendShapeControllerTracker.GetControllers();
+            var actors = PerformanceRecorder.ActorTracker.GetActors();
 
-            foreach (var controller in controllers)
+            foreach (var actor in actors)
             {
-                if (controller.mappings == target)
-                    controller.Rebind();
+                if (actor is BlendShapesController)
+                {
+                    var controller = actor as BlendShapesController;
+                    
+                    if (controller.mappings == target)
+                        controller.Rebind();
+                }
             }
         }
     }

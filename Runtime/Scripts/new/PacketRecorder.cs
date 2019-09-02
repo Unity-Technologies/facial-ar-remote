@@ -5,7 +5,13 @@ using Microsoft.IO;
 
 namespace PerformanceRecorder
 {
-    public abstract class PacketRecorder<T> : IPacketBuffer where T : struct
+    public interface IPacketRecorder : IPacketBuffer
+    {
+        void StartRecording();
+        void StopRecording();
+    }
+
+    public abstract class PacketRecorder<T> : IPacketRecorder where T : struct
     {
         RecyclableMemoryStreamManager m_Manager = new RecyclableMemoryStreamManager();
         MemoryStream m_MemoryStream;
