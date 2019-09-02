@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
 {
+    [ExecuteAlways]
     public abstract class Actor : MonoBehaviour
     {
 #if UNITY_EDITOR

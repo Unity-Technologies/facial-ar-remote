@@ -61,10 +61,10 @@ namespace PerformanceRecorder
             Actor.actorDisabled += ActorDisabled;
             ActorServer.recordingStateChanged += RecordingStateChanged;
 
-            var controllers = ActorTracker.GetActors();
+            var actors = ActorTracker.GetActors();
 
-            foreach (var controller in controllers)
-                ActorEnabled(controller);
+            foreach (var actor in actors)
+                ActorEnabled(actor);
         }
 
         void OnDisable()
@@ -88,6 +88,8 @@ namespace PerformanceRecorder
 
             if (actor is BlendShapesController)
                 actorServer = new FaceActorServer();
+            else if (actor is VirtualCameraActor)
+                actorServer = new VirtualCameraActorServer();
 
             if (actorServer != null)
             {

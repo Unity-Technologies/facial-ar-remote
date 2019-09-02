@@ -7,7 +7,6 @@ namespace Unity.Labs.FacialRemote
     /// <summary>
     /// Updates blend shape values from the stream reader to the skinned mesh renders referenced in this script.
     /// </summary>
-    [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class BlendShapesController : Actor
     {
