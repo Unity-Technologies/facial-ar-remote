@@ -78,7 +78,7 @@ namespace PerformanceRecorder
     {
         public CameraRigType cameraRig;
         public AxisLock axisLock;
-        public int focalLength; 
+        public float focalLength; 
         public bool frozen;
         
         public override string ToString()
@@ -112,7 +112,7 @@ namespace PerformanceRecorder
             {
                 var hashCode = (int)cameraRig;
                 hashCode = (hashCode * 397) ^ (int)axisLock;
-                hashCode = (hashCode * 397) ^ focalLength;
+                hashCode = (hashCode * 397) ^ (int)focalLength;
                 hashCode = (hashCode * 397) ^ frozen.GetHashCode();
                 return hashCode;
             }
@@ -123,7 +123,7 @@ namespace PerformanceRecorder
             return
                 this.cameraRig == other.cameraRig &&
                 this.axisLock == other.axisLock &&
-                this.focalLength == other.focalLength &&
+                Math.Abs(this.focalLength - other.focalLength) < Mathf.Epsilon &&
                 this.frozen == other.frozen;
         }
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using PerformanceRecorder;
 using UnityEngine;
 
@@ -9,7 +9,7 @@ namespace Unity.Labs.FacialRemote
     public class VirtualCameraActor : Actor
     {
         [SerializeField]
-        VirtualCameraStateData m_State;
+        VirtualCameraStateData m_State = new VirtualCameraStateData();
         [SerializeField]
         Camera m_Camera;
 
@@ -43,16 +43,16 @@ namespace Unity.Labs.FacialRemote
             set => m_MovementScale = value;
         }
 
-        public void SetVirtualCameraState(VirtualCameraStateData state)
+        public void SetVirtualCameraState(VirtualCameraStateData data)
         {
-            if (m_State == state)
+            if (m_State == data)
                 return;
             
-            SetCameraFrozenState(state.frozen);
-            SetCameraRig((int)state.cameraRig);
-            SetFocalLength(state.focalLength);
+            SetCameraFrozenState(data.frozen);
+            SetCameraRig(data.cameraRig);
+            SetFocalLength(data.focalLength);
 
-            m_State = state;
+            m_State = data;
         }
 
         public void SetCameraPose(Pose remoteCameraPose)
@@ -101,8 +101,9 @@ namespace Unity.Labs.FacialRemote
             m_CachedCameraOffset.position += translateBy;
         }
 
-        void SetCameraRig(int cameraRigIndex)
+        void SetCameraRig(CameraRigType cameraRig)
         {
+            var cameraRigIndex = (int)cameraRig;
             Debug.Assert(cameraRigIndex < m_CameraRigs.Count);
             Debug.Assert(cameraRigIndex >= 0);
 
@@ -112,7 +113,7 @@ namespace Unity.Labs.FacialRemote
             }
         }
 
-        void SetFocalLength(int i)
+        void SetFocalLength(float focalLength)
         {
             //TODO: Set using ICameraRig interface
             /*
