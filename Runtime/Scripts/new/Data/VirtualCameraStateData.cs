@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace PerformanceRecorder
 {
-    public enum CameraRig
+    public enum CameraRigType
     {
         HardLock,
         LightDamping,
@@ -16,20 +16,67 @@ namespace PerformanceRecorder
     [Flags]
     public enum AxisLock
     {
-        Nothing     = (1 << 0),
-        Truck       = (1 << 1),
-        Dolly       = (1 << 2),
-        Pedestal    = (1 << 3),
-        Pan         = (1 << 4),
-        Tilt        = (1 << 5),
-        Dutch       = (1 << 6),
-        DutchZero   = (1 << 7)
+        None        = 0,
+        Truck       = (1 << 0),
+        Dolly       = (1 << 1),
+        Pedestal    = (1 << 2),
+        Pan         = (1 << 3),
+        Tilt        = (1 << 4),
+        Dutch       = (1 << 5),
+        DutchZero   = (1 << 6)
+    }
+
+    public static class AxisLockUtilities
+    {
+        /// <summary>
+        /// Checks if flag has only a single bit set.
+        /// </summary>
+        public static bool IsSingleFlag(AxisLock flag)
+        {
+            var value = (int)flag;
+            return value != 0 && (value & (value-1)) == 0;
+        }
+
+        /// <summary>
+        /// Checks if flag is set.
+        /// </summary>
+        public static bool HasFlag(AxisLock flags, AxisLock flag)
+        {
+            if ((int)flags == 0 && flag == AxisLock.None)
+                return true;
+
+            if (!IsSingleFlag(flag))
+                new ArgumentOutOfRangeException(nameof(flag), flag, null);
+
+            return flags.HasFlag(flag);
+        }
+
+        /// <summary>
+        /// Sets a flag and returns true if changed.
+        /// </summary>
+        public static bool SetFlag(ref AxisLock flags, AxisLock flag)
+        {
+            var hasFlag = HasFlag(flags, flag);
+            flags |= flag;
+            return !hasFlag;
+        }
+
+        /// <summary>
+        /// Clears a flag and returns true if changed.
+        /// </summary>
+        public static bool ClearFlag(ref AxisLock flags, AxisLock flag)
+        {
+            var hasFlag = HasFlag(flags, flag);
+            flags &= ~flag;
+            return hasFlag;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    [Serializable]
     public struct VirtualCameraStateData
     {
-        public CameraRig cameraRig;
+        public CameraRigType cameraRig;
         public AxisLock axisLock;
         public int focalLength; 
         public bool frozen;

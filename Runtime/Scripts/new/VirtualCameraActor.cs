@@ -9,6 +9,8 @@ namespace Unity.Labs.FacialRemote
     public class VirtualCameraActor : Actor
     {
         [SerializeField]
+        VirtualCameraStateData m_State;
+        [SerializeField]
         Camera m_Camera;
 
         [SerializeField]
@@ -24,7 +26,6 @@ namespace Unity.Labs.FacialRemote
         Pose m_CameraPoseOnFreeze = Pose.identity;
         Pose m_CachedCameraOffset = Pose.identity;
         Pose m_LastRemoteCameraPose = Pose.identity;
-        VirtualCameraStateData m_VCamStateData;
 
         /// <summary>
         /// Set forward/back and strafing from a joystick input
@@ -42,16 +43,16 @@ namespace Unity.Labs.FacialRemote
             set => m_MovementScale = value;
         }
 
-        public void SetVirtualCameraState(VirtualCameraStateData data)
+        public void SetVirtualCameraState(VirtualCameraStateData state)
         {
-            if (m_VCamStateData == data)
+            if (m_State == state)
                 return;
             
-            SetCameraFrozenState(data.frozen);
-            SetCameraRig((int)data.cameraRig);
-            SetFocalLength(data.focalLength);
+            SetCameraFrozenState(state.frozen);
+            SetCameraRig((int)state.cameraRig);
+            SetFocalLength(state.focalLength);
 
-            m_VCamStateData = data;
+            m_State = state;
         }
 
         public void SetCameraPose(Pose remoteCameraPose)
@@ -119,75 +120,6 @@ namespace Unity.Labs.FacialRemote
             {
                 cameraRig.m_Lens.FieldOfView = i;
             }
-            */
-        }
-
-        void SetAxisLock(AxisLock axisLock)
-        {
-            /*
-            switch (axisLock)
-            {
-                case AxisLock.Truck:
-                    if (on && (data.axisLock & AxisLock.Truck) == 0)
-                        data.axisLock |= AxisLock.Truck;
-                    else if (!on && (data.axisLock & AxisLock.Truck) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Truck;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.Dolly:
-                    if (on && (data.axisLock & AxisLock.Dolly) == 0)
-                        data.axisLock |= AxisLock.Dolly;
-                    else if (!on && (data.axisLock & AxisLock.Dolly) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Dolly;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.Pedestal:
-                    if (on && (data.axisLock & AxisLock.Pedestal) == 0)
-                        data.axisLock |= AxisLock.Pedestal;
-                    else if (!on && (data.axisLock & AxisLock.Pedestal) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Pedestal;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.Pan:
-                    if (on && (data.axisLock & AxisLock.Pedestal) == 0)
-                        data.axisLock |= AxisLock.Pedestal;
-                    else if (!on && (data.axisLock & AxisLock.Pedestal) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Pedestal;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.Tilt:
-                    if (on && (data.axisLock & AxisLock.Pedestal) == 0)
-                        data.axisLock |= AxisLock.Pedestal;
-                    else if (!on && (data.axisLock & AxisLock.Pedestal) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Pedestal;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.Dutch:
-                    if (on && (data.axisLock & AxisLock.Pedestal) == 0)
-                        data.axisLock |= AxisLock.Pedestal;
-                    else if (!on && (data.axisLock & AxisLock.Pedestal) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Pedestal;
-                    else
-                        noChange = true;
-                    break;
-                case AxisLock.DutchZero:
-                    if (on && (data.axisLock & AxisLock.Pedestal) == 0)
-                        data.axisLock |= AxisLock.Pedestal;
-                    else if (!on && (data.axisLock & AxisLock.Pedestal) != 0)
-                        m_VirtualCameraStateData.axisLock &= ~AxisLock.Pedestal;
-                    else
-                        noChange = true;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(axisLock), axisLock, null);
-            }
-
-            m_CachedAxisLock = axisLock;
             */
         }
     }
