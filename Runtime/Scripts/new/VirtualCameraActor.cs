@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using PerformanceRecorder;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -9,6 +10,8 @@ namespace Unity.Labs.FacialRemote
     [RequireComponent(typeof(Animator))]
     public class VirtualCameraActor : Actor
     {
+        Camera cam;
+        
         [SerializeField]
         VirtualCameraStateData m_StateData;
         
@@ -91,8 +94,8 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateCameraRig()
         {
-            if (m_StateData.cameraRig == m_CachedStateData.cameraRig)
-                return;
+            //if (m_StateData.cameraRig == m_CachedStateData.cameraRig)
+            //    return;
             
             if (m_CameraRigs.Count == 0)
                 return;
@@ -133,13 +136,20 @@ namespace Unity.Labs.FacialRemote
             
             foreach (var rig in m_ICameraRigs)
             {
-                rig.focalLength = m_StateData.focalLength;
+                rig.focalLength = FocalLengthToVerticalFOV(m_StateData.focalLength, rig.GetSensorSize());
             }
         }
 
         void OnValidate()
         {
             UpdateCameraRig();
+        }
+        
+        float FocalLengthToVerticalFOV(float focalLength, Vector2 sensorSize)
+        {
+            if (focalLength < Mathf.Epsilon)
+                return 180f;
+            return Mathf.Rad2Deg * 2.0f * Mathf.Atan(sensorSize.y * 0.5f / focalLength);
         }
 
         void SetAxisLock(AxisLock axisLock)
