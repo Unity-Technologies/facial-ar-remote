@@ -170,27 +170,29 @@ namespace PerformanceRecorder
                 actor.Update();
         }
 
-        void DeviceGUI(ActorServer actor)
+        void DeviceGUI(ActorServer actorServer)
         {
+            actorServer.port = EditorGUILayout.IntField("Port", actorServer.port);
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
 
-                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.None))
+                using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.None))
                 {
                     if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
                     {
-                        actor.Connect();
+                        actorServer.Connect();
 
                         StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actor.actor.gameObject);
+                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject);
                     }
                 }
-                using (new EditorGUI.DisabledGroupScope(actor.state != PreviewState.LiveStream))
+                using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.LiveStream))
                 {
                     if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
                     {
-                        actor.Disconnect();
+                        actorServer.Disconnect();
                         StopAnimationMode();
                     }
                 }
