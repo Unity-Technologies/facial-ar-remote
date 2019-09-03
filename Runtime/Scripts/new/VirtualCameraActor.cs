@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using PerformanceRecorder;
 using UnityEngine;
 
@@ -28,6 +29,8 @@ namespace Unity.Labs.FacialRemote
 
         Vector3 m_HorizontalMoveInput;
         float m_VerticalMoveInput;
+        
+        List<IUsesCameraRigData> m_ICameraRigs = new List<IUsesCameraRigData>();
 
         public void SetVirtualCameraState(VirtualCameraStateData data)
         {
@@ -91,25 +94,47 @@ namespace Unity.Labs.FacialRemote
             if (m_StateData.cameraRig == m_CachedStateData.cameraRig)
                 return;
             
-            var cameraRigIndex = (int)m_StateData.cameraRig;
-            Debug.Assert(cameraRigIndex < m_CameraRigs.Count);
-            Debug.Assert(cameraRigIndex >= 0);
-
+            if (m_CameraRigs.Count == 0)
+                return;
+            
+            if (m_ICameraRigs.Count != m_CameraRigs.Count)
+            {
+                foreach (var rig in m_CameraRigs)
+                {
+                    m_ICameraRigs.Clear();
+                    var cR = rig.GetComponent<IUsesCameraRigData>();
+                    m_ICameraRigs.Add(cR);
+                }
+            }
+            
             for (var i = 0; i < m_CameraRigs.Count; i++)
             {
-                m_CameraRigs[cameraRigIndex].SetActive(i == cameraRigIndex);
+                m_CameraRigs[i].SetActive(m_ICameraRigs[i].cameraRigType == m_StateData.cameraRig);
             }
         }
 
         void UpdateFocalLength()
         {
-            //TODO: Set using ICameraRig interface
-            /*
-            foreach (var cameraRig in m_CameraRigs)
+            if (Math.Abs(m_StateData.focalLength - m_CachedStateData.focalLength) < Mathf.Epsilon)
+                return;
+            
+            if (m_CameraRigs.Count == 0)
+                return;
+            
+            if (m_ICameraRigs.Count != m_CameraRigs.Count)
             {
-                cameraRig.m_Lens.FieldOfView = i;
+                m_ICameraRigs.Clear();
+                foreach (var rig in m_CameraRigs)
+                {
+                    var cR = rig.GetComponent<IUsesCameraRigData>();
+                    m_ICameraRigs.Add(cR);
+                }
             }
-            */
+            
+            foreach (var rig in m_ICameraRigs)
+            {
+                rig.focalLength = m_StateData.focalLength;
+            }
         }
 
         void SetAxisLock(AxisLock axisLock)
