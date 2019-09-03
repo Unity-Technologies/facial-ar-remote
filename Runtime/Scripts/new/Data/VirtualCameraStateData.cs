@@ -46,7 +46,7 @@ namespace PerformanceRecorder
                 return true;
 
             if (!IsSingleFlag(flag))
-                new ArgumentOutOfRangeException(nameof(flag), flag, null);
+                throw new ArgumentOutOfRangeException(nameof(flag), flag, null);
 
             return flags.HasFlag(flag);
         }
