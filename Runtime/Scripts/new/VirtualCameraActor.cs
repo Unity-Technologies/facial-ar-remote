@@ -99,9 +99,9 @@ namespace Unity.Labs.FacialRemote
             
             if (m_ICameraRigs.Count != m_CameraRigs.Count)
             {
+                m_ICameraRigs.Clear();
                 foreach (var rig in m_CameraRigs)
                 {
-                    m_ICameraRigs.Clear();
                     var cR = rig.GetComponent<IUsesCameraRigData>();
                     m_ICameraRigs.Add(cR);
                 }
@@ -135,6 +135,11 @@ namespace Unity.Labs.FacialRemote
             {
                 rig.focalLength = m_StateData.focalLength;
             }
+        }
+
+        void OnValidate()
+        {
+            UpdateCameraRig();
         }
 
         void SetAxisLock(AxisLock axisLock)
