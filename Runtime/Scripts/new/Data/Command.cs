@@ -5,7 +5,9 @@ namespace PerformanceRecorder
     public enum CommandType
     {
         StartRecording,
-        StopRecording
+        StopRecording,
+        TrackingInitialized,
+        TrackingLost
     }
 
     public enum CommandIntType
