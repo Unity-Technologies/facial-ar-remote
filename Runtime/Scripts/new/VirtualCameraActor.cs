@@ -23,7 +23,7 @@ namespace Unity.Labs.FacialRemote
 
         Pose m_CameraPoseOnFreeze = Pose.identity;
         Pose m_CachedCameraOffset = Pose.identity;
-        Pose m_LastRemoteCameraPose = Pose.identity;
+        Pose m_LastPose = Pose.identity;
         
         VirtualCameraStateData m_CachedStateData;
 
@@ -46,22 +46,21 @@ namespace Unity.Labs.FacialRemote
             m_CachedStateData = m_StateData;
         }
 
-        public void SetCameraPose(Pose remoteCameraPose)
+        public void SetCameraPose(Pose pose)
         {
             if (m_StateData.frozen)
                 return;
 
+            m_LastPose = pose;
+
             var localInputVector = transform.TransformDirection(m_HorizontalMoveInput);
             Translate(m_InputScale * Time.deltaTime * (localInputVector + Vector3.up * m_VerticalMoveInput));
 
-            Pose trackedPose; 
-            trackedPose.position = remoteCameraPose.position * m_MovementScale + m_CachedCameraOffset.position;
-            trackedPose.rotation = remoteCameraPose.rotation * m_CachedCameraOffset.rotation;
+            pose.position = pose.position * m_MovementScale + m_CachedCameraOffset.position;
+            pose.rotation = pose.rotation * m_CachedCameraOffset.rotation;
 
-            transform.localPosition = trackedPose.position;
-            transform.localRotation = trackedPose.rotation;
-
-            m_LastRemoteCameraPose = remoteCameraPose;
+            transform.localPosition = pose.position;
+            transform.localRotation = pose.rotation;
         }
 
         /// <summary>
@@ -79,7 +78,7 @@ namespace Unity.Labs.FacialRemote
             }
             else
             {
-                m_CachedCameraOffset = new Pose(m_LastRemoteCameraPose.position - m_CameraPoseOnFreeze.position, 
+                m_CachedCameraOffset = new Pose(m_LastPose.position - m_CameraPoseOnFreeze.position, 
                     Quaternion.Inverse(m_CameraPoseOnFreeze.rotation));
             }
         }

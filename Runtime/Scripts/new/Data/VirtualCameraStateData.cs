@@ -31,6 +31,8 @@ namespace PerformanceRecorder
         /// <summary>
         /// Checks if flag has only a single bit set.
         /// </summary>
+        /// <param name="flag"></param>
+        /// <returns>True if flag has only a single bit set.</returns>
         public static bool IsSingleFlag(AxisLock flag)
         {
             var value = (int)flag;
@@ -40,10 +42,13 @@ namespace PerformanceRecorder
         /// <summary>
         /// Checks if flag is set.
         /// </summary>
+        /// <param name="flags"></param>
+        /// <param name="flag"></param>
+        /// <returns>True if flags has flag set.</returns>
         public static bool HasFlag(AxisLock flags, AxisLock flag)
         {
-            if ((int)flags == 0 && flag == AxisLock.None)
-                return true;
+            if (flag == AxisLock.None)
+                return (int)flags == 0;
 
             if (!IsSingleFlag(flag))
                 throw new ArgumentOutOfRangeException(nameof(flag), flag, null);
@@ -52,8 +57,11 @@ namespace PerformanceRecorder
         }
 
         /// <summary>
-        /// Sets a flag and returns true if changed.
+        /// Sets a flag.
         /// </summary>
+        /// <param name="flags"></param>
+        /// <param name="flag"></param>
+        /// <returns>True if changed.</returns>
         public static bool SetFlag(ref AxisLock flags, AxisLock flag)
         {
             var hasFlag = HasFlag(flags, flag);
@@ -62,8 +70,11 @@ namespace PerformanceRecorder
         }
 
         /// <summary>
-        /// Clears a flag and returns true if changed.
+        /// Clears a flag.
         /// </summary>
+        /// <param name="flags"></param>
+        /// <param name="flag"></param>
+        /// <returns>True if changed.</returns>
         public static bool ClearFlag(ref AxisLock flags, AxisLock flag)
         {
             var hasFlag = HasFlag(flags, flag);
