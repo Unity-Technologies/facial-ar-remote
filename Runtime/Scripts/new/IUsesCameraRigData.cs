@@ -4,9 +4,7 @@ namespace PerformanceRecorder
 {
     public interface IUsesCameraRigData
     {
-        CameraRigType cameraRigType { get; set; }
-        float focalLength { get; set; }
-        Vector2 GetSensorSize();
-        void SetActive(bool active);
+        void SetFocalLength(float focalLength);
+        void SetActive(CameraRigType cameraRigType);
     }
 }
