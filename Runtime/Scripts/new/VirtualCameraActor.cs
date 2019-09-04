@@ -111,6 +111,7 @@ namespace Unity.Labs.FacialRemote
             ConnectInterfaces();
             
             UpdateCameraRig();
+            UpdateFocalLength();
         }
     }
 }
