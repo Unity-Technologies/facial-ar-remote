@@ -106,9 +106,9 @@ namespace Unity.Labs.FacialRemote
                 }
             }
             
-            for (var i = 0; i < m_CameraRigs.Count; i++)
+            for (var i = 0; i < m_ICameraRigs.Count; i++)
             {
-                m_CameraRigs[i].SetActive(m_ICameraRigs[i].cameraRigType == m_StateData.cameraRig);
+                m_ICameraRigs[i].SetActive(m_ICameraRigs[i].cameraRigType == m_StateData.cameraRig);
             }
         }
 
