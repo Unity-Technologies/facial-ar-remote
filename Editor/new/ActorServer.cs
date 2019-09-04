@@ -93,6 +93,11 @@ namespace PerformanceRecorder
             return m_PacketStream.reader;
         }
 
+        protected PacketWriter GetWriter()
+        {
+            return m_PacketStream.writer;
+        }
+
         protected void AddRecorder(IPacketRecorder recorder)
         {
             m_Recorders.Add(recorder);
@@ -204,7 +209,7 @@ namespace PerformanceRecorder
             if (m_IsClientConnected != IsClientConnected())
             {
                 m_IsClientConnected = IsClientConnected();
-                actorServerChanged(this);
+                SendActorServerChanged();
             }
         }
 
@@ -217,7 +222,7 @@ namespace PerformanceRecorder
 
             m_IsRecording = true;
 
-            actorServerChanged(this);
+            SendActorServerChanged();
         }
 
         public bool IsRecording()
@@ -250,7 +255,7 @@ namespace PerformanceRecorder
 
             m_IsRecording = false;
             
-            actorServerChanged(this);
+            SendActorServerChanged();
         }
 
         string GenerateFileName()
@@ -303,6 +308,13 @@ namespace PerformanceRecorder
                     StopRecording();
                     break;
             }
+        }
+
+        public virtual void OnGUI() {}
+
+        protected void SendActorServerChanged()
+        {
+            actorServerChanged(this);
         }
     }
 }
