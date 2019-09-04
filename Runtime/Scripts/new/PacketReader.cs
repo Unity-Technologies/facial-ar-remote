@@ -49,8 +49,9 @@ namespace PerformanceRecorder
                 endOfStream = true;
                 memoryStream.Dispose();
             }
-            catch
+            catch (Exception e)
             {
+                UnityEngine.Debug.Log(e.Message);
                 memoryStream.Dispose();
             }
 
@@ -98,13 +99,18 @@ namespace PerformanceRecorder
         {
             var bytes = GetBuffer(PacketDescriptor.DescriptorSize);
             input.Read(bytes, PacketDescriptor.DescriptorSize);
-            output.Write(bytes, 0, PacketDescriptor.DescriptorSize);
 
             var descriptor = bytes.ToStruct<PacketDescriptor>();
             var payloadSize = descriptor.GetPayloadSize();
-            bytes = GetBuffer(payloadSize);
-            input.Read(bytes, payloadSize);
-            output.Write(bytes, 0, payloadSize);
+
+            if (payloadSize > 0)
+            {
+                output.Write(bytes, 0, PacketDescriptor.DescriptorSize);
+
+                bytes = GetBuffer(payloadSize);
+                input.Read(bytes, payloadSize);
+                output.Write(bytes, 0, payloadSize);
+            }
         }
 
         byte[] GetBuffer(int size)
