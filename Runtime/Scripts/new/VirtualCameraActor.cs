@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using PerformanceRecorder;
-using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 
 namespace Unity.Labs.FacialRemote
@@ -10,8 +9,6 @@ namespace Unity.Labs.FacialRemote
     [RequireComponent(typeof(Animator))]
     public class VirtualCameraActor : Actor
     {
-        Camera cam;
-        
         [SerializeField]
         VirtualCameraStateData m_StateData;
         
