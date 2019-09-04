@@ -53,7 +53,7 @@ namespace PerformanceRecorder
 
         public void Disconnect()
         {
-            m_NetworkStreamSource.StopConnections();
+            m_NetworkStreamSource.DisconnectClient();
             packetStream.Stop();
         }
 

@@ -20,7 +20,7 @@ namespace PerformanceRecorder
                 var readBytes = stream.Read(bytes, offset, count - offset);
 
                 if (readBytes == 0)
-                    throw new Exception("Reached end of stream");
+                    throw new EndOfStreamException();
 
                 offset += readBytes;
 

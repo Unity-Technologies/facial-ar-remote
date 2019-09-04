@@ -36,6 +36,7 @@ namespace PerformanceRecorder
             if (stream == null)
                 throw new NullReferenceException();
 
+            var endOfStream = false;
             var memoryStream = m_Manager.GetStream();
 
             try
@@ -43,10 +44,18 @@ namespace PerformanceRecorder
                 ReadPacket(stream, memoryStream);
                 m_Queue.Enqueue(memoryStream);
             }
-            catch (Exception)
+            catch (EndOfStreamException)
+            {
+                endOfStream = true;
+                memoryStream.Dispose();
+            }
+            catch
             {
                 memoryStream.Dispose();
             }
+
+            if (endOfStream)
+                throw new EndOfStreamException();
         }
 
         /// <summary>
