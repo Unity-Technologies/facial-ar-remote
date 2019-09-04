@@ -72,6 +72,9 @@ namespace PerformanceRecorder
 
                 var descriptor = memoryStream.Read<PacketDescriptor>(GetBuffer(PacketDescriptor.DescriptorSize));
 
+                if (descriptor.GetPayloadSize() == 0)
+                    continue;
+                
                 switch(descriptor.type)
                 {
                     case PacketType.Pose:
