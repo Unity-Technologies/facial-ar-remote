@@ -13,7 +13,7 @@ namespace Unity.Labs.FacialRemote
         VirtualCameraStateData m_StateData;
 
         [SerializeField]
-        GameObject m_CameraRigManager;
+        GameObject m_CameraRigManagerGO;
 
         [SerializeField, Range(1,100)]
         float m_InputScale = 3f;
@@ -27,7 +27,7 @@ namespace Unity.Labs.FacialRemote
         Vector3 m_HorizontalMoveInput;
         float m_VerticalMoveInput;
 
-        IUsesCameraRigData m_ICameraRigManager;
+        IUsesCameraRigData m_CameraRigManager;
 
         public void SetVirtualCameraState(VirtualCameraStateData data)
         {
@@ -90,7 +90,7 @@ namespace Unity.Labs.FacialRemote
             //if (m_StateData.cameraRig == m_CachedStateData.cameraRig)
             //    return;
             
-            m_ICameraRigManager.SetActive(m_StateData.cameraRig);
+            m_CameraRigManager.SetActive(m_StateData.cameraRig);
         }
 
         void UpdateFocalLength()
@@ -98,12 +98,12 @@ namespace Unity.Labs.FacialRemote
             if (Math.Abs(m_StateData.focalLength - m_CachedStateData.focalLength) < Mathf.Epsilon)
                 return;
 
-            m_ICameraRigManager.SetFocalLength(m_StateData.focalLength);
+            m_CameraRigManager.SetFocalLength(m_StateData.focalLength);
         }
 
         void ConnectInterfaces()
         {
-            m_ICameraRigManager = m_CameraRigManager.GetComponent<IUsesCameraRigData>();
+            m_CameraRigManager = m_CameraRigManagerGO.GetComponent<IUsesCameraRigData>();
         }
 
         void OnValidate()
