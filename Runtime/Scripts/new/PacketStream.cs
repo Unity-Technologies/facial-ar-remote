@@ -68,8 +68,16 @@ namespace PerformanceRecorder
             {
                 while (m_Running)
                 {
-                    if (stream != null && stream.CanRead)
-                        reader.Read(stream);
+                    try
+                    {
+                        if (stream != null && stream.CanRead)
+                            reader.Read(stream);
+                    }
+                    catch (EndOfStreamException)
+                    {
+                        if (stream != null)
+                            stream.Close();
+                    }
                     
                     Thread.Sleep(1);
                 };

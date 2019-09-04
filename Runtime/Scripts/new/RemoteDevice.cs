@@ -63,7 +63,7 @@ namespace PerformanceRecorder
 
         void OnDisable()
         {
-            m_NetworkStreamSource.StopConnections();
+            m_NetworkStreamSource.StopServer();
             m_PacketStream.Stop();
             m_PacketStream.reader.faceDataChanged -= FaceDataChanged;
         }

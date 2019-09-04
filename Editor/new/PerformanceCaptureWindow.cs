@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -40,11 +41,16 @@ namespace PerformanceRecorder
         static readonly GUILayoutOption kButtonSmall = GUILayout.Width(20f);
         static readonly GUILayoutOption kButtonMid = GUILayout.Width(36f);
         static readonly GUILayoutOption kButtonWide = GUILayout.Width(60f);
+        static readonly GUILayoutOption kButtonLarge = GUILayout.Width(80f);
         static readonly string k_Assets = "Assets";
+
         [SerializeField]
         List<ActorServer> m_ActorServers = new List<ActorServer>();
+
         [SerializeField]
         Vector2 m_Scroll;
+
+        IPAddress[] m_ServerAddresses;
 
         [MenuItem("Window/Performance Capture")]
         public static void ShowWindow()
@@ -59,12 +65,14 @@ namespace PerformanceRecorder
             EditorApplication.update += Update;
             Actor.actorEnabled += ActorEnabled;
             Actor.actorDisabled += ActorDisabled;
-            ActorServer.recordingStateChanged += RecordingStateChanged;
+            ActorServer.actorServerChanged += ActorServerChanged;
 
             var actors = ActorTracker.GetActors();
 
             foreach (var actor in actors)
                 ActorEnabled(actor);
+
+            m_ServerAddresses = NetworkUtilities.GetIPAddresses();
         }
 
         void OnDisable()
@@ -76,7 +84,7 @@ namespace PerformanceRecorder
 
             AnimationMode.StopAnimationMode();
 
-            ActorServer.recordingStateChanged -= RecordingStateChanged;
+            ActorServer.actorServerChanged -= ActorServerChanged;
             Actor.actorEnabled -= ActorEnabled;
             Actor.actorDisabled -= ActorDisabled;
             EditorApplication.update -= Update;
@@ -113,7 +121,7 @@ namespace PerformanceRecorder
             Repaint();
         }
 
-        void RecordingStateChanged(ActorServer actor)
+        void ActorServerChanged(ActorServer actor)
         {
             Repaint();
         }
@@ -172,6 +180,15 @@ namespace PerformanceRecorder
 
         void DeviceGUI(ActorServer actorServer)
         {
+            EditorGUILayout.LabelField("Available Interfaces");
+
+            EditorGUI.indentLevel++;
+
+            foreach (var address in m_ServerAddresses)
+                EditorGUILayout.LabelField(address.ToString());
+
+            EditorGUI.indentLevel--;
+
             actorServer.port = EditorGUILayout.IntField("Port", actorServer.port);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -180,7 +197,7 @@ namespace PerformanceRecorder
 
                 using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.None))
                 {
-                    if (GUILayout.Button("Connect", EditorStyles.miniButton, kButtonWide))
+                    if (GUILayout.Button("Start Server", EditorStyles.miniButton, kButtonLarge))
                     {
                         actorServer.Connect();
 
@@ -190,10 +207,17 @@ namespace PerformanceRecorder
                 }
                 using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.LiveStream))
                 {
-                    if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonWide))
+                    if (GUILayout.Button("Stop Server", EditorStyles.miniButton, kButtonLarge))
                     {
                         actorServer.Disconnect();
                         StopAnimationMode();
+                    }
+                }
+                using (new EditorGUI.DisabledGroupScope(!actorServer.IsClientConnected()))
+                {
+                    if (GUILayout.Button("Close Client", EditorStyles.miniButton, kButtonLarge))
+                    {
+                        actorServer.DisconnectClient();
                     }
                 }
             }

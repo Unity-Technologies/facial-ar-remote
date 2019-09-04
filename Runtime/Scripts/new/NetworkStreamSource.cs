@@ -37,26 +37,26 @@ namespace PerformanceRecorder
 
         public void ConnectToServer(string serverIP, int port)
         {
-            Dispose();
+            StopServer();
 
             IPAddress ip;
             if (!IPAddress.TryParse(serverIP, out ip))
                 return;
 
             var endPoint = new IPEndPoint(ip, port);
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            m_StreamSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             var thread = new Thread(() =>
             {
                 try
                 {
                     isConnecting = true;
                     Debug.Log("Client: Connecting to " + endPoint.Address.ToString());
-                    socket.Connect(endPoint);
+                    m_StreamSocket.Connect(endPoint);
                     Debug.Log("Client: Connected");
 
                     if (m_Stream == null)
                     {
-                        m_Stream = CreateBufferedNetworkStream(socket);
+                        m_Stream = CreateBufferedNetworkStream(m_StreamSocket);
                         Debug.Log("Client: Stream Created");
                     }
                 }
@@ -77,7 +77,9 @@ namespace PerformanceRecorder
 
         public void StartServer(int port)
         {
-            var addresses = GetIPAddresses();
+            isListening = true;
+            
+            var addresses = NetworkUtilities.GetIPAddresses();
 
             foreach (var address in addresses)
             {
@@ -93,37 +95,31 @@ namespace PerformanceRecorder
             foreach (var thread in m_Threads)
                 thread.Start();
 
-            isListening = true;
         }
 
-        public void StopConnections()
-        {
-            Dispose();
-        }
-
-        void Dispose()
+        public void DisconnectClient()
         {
             DisposeStream();
+            DisposeSocket(m_StreamSocket);
+            m_StreamSocket = null;
+        }
+
+        public void StopServer()
+        {
+            isListening = false;
+
+            DisconnectClient();
 
             foreach (var socket in m_ServerSockets)
-            {
-                if (socket.Connected)
-                {
-                    socket.Shutdown(SocketShutdown.Both);
-                    socket.Close(1);
-                }
-                socket.Dispose();
-            }
+                DisposeSocket(socket);
 
             foreach (var thread in m_Threads)
             {
-                thread.Abort();
+                thread.Join();
             }
 
             m_Threads.Clear();
             m_ServerSockets.Clear();
-
-            isListening = false;
         }
 
         void DisposeStream()
@@ -132,51 +128,19 @@ namespace PerformanceRecorder
             {
                 m_Stream.Close();
                 m_Stream = null;
-                m_StreamSocket = null;
             }
         }
 
-        IPAddress[] GetIPAddresses()
+        void DisposeSocket(Socket socket)
         {
-            try
+            if (socket != null)
             {
-                var addresses = new List<IPAddress>();
-                
-                addresses.AddRange(Dns.GetHostEntry("localhost").AddressList);
-                addresses.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList);
-
-                return addresses.ToArray();
-            }
-            catch (Exception)
-            {
-                Debug.LogWarning("DNS-based method failed, using network interfaces to find local IP");
-
-                var addresses = new List<IPAddress>();
-
-                foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                if (socket.Connected)
                 {
-                    if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback)
-                        continue;
-
-                    switch (networkInterface.OperationalStatus)
-                    {
-                        case OperationalStatus.Up:
-                        case OperationalStatus.Unknown:
-                            foreach (var ip in networkInterface.GetIPProperties().UnicastAddresses)
-                            {
-                                var address = ip.Address;
-
-                                if (address.AddressFamily != AddressFamily.InterNetwork)
-                                    continue;
-                                
-                                addresses.Add(address);
-                            }
-
-                            break;
-                    }
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close(1);
                 }
-
-                return addresses.ToArray();
+                socket.Dispose();
             }
         }
 
@@ -201,11 +165,15 @@ namespace PerformanceRecorder
 
             var thread = new Thread(() =>
             {
-                try
+                var endPoint = listenSocket.LocalEndPoint as IPEndPoint;
+
+                if (endPoint == null)
+                    return;
+                        
+                while (isListening)
                 {
-                    while (true)
+                    try
                     {
-                        var endPoint = listenSocket.LocalEndPoint as IPEndPoint;
                         Debug.Log("Server: Listening " + endPoint.Address);
                         var socket = listenSocket.Accept();
                         Debug.Log("Server: Accepted " + endPoint.Address);
@@ -218,8 +186,11 @@ namespace PerformanceRecorder
                             Debug.Log("Server: Stream Created");
                         }
                     }
+                    catch (Exception e)
+                    {
+                        Debug.Log("Server: " + e.Message);
+                    }
                 }
-                catch (Exception) {}
             });
 
             return thread;

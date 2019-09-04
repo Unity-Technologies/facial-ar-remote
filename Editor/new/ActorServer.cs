@@ -19,7 +19,7 @@ namespace PerformanceRecorder
     public abstract class ActorServer
     {
         static readonly string k_DefaultDirectory = "Assets/";
-        public static event Action<ActorServer> recordingStateChanged;
+        public static event Action<ActorServer> actorServerChanged;
 
         [SerializeField]
         string m_Ip = "192.168.0.1";
@@ -40,6 +40,7 @@ namespace PerformanceRecorder
         string m_Directory = k_DefaultDirectory;
         bool m_ChangingState = false;
         bool m_IsRecording = false;
+        bool m_IsClientConnected = false;
 
         public string ip
         {
@@ -102,6 +103,11 @@ namespace PerformanceRecorder
             m_PacketStream.reader.commandChanged += CommandChanged;
         }
 
+        public bool IsClientConnected()
+        {
+            return m_NetworkStreamSource.isConnected;
+        }
+
         ~ActorServer()
         {
             Dispose();
@@ -112,7 +118,7 @@ namespace PerformanceRecorder
             StopRecorders();
 
             m_Player.Stop();
-            m_NetworkStreamSource.StopConnections();
+            m_NetworkStreamSource.StopServer();
             m_PacketStream.Stop();
         }
 
@@ -178,9 +184,14 @@ namespace PerformanceRecorder
 
         public void Disconnect()
         {
-            m_NetworkStreamSource.StopConnections();
+            m_NetworkStreamSource.StopServer();
             m_PacketStream.Stop();
             SetPreviewState(PreviewState.None);
+        }
+
+        public void DisconnectClient()
+        {
+            m_NetworkStreamSource.DisconnectClient();
         }
 
         public void Update()
@@ -188,7 +199,13 @@ namespace PerformanceRecorder
             m_PacketStream.reader.Receive();
             
             if (m_PrevState == PreviewState.Playback)
-                m_Player.Update();    
+                m_Player.Update();
+
+            if (m_IsClientConnected != IsClientConnected())
+            {
+                m_IsClientConnected = IsClientConnected();
+                actorServerChanged(this);
+            }
         }
 
         public void StartRecording()
@@ -200,7 +217,7 @@ namespace PerformanceRecorder
 
             m_IsRecording = true;
 
-            recordingStateChanged(this);
+            actorServerChanged(this);
         }
 
         public bool IsRecording()
@@ -233,7 +250,7 @@ namespace PerformanceRecorder
 
             m_IsRecording = false;
             
-            recordingStateChanged(this);
+            actorServerChanged(this);
         }
 
         string GenerateFileName()
