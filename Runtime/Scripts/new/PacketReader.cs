@@ -78,7 +78,7 @@ namespace PerformanceRecorder
 
                 var descriptor = memoryStream.Read<PacketDescriptor>(GetBuffer(PacketDescriptor.DescriptorSize));
 
-                if (descriptor.GetPayloadSize() == 0)
+                if (memoryStream.Length != descriptor.GetPayloadSize() + PacketDescriptor.DescriptorSize)
                 {
                     memoryStream.Dispose();
                     continue;
