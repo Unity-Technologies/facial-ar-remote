@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using PerformanceRecorder;
 using UnityEngine;
 
@@ -15,9 +14,6 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         GameObject m_CameraRigManagerGO;
 
-        [SerializeField, Range(1,100)]
-        float m_InputScale = 3f;
-
         Pose m_CameraPoseOnFreeze = Pose.identity;
         Pose m_CachedCameraOffset = Pose.identity;
         Pose m_LastPose = Pose.identity;
@@ -29,6 +25,16 @@ namespace Unity.Labs.FacialRemote
         public VirtualCameraStateData state
         {
             get { return m_State; }
+        }
+
+        public GameObject cameraRigManagerGo
+        {
+            get => m_CameraRigManagerGO;
+            set
+            {
+                m_CameraRigManagerGO = value;
+                ConnectInterfaces();
+            }
         }
 
         public void SetState(VirtualCameraStateData data)
@@ -105,7 +111,7 @@ namespace Unity.Labs.FacialRemote
 
         void ConnectInterfaces()
         {
-            m_CameraRigManager = m_CameraRigManagerGO.GetComponent<IUsesCameraRigData>();
+            m_CameraRigManager = cameraRigManagerGo.GetComponent<IUsesCameraRigData>();
         }
 
         void OnValidate()
