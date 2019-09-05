@@ -142,7 +142,7 @@ namespace PerformanceRecorder
             if (actorServer == null || actorServer.actor == null)
                 return;
             
-            EditorGUIUtility.labelWidth = 60f;
+            EditorGUIUtility.labelWidth = 100f;
 
             using (new GUILayout.VerticalScope("box"))
             {
@@ -167,6 +167,10 @@ namespace PerformanceRecorder
                     EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
                     DoPlayerGUI(actorServer);
                 }
+
+                EditorGUILayout.LabelField("State", EditorStyles.boldLabel);
+                
+                actorServer.OnGUI();
             }
 
             EditorGUIUtility.labelWidth = 0f;

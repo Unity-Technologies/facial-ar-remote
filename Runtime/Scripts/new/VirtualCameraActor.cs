@@ -10,7 +10,7 @@ namespace Unity.Labs.FacialRemote
     public class VirtualCameraActor : Actor
     {
         [SerializeField]
-        VirtualCameraStateData m_StateData;
+        VirtualCameraStateData m_State;
 
         [SerializeField]
         GameObject m_CameraRigManagerGO;
@@ -22,27 +22,32 @@ namespace Unity.Labs.FacialRemote
         Pose m_CachedCameraOffset = Pose.identity;
         Pose m_LastPose = Pose.identity;
         
-        VirtualCameraStateData m_CachedStateData;
+        VirtualCameraStateData m_PrevState;
 
         IUsesCameraRigData m_CameraRigManager;
 
-        public void SetVirtualCameraState(VirtualCameraStateData data)
+        public VirtualCameraStateData state
         {
-            if (m_StateData == data)
+            get { return m_State; }
+        }
+
+        public void SetState(VirtualCameraStateData data)
+        {
+            if (m_State == data)
                 return;
 
-            m_StateData = data;
+            m_State = data;
             
             UpdateFrozenState();
             UpdateCameraRig();
             UpdateFocalLength();
 
-            m_CachedStateData = m_StateData;
+            m_PrevState = m_State;
         }
 
         public void SetCameraPose(Pose pose)
         {
-            if (m_StateData.frozen)
+            if (m_State.frozen)
                 return;
 
             m_LastPose = pose;
@@ -62,10 +67,10 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         void UpdateFrozenState()
         {
-            if (m_StateData.frozen == m_CachedStateData.frozen)
+            if (m_State.frozen == m_PrevState.frozen)
                 return;
 
-            if (m_StateData.frozen)
+            if (m_State.frozen)
             {
                 m_CameraPoseOnFreeze = new Pose(transform.localPosition, 
                     transform.localRotation);
@@ -87,15 +92,15 @@ namespace Unity.Labs.FacialRemote
             //if (m_StateData.cameraRig == m_CachedStateData.cameraRig)
             //    return;
             
-            m_CameraRigManager.SetActive(m_StateData.cameraRig);
+            m_CameraRigManager.SetActive(m_State.cameraRig);
         }
 
         void UpdateFocalLength()
         {
-            if (Math.Abs(m_StateData.focalLength - m_CachedStateData.focalLength) < Mathf.Epsilon)
+            if (Math.Abs(m_State.focalLength - m_PrevState.focalLength) < Mathf.Epsilon)
                 return;
 
-            m_CameraRigManager.SetFocalLength(m_StateData.focalLength);
+            m_CameraRigManager.SetFocalLength(m_State.focalLength);
         }
 
         void ConnectInterfaces()
