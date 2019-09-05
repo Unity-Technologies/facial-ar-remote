@@ -199,7 +199,7 @@ namespace PerformanceRecorder
         Stream CreateBufferedNetworkStream(Socket socket)
         {
             m_StreamSocket = socket;
-            return new BufferedStream(new NetworkStream(socket, true));
+            return new NetworkStream(socket, true);
         }
     }
 }

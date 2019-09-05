@@ -70,6 +70,9 @@ namespace PerformanceRecorder
             {
                 memoryStream.Position = 0;
 
+                if (memoryStream.Length < PacketDescriptor.DescriptorSize)
+                    continue;
+
                 var descriptor = memoryStream.Read<PacketDescriptor>(GetBuffer(PacketDescriptor.DescriptorSize));
 
                 if (descriptor.GetPayloadSize() == 0)
