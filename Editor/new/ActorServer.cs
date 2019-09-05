@@ -25,8 +25,6 @@ namespace PerformanceRecorder
         string m_Ip = "192.168.0.1";
         [SerializeField]
         int m_Port = 9000;
-        [SerializeField]
-        bool m_IsServer = false;
         HashSet<IPacketRecorder> m_Recorders = new HashSet<IPacketRecorder>();
         NetworkStreamSource m_NetworkStreamSource = new NetworkStreamSource();
         PacketStream m_PacketStream = new PacketStream();
@@ -52,12 +50,6 @@ namespace PerformanceRecorder
         {
             get { return m_Port; }
             set { m_Port = value; }
-        }
-
-        public bool isServer
-        {
-            get { return m_IsServer; }
-            set { m_IsServer = value; }
         }
 
         public TakePlayer player
@@ -169,29 +161,31 @@ namespace PerformanceRecorder
                 m_Player.Play(animator, m_Clip);
             }
 
+            var changed = m_PrevState != newState;
+
             m_PrevState = newState;
             m_ChangingState = false;
+
+            if (changed)
+                SendActorServerChanged();
         }
 
-        public void Connect()
+        public void StartServer()
         {
-            isServer = true;
-            
-            if (isServer)
-                m_NetworkStreamSource.StartServer(port);
-            else
-                m_NetworkStreamSource.ConnectToServer(ip, port);
-            
+            m_NetworkStreamSource.StartServer(port);
             m_PacketStream.streamSource = m_NetworkStreamSource;
             m_PacketStream.Start();
-            SetPreviewState(PreviewState.LiveStream);
         }
 
-        public void Disconnect()
+        public void StopServer()
         {
             m_NetworkStreamSource.StopServer();
             m_PacketStream.Stop();
-            SetPreviewState(PreviewState.None);
+        }
+
+        public bool IsServerRunning()
+        {
+            return m_NetworkStreamSource.isListening;
         }
 
         public void DisconnectClient()
@@ -206,10 +200,20 @@ namespace PerformanceRecorder
             if (m_PrevState == PreviewState.Playback)
                 m_Player.Update();
 
-            if (m_IsClientConnected != IsClientConnected())
+            var isConnected = IsClientConnected();
+
+            if (m_IsClientConnected != isConnected)
             {
-                m_IsClientConnected = IsClientConnected();
-                SendActorServerChanged();
+                m_IsClientConnected = isConnected;
+
+                if (isConnected)
+                {
+                    SetPreviewState(PreviewState.LiveStream);
+                }
+                else
+                {
+                    SetPreviewState(PreviewState.None);
+                }
             }
         }
 

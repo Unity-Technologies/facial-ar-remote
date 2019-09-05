@@ -121,8 +121,34 @@ namespace PerformanceRecorder
             Repaint();
         }
 
-        void ActorServerChanged(ActorServer actor)
+        void ActorServerChanged(ActorServer actorServer)
         {
+            if (actorServer.state == PreviewState.LiveStream)
+            {
+                if (!AnimationMode.InAnimationMode())
+                {
+                    StartAnimationMode();
+                    RegisterBindingsToAnimationMode(actorServer.actor.gameObject);
+                }
+            }
+
+            if (actorServer.state == PreviewState.Playback)
+            {
+                if (!AnimationMode.InAnimationMode())
+                {
+                    StartAnimationMode();
+                    RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
+                }
+            }
+
+            if (actorServer.state == PreviewState.None)
+            {
+                if (AnimationMode.InAnimationMode())
+                {
+                    StopAnimationMode();
+                }
+            }
+
             Repaint();
         }
 
@@ -151,8 +177,11 @@ namespace PerformanceRecorder
                     EditorGUILayout.ObjectField("Target", actorServer.actor.gameObject, typeof(GameObject), true);
                 }
 
-                EditorGUILayout.LabelField("Device", EditorStyles.boldLabel);
-                DeviceGUI(actorServer);
+                EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
+                ServerGUI(actorServer);
+
+                EditorGUILayout.LabelField("Client", EditorStyles.boldLabel);
+                ClientGUI(actorServer);
 
                 EditorGUILayout.LabelField("Recorder", EditorStyles.boldLabel);
                 DoDirectoryGUI(actorServer);
@@ -182,7 +211,7 @@ namespace PerformanceRecorder
                 actor.Update();
         }
 
-        void DeviceGUI(ActorServer actorServer)
+        void ServerGUI(ActorServer actorServer)
         {
             EditorGUILayout.LabelField("Available Interfaces");
 
@@ -199,27 +228,43 @@ namespace PerformanceRecorder
             {
                 GUILayout.FlexibleSpace();
 
-                using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.None))
+                using (new EditorGUI.DisabledGroupScope(actorServer.IsServerRunning()))
                 {
-                    if (GUILayout.Button("Start Server", EditorStyles.miniButton, kButtonLarge))
+                    if (GUILayout.Button("Start", EditorStyles.miniButton, kButtonWide))
                     {
-                        actorServer.Connect();
+                        actorServer.StartServer();
+                    }
+                }
+                using (new EditorGUI.DisabledGroupScope(!actorServer.IsServerRunning()))
+                {
+                    if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonWide))
+                    {
+                        actorServer.StopServer();
+                    }
+                }
+            }
+        }
 
-                        StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject);
-                    }
-                }
-                using (new EditorGUI.DisabledGroupScope(actorServer.state != PreviewState.LiveStream))
-                {
-                    if (GUILayout.Button("Stop Server", EditorStyles.miniButton, kButtonLarge))
-                    {
-                        actorServer.Disconnect();
-                        StopAnimationMode();
-                    }
-                }
+        void ClientGUI(ActorServer actorServer)
+        {
+            var status = new GUIContent("Disconnected");
+
+            if (actorServer.IsClientConnected())
+                status = new GUIContent("Connected");
+
+            EditorGUILayout.LabelField(new GUIContent("Status"), status);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+
                 using (new EditorGUI.DisabledGroupScope(!actorServer.IsClientConnected()))
                 {
-                    if (GUILayout.Button("Close Client", EditorStyles.miniButton, kButtonLarge))
+                    if (GUILayout.Button("Disconnect", EditorStyles.miniButton, kButtonLarge))
                     {
                         actorServer.DisconnectClient();
                     }
@@ -281,12 +326,9 @@ namespace PerformanceRecorder
                     var wasPlaying = actorServer.state == PreviewState.Playback;
 
                     actorServer.StopPlayback();
-                    StopAnimationMode();
 
                     if (wasPlaying && actorServer.clip != null)
                     {
-                        StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
                         actorServer.StartPlayback();
                     }
                 }
@@ -308,8 +350,6 @@ namespace PerformanceRecorder
                 {
                     if (GUILayout.Button("Play", EditorStyles.miniButton, kButtonMid))
                     {
-                        StartAnimationMode();
-                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
                         actorServer.StartPlayback();
                     }
                 }
@@ -318,7 +358,6 @@ namespace PerformanceRecorder
                     if (GUILayout.Button("Stop", EditorStyles.miniButton, kButtonMid))
                     {
                         actorServer.StopPlayback();
-                        StopAnimationMode();
                     }
                 }
             }
