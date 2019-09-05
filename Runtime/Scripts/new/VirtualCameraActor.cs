@@ -9,11 +9,9 @@ namespace Unity.Labs.FacialRemote
     public class VirtualCameraActor : Actor
     {
         [SerializeField]
-        VirtualCameraStateData m_State;
-
-        [SerializeField]
         GameObject m_CameraRigManagerGO;
 
+        VirtualCameraStateData m_State;
         Pose m_CameraPoseOnFreeze = Pose.identity;
         Pose m_CachedCameraOffset = Pose.identity;
         Pose m_LastPose = Pose.identity;
