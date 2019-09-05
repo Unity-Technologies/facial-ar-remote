@@ -71,5 +71,31 @@ namespace PerformanceRecorder
                 }
             }
         }
+
+        public override void OnStartRecording()
+        {
+            var virtualCamera = actor as VirtualCameraActor;
+            var state = virtualCamera.state;
+
+            state.recording = true;
+
+            virtualCamera.SetState(state);
+
+            if (IsClientConnected())
+                GetWriter().Write(state);
+        }
+
+        public override void OnStopRecording()
+        {
+            var virtualCamera = actor as VirtualCameraActor;
+            var state = virtualCamera.state;
+
+            state.recording = false;
+
+            virtualCamera.SetState(state);
+
+            if (IsClientConnected())
+                GetWriter().Write(state);
+        }
     }
 }

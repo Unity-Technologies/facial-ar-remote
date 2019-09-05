@@ -227,6 +227,8 @@ namespace PerformanceRecorder
             m_IsRecording = true;
 
             SendActorServerChanged();
+
+            OnStartRecording();
         }
 
         public bool IsRecording()
@@ -260,6 +262,8 @@ namespace PerformanceRecorder
             m_IsRecording = false;
             
             SendActorServerChanged();
+
+            OnStopRecording();
         }
 
         string GenerateFileName()
@@ -315,6 +319,8 @@ namespace PerformanceRecorder
         }
 
         public virtual void OnGUI() {}
+        public virtual void OnStartRecording() {}
+        public virtual void OnStopRecording() {}
 
         protected void SendActorServerChanged()
         {

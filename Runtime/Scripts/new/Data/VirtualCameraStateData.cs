@@ -92,23 +92,21 @@ namespace PerformanceRecorder
         public AxisLock axisLock;
         public float focalLength; 
         public bool frozen;
+        public bool recording;
         
         public override string ToString()
         {
-            return string.Format("({0}, {1}, {2}, {3})",
-                (object)this.cameraRig.ToString(),
-                (object)this.axisLock.ToString(),
-                (object)this.focalLength.ToString(),
-                (object)this.frozen.ToString());
+            return ToString("(CameraRig {0}, AxisLock ({1}), Focal {2}, Frozen {3}, Recording {4})");
         }
 
         public string ToString(string format)
         {
-            return string.Format("({0}, {1}, {2}, {3})", 
-                (object) this.cameraRig.ToString(format), 
-                (object) this.axisLock.ToString(format),
-                (object) this.focalLength.ToString(format),
-                (object) this.frozen.ToString());
+            return string.Format(format, 
+                (object) this.cameraRig, 
+                (object) this.axisLock,
+                (object) this.focalLength,
+                (object) this.frozen,
+                (object) this.recording);
         }
         
         public override bool Equals(object obj)
@@ -126,6 +124,7 @@ namespace PerformanceRecorder
                 hashCode = (hashCode * 397) ^ (int)axisLock;
                 hashCode = (hashCode * 397) ^ (int)focalLength;
                 hashCode = (hashCode * 397) ^ frozen.GetHashCode();
+                hashCode = (hashCode * 397) ^ recording.GetHashCode();
                 return hashCode;
             }
         }
@@ -136,7 +135,8 @@ namespace PerformanceRecorder
                 this.cameraRig == other.cameraRig &&
                 this.axisLock == other.axisLock &&
                 Math.Abs(this.focalLength - other.focalLength) < Mathf.Epsilon &&
-                this.frozen == other.frozen;
+                this.frozen == other.frozen &&
+                this.recording == other.recording;
         }
 
         public static bool operator ==(VirtualCameraStateData a, VirtualCameraStateData b)
