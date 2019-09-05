@@ -88,6 +88,7 @@ namespace PerformanceRecorder
     public struct VirtualCameraStateData
     {
         public CameraRigType cameraRig;
+        [EnumFlag]
         public AxisLock axisLock;
         public float focalLength; 
         public bool frozen;
