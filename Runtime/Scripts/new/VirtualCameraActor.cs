@@ -24,9 +24,6 @@ namespace Unity.Labs.FacialRemote
         
         VirtualCameraStateData m_CachedStateData;
 
-        Vector3 m_HorizontalMoveInput;
-        float m_VerticalMoveInput;
-
         IUsesCameraRigData m_CameraRigManager;
 
         public void SetVirtualCameraState(VirtualCameraStateData data)
@@ -50,8 +47,8 @@ namespace Unity.Labs.FacialRemote
 
             m_LastPose = pose;
 
-            var localInputVector = transform.TransformDirection(m_HorizontalMoveInput);
-            Translate(m_InputScale * Time.deltaTime * (localInputVector + Vector3.up * m_VerticalMoveInput));
+            //var localInputVector = transform.TransformDirection(m_HorizontalMoveInput);
+            //Translate(m_InputScale * Time.deltaTime * (localInputVector + Vector3.up * m_VerticalMoveInput));
 
             pose.position = pose.position + m_CachedCameraOffset.position;
             pose.rotation = pose.rotation * m_CachedCameraOffset.rotation;
