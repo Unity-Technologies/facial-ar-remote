@@ -76,7 +76,12 @@ namespace PerformanceRecorder
 
         public bool IsConnected()
         {
-            return m_NetworkStreamSource.isConnected || m_NetworkStreamSource.isConnecting;
+            return m_NetworkStreamSource.isConnected;
+        }
+
+        public bool IsTryingToConnect()
+        {
+            return m_NetworkStreamSource.isConnecting;
         }
 
         public void Connect()
