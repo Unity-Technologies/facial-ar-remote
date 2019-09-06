@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEditor;
 using Unity.Labs.FacialRemote;
@@ -123,30 +121,39 @@ namespace PerformanceRecorder
 
         void ActorServerChanged(ActorServer actorServer)
         {
-            if (actorServer.state == PreviewState.LiveStream)
+            switch (actorServer.state) 
             {
-                if (!AnimationMode.InAnimationMode())
+                case PreviewState.LiveStream:
                 {
-                    StartAnimationMode();
-                    RegisterBindingsToAnimationMode(actorServer.actor.gameObject);
-                }
-            }
+                    if (!AnimationMode.InAnimationMode())
+                    {
+                        StartAnimationMode();
+                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject);
+                    }
 
-            if (actorServer.state == PreviewState.Playback)
-            {
-                if (!AnimationMode.InAnimationMode())
-                {
-                    StartAnimationMode();
-                    RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
+                    break;
                 }
-            }
+                case PreviewState.Playback:
+                {
+                    if (!AnimationMode.InAnimationMode())
+                    {
+                        StartAnimationMode();
+                        RegisterBindingsToAnimationMode(actorServer.actor.gameObject, actorServer.clip);
+                    }
 
-            if (actorServer.state == PreviewState.None)
-            {
-                if (AnimationMode.InAnimationMode())
-                {
-                    StopAnimationMode();
+                    break;
                 }
+                case PreviewState.None:
+                {
+                    if (AnimationMode.InAnimationMode())
+                    {
+                        StopAnimationMode();
+                    }
+
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             Repaint();
@@ -154,9 +161,9 @@ namespace PerformanceRecorder
 
         void OnGUI()
         {
-            using (var scrollview = new EditorGUILayout.ScrollViewScope(m_Scroll))
+            using (var scrollView = new EditorGUILayout.ScrollViewScope(m_Scroll))
             {
-                m_Scroll = scrollview.scrollPosition;
+                m_Scroll = scrollView.scrollPosition;
 
                 foreach (var actor in m_ActorServers)
                     DoActorGUI(actor);
@@ -219,6 +226,16 @@ namespace PerformanceRecorder
 
             foreach (var address in m_ServerAddresses)
                 EditorGUILayout.LabelField(address.ToString());
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button("Refresh", EditorStyles.miniButton, kButtonWide))
+                {
+                    m_ServerAddresses = NetworkUtilities.GetIPAddresses();
+                }
+            }
 
             EditorGUI.indentLevel--;
 
