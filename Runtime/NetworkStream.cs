@@ -25,6 +25,7 @@ namespace Unity.Labs.FacialRemote
         /// </summary>
         const int k_MaxConnections = 64;
 
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Contains the buffer layout and blend shape name and mapping information for interpreting the data stream from a connected device.")]
         StreamSettings m_StreamSettings;
@@ -44,6 +45,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("(Optional) Manual override to use a specific stream recorder. Default behavior is to use GetComponentInChildren on this object.")]
         GameObject m_StreamRecorderOverride;
+#pragma warning restore 649
 
         int m_LastFrameNum;
 

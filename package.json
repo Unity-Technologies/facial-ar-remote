@@ -6,6 +6,7 @@
   "unityRelease": "0f6",
   "description": "Facial AR Remote for remote iteration on ARKit blendshapes",
   "dependencies": {
+    "com.unity.textmeshpro": "2.0.1",
     "com.unity.xr.arfoundation": "2.1.8"
   }
 }

@@ -1,7 +1,13 @@
-﻿using System;
+﻿#if UNITY_IOS && !UNITY_EDITOR && INCLUDE_ARKIT_FACE_PLUGIN
+#define FACETRACKING
+#endif
+
+using System;
 using UnityEngine;
-#if UNITY_IOS
-using UnityEngine.XR.iOS;
+using UnityEngine.XR.ARKit;
+
+#if FACETRACKING
+using UnityEngine.XR.ARKit;
 #endif
 
 namespace Unity.Labs.FacialRemote
@@ -11,61 +17,59 @@ namespace Unity.Labs.FacialRemote
         public const int PoseFloatCount = 7;
         public const int PoseSize = sizeof(float) * PoseFloatCount;
 
-#if UNITY_IOS
-        public const string  BrowDownLeft        =   ARBlendShapeLocation.BrowDownLeft;
-        public const string  BrowDownRight       =   ARBlendShapeLocation.BrowDownRight;
-        public const string  BrowInnerUp         =   ARBlendShapeLocation.BrowInnerUp;
-        public const string  BrowOuterUpLeft     =   ARBlendShapeLocation.BrowOuterUpLeft;
-        public const string  BrowOuterUpRight    =   ARBlendShapeLocation.BrowOuterUpRight;
-        public const string  CheekPuff           =   ARBlendShapeLocation.CheekPuff;
-        public const string  CheekSquintLeft     =   ARBlendShapeLocation.CheekSquintLeft;
-        public const string  CheekSquintRight    =   ARBlendShapeLocation.CheekSquintRight;
-        public const string  EyeBlinkLeft        =   ARBlendShapeLocation.EyeBlinkLeft;
-        public const string  EyeBlinkRight       =   ARBlendShapeLocation.EyeBlinkRight;
-        public const string  EyeLookDownLeft     =   ARBlendShapeLocation.EyeLookDownLeft;
-        public const string  EyeLookDownRight    =   ARBlendShapeLocation.EyeLookDownRight;
-        public const string  EyeLookInLeft       =   ARBlendShapeLocation.EyeLookInLeft;
-        public const string  EyeLookInRight      =   ARBlendShapeLocation.EyeLookInRight;
-        public const string  EyeLookOutLeft      =   ARBlendShapeLocation.EyeLookOutLeft;
-        public const string  EyeLookOutRight     =   ARBlendShapeLocation.EyeLookOutRight;
-        public const string  EyeLookUpLeft       =   ARBlendShapeLocation.EyeLookUpLeft;
-        public const string  EyeLookUpRight      =   ARBlendShapeLocation.EyeLookUpRight;
-        public const string  EyeSquintLeft       =   ARBlendShapeLocation.EyeSquintLeft;
-        public const string  EyeSquintRight      =   ARBlendShapeLocation.EyeSquintRight;
-        public const string  EyeWideLeft         =   ARBlendShapeLocation.EyeWideLeft;
-        public const string  EyeWideRight        =   ARBlendShapeLocation.EyeWideRight;
-        public const string  JawForward          =   ARBlendShapeLocation.JawForward;
-        public const string  JawLeft             =   ARBlendShapeLocation.JawLeft;
-        public const string  JawOpen             =   ARBlendShapeLocation.JawOpen;
-        public const string  JawRight            =   ARBlendShapeLocation.JawRight;
-        public const string  MouthClose          =   ARBlendShapeLocation.MouthClose;
-        public const string  MouthDimpleLeft     =   ARBlendShapeLocation.MouthDimpleLeft;
-        public const string  MouthDimpleRight    =   ARBlendShapeLocation.MouthDimpleRight;
-        public const string  MouthFrownLeft      =   ARBlendShapeLocation.MouthFrownLeft;
-        public const string  MouthFrownRight     =   ARBlendShapeLocation.MouthFrownRight;
-        public const string  MouthFunnel         =   ARBlendShapeLocation.MouthFunnel;
-        public const string  MouthLeft           =   ARBlendShapeLocation.MouthLeft;
-        public const string  MouthLowerDownLeft  =   ARBlendShapeLocation.MouthLowerDownLeft;
-        public const string  MouthLowerDownRight =   ARBlendShapeLocation.MouthLowerDownRight;
-        public const string  MouthPressLeft      =   ARBlendShapeLocation.MouthPressLeft;
-        public const string  MouthPressRight     =   ARBlendShapeLocation.MouthPressRight;
-        public const string  MouthPucker         =   ARBlendShapeLocation.MouthPucker;
-        public const string  MouthRight          =   ARBlendShapeLocation.MouthRight;
-        public const string  MouthRollLower      =   ARBlendShapeLocation.MouthRollLower;
-        public const string  MouthRollUpper      =   ARBlendShapeLocation.MouthRollUpper;
-        public const string  MouthShrugLower     =   ARBlendShapeLocation.MouthShrugLower;
-        public const string  MouthShrugUpper     =   ARBlendShapeLocation.MouthShrugUpper;
-        public const string  MouthSmileLeft      =   ARBlendShapeLocation.MouthSmileLeft;
-        public const string  MouthSmileRight     =   ARBlendShapeLocation.MouthSmileRight;
-        public const string  MouthStretchLeft    =   ARBlendShapeLocation.MouthStretchLeft;
-        public const string  MouthStretchRight   =   ARBlendShapeLocation.MouthStretchRight;
-        public const string  MouthUpperUpLeft    =   ARBlendShapeLocation.MouthUpperUpLeft;
-        public const string  MouthUpperUpRight   =   ARBlendShapeLocation.MouthUpperUpRight;
-        public const string  NoseSneerLeft       =   ARBlendShapeLocation.NoseSneerLeft;
-        public const string  NoseSneerRight      =   ARBlendShapeLocation.NoseSneerRight;
-#if !(ARKIT_1_5)
-        public const string  TongueOut           =   ARBlendShapeLocation.TongueOut;
-#endif //ARKIT_1_5
+#if FACETRACKING
+        public static readonly string  BrowDownLeft        =   ARKitBlendShapeLocation.BrowDownLeft.ToString();
+        public static readonly string  BrowDownRight       =   ARKitBlendShapeLocation.BrowDownRight.ToString();
+        public static readonly string  BrowInnerUp         =   ARKitBlendShapeLocation.BrowInnerUp.ToString();
+        public static readonly string  BrowOuterUpLeft     =   ARKitBlendShapeLocation.BrowOuterUpLeft.ToString();
+        public static readonly string  BrowOuterUpRight    =   ARKitBlendShapeLocation.BrowOuterUpRight.ToString();
+        public static readonly string  CheekPuff           =   ARKitBlendShapeLocation.CheekPuff.ToString();
+        public static readonly string  CheekSquintLeft     =   ARKitBlendShapeLocation.CheekSquintLeft.ToString();
+        public static readonly string  CheekSquintRight    =   ARKitBlendShapeLocation.CheekSquintRight.ToString();
+        public static readonly string  EyeBlinkLeft        =   ARKitBlendShapeLocation.EyeBlinkLeft.ToString();
+        public static readonly string  EyeBlinkRight       =   ARKitBlendShapeLocation.EyeBlinkRight.ToString();
+        public static readonly string  EyeLookDownLeft     =   ARKitBlendShapeLocation.EyeLookDownLeft.ToString();
+        public static readonly string  EyeLookDownRight    =   ARKitBlendShapeLocation.EyeLookDownRight.ToString();
+        public static readonly string  EyeLookInLeft       =   ARKitBlendShapeLocation.EyeLookInLeft.ToString();
+        public static readonly string  EyeLookInRight      =   ARKitBlendShapeLocation.EyeLookInRight.ToString();
+        public static readonly string  EyeLookOutLeft      =   ARKitBlendShapeLocation.EyeLookOutLeft.ToString();
+        public static readonly string  EyeLookOutRight     =   ARKitBlendShapeLocation.EyeLookOutRight.ToString();
+        public static readonly string  EyeLookUpLeft       =   ARKitBlendShapeLocation.EyeLookUpLeft.ToString();
+        public static readonly string  EyeLookUpRight      =   ARKitBlendShapeLocation.EyeLookUpRight.ToString();
+        public static readonly string  EyeSquintLeft       =   ARKitBlendShapeLocation.EyeSquintLeft.ToString();
+        public static readonly string  EyeSquintRight      =   ARKitBlendShapeLocation.EyeSquintRight.ToString();
+        public static readonly string  EyeWideLeft         =   ARKitBlendShapeLocation.EyeWideLeft.ToString();
+        public static readonly string  EyeWideRight        =   ARKitBlendShapeLocation.EyeWideRight.ToString();
+        public static readonly string  JawForward          =   ARKitBlendShapeLocation.JawForward.ToString();
+        public static readonly string  JawLeft             =   ARKitBlendShapeLocation.JawLeft.ToString();
+        public static readonly string  JawOpen             =   ARKitBlendShapeLocation.JawOpen.ToString();
+        public static readonly string  JawRight            =   ARKitBlendShapeLocation.JawRight.ToString();
+        public static readonly string  MouthClose          =   ARKitBlendShapeLocation.MouthClose.ToString();
+        public static readonly string  MouthDimpleLeft     =   ARKitBlendShapeLocation.MouthDimpleLeft.ToString();
+        public static readonly string  MouthDimpleRight    =   ARKitBlendShapeLocation.MouthDimpleRight.ToString();
+        public static readonly string  MouthFrownLeft      =   ARKitBlendShapeLocation.MouthFrownLeft.ToString();
+        public static readonly string  MouthFrownRight     =   ARKitBlendShapeLocation.MouthFrownRight.ToString();
+        public static readonly string  MouthFunnel         =   ARKitBlendShapeLocation.MouthFunnel.ToString();
+        public static readonly string  MouthLeft           =   ARKitBlendShapeLocation.MouthLeft.ToString();
+        public static readonly string  MouthLowerDownLeft  =   ARKitBlendShapeLocation.MouthLowerDownLeft.ToString();
+        public static readonly string  MouthLowerDownRight =   ARKitBlendShapeLocation.MouthLowerDownRight.ToString();
+        public static readonly string  MouthPressLeft      =   ARKitBlendShapeLocation.MouthPressLeft.ToString();
+        public static readonly string  MouthPressRight     =   ARKitBlendShapeLocation.MouthPressRight.ToString();
+        public static readonly string  MouthPucker         =   ARKitBlendShapeLocation.MouthPucker.ToString();
+        public static readonly string  MouthRight          =   ARKitBlendShapeLocation.MouthRight.ToString();
+        public static readonly string  MouthRollLower      =   ARKitBlendShapeLocation.MouthRollLower.ToString();
+        public static readonly string  MouthRollUpper      =   ARKitBlendShapeLocation.MouthRollUpper.ToString();
+        public static readonly string  MouthShrugLower     =   ARKitBlendShapeLocation.MouthShrugLower.ToString();
+        public static readonly string  MouthShrugUpper     =   ARKitBlendShapeLocation.MouthShrugUpper.ToString();
+        public static readonly string  MouthSmileLeft      =   ARKitBlendShapeLocation.MouthSmileLeft.ToString();
+        public static readonly string  MouthSmileRight     =   ARKitBlendShapeLocation.MouthSmileRight.ToString();
+        public static readonly string  MouthStretchLeft    =   ARKitBlendShapeLocation.MouthStretchLeft.ToString();
+        public static readonly string  MouthStretchRight   =   ARKitBlendShapeLocation.MouthStretchRight.ToString();
+        public static readonly string  MouthUpperUpLeft    =   ARKitBlendShapeLocation.MouthUpperUpLeft.ToString();
+        public static readonly string  MouthUpperUpRight   =   ARKitBlendShapeLocation.MouthUpperUpRight.ToString();
+        public static readonly string  NoseSneerLeft       =   ARKitBlendShapeLocation.NoseSneerLeft.ToString();
+        public static readonly string  NoseSneerRight      =   ARKitBlendShapeLocation.NoseSneerRight.ToString();
+        public static readonly string  TongueOut           =   ARKitBlendShapeLocation.TongueOut.ToString();
 #else
         public const string  BrowDownLeft        =   "browDown_L";
         public const string  BrowDownRight       =   "browDown_R";
@@ -118,9 +122,7 @@ namespace Unity.Labs.FacialRemote
         public const string  MouthUpperUpRight   =   "mouthUpperUp_R";
         public const string  NoseSneerLeft       =   "noseSneer_L";
         public const string  NoseSneerRight      =   "noseSneer_R";
-#if !(ARKIT_1_5)
         public const string  TongueOut           =   "tongueOut";
-#endif //ARKIT_1_5
 #endif
 
         /// <summary>
@@ -183,9 +185,7 @@ namespace Unity.Labs.FacialRemote
             MouthUpperUpRight,
             NoseSneerLeft,
             NoseSneerRight,
-#if ARKIT_2_0
             TongueOut,
-#endif
         };
 
         /// <summary>

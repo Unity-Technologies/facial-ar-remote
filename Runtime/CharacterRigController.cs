@@ -9,6 +9,7 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class CharacterRigController : MonoBehaviour, IUsesStreamReader
     {
+#pragma warning disable 649
         [Range(0f, 1f)]
         [SerializeField]
         [Tooltip("Amount to smoothing when returning to the start pose for the character when AR tracking is lost.")]
@@ -77,6 +78,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Amount of influence the AR head anchor pose has on the neck bone.")]
         float m_NeckFollowAmount = 0.4f;
+#pragma warning restore 649
 
         int m_EyeLookDownLeftIndex;
         int m_EyeLookDownRightIndex;

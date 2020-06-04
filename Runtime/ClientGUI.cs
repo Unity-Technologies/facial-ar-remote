@@ -1,3 +1,7 @@
+#if UNITY_IOS && !UNITY_EDITOR && INCLUDE_ARKIT_FACE_PLUGIN
+#define FACETRACKING
+#endif
+
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -6,14 +10,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-#if UNITY_IOS
-using UnityEngine.XR.iOS;
+#if FACETRACKING
+using UnityEngine.XR.ARKit;
 #endif
 
 namespace Unity.Labs.FacialRemote
 {
     class ClientGUI : MonoBehaviour
     {
+#pragma warning disable 649
         [SerializeField]
         Transform m_FaceAnchor;
 
@@ -53,6 +58,7 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         TMP_InputField m_IPTextField;
+#pragma warning restore 649
 
         Camera m_Camera;
 
@@ -61,12 +67,15 @@ namespace Unity.Labs.FacialRemote
 
         Socket m_Socket;
 
+        bool m_Supported = true;
+
         void Awake()
         {
             m_Camera = Camera.main;
-#if UNITY_IOS
-            var config = new ARKitFaceTrackingConfiguration();
-            if (config.IsSupported)
+#if FACETRACKING
+            // TODO: fallback?
+            //var config = new ARKitFaceTrackingConfiguration();
+            if (m_Supported)
             {
                 m_MainGUI.enabled = false;
                 m_FaceLostGUI.enabled = false;
@@ -79,7 +88,7 @@ namespace Unity.Labs.FacialRemote
                 m_FaceLostGUI.enabled = false;
                 m_NotSupportedGUI.enabled = true;
                 enabled = false;
-#if UNITY_IOS
+#if FACETRACKING
             }
 #endif
         }

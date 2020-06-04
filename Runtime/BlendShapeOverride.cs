@@ -9,6 +9,7 @@ namespace Unity.Labs.FacialRemote
     [Serializable]
     public class BlendShapeOverride
     {
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Enables the use of these override values on a blend shape.")]
         bool m_UseOverride;
@@ -41,6 +42,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("Max value a scaled blend shape can reach.")]
         float m_BlendShapeMax = 100f;
+#pragma warning restore 649
 
         public bool useOverride { get { return m_UseOverride; } }
         public string name { get { return m_Name; } }

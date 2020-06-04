@@ -12,6 +12,7 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class StreamReader : MonoBehaviour, IStreamReader
     {
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Root of character to be be driven.")]
         GameObject m_Character;
@@ -44,6 +45,7 @@ namespace Unity.Labs.FacialRemote
         [SerializeField]
         [Tooltip("(Optional) Manually add stream sources which aren't on this GameObject or its children.")]
         GameObject[] m_StreamSourceOverrides = { };
+#pragma warning restore 649
 
         IStreamSource m_ActiveStreamSource;
 

@@ -1,13 +1,19 @@
-﻿using System;
+﻿#if INCLUDE_ARKIT_FACE_PLUGIN && INCLUDE_AR_FOUNDATION
+#define FACETRACKING
+#endif
+
+using System;
 using System.Net.Sockets;
 using System.Threading;
-#if UNITY_IOS
+using Unity.Collections;
+using UnityEngine;
+using UnityEngine.XR.ARKit;
+#if FACETRACKING
 using System.Linq;
 using System.Collections.Generic;
-#endif
-using UnityEngine;
-#if UNITY_IOS
-using UnityEngine.XR.iOS;
+using UnityEngine.XR.ARFoundation;
+#else
+using UnityObject = UnityEngine.Object;
 #endif
 
 namespace Unity.Labs.FacialRemote
@@ -20,9 +26,19 @@ namespace Unity.Labs.FacialRemote
         const float k_Timeout = 5;
         const int k_SleepTime = 4;
 
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Stream settings that contain the settings for encoding the blend shapes' byte stream.")]
         StreamSettings m_StreamSettings;
+
+#if FACETRACKING
+        [SerializeField]
+        ARFaceManager m_FaceManager;
+#else
+        [SerializeField]
+        UnityObject m_FaceManager;
+#endif
+#pragma warning restore 649
 
         float[] m_BlendShapes;
 
@@ -37,7 +53,7 @@ namespace Unity.Labs.FacialRemote
 
         float m_StartTime;
 
-#if UNITY_IOS
+#if FACETRACKING
         bool m_ARFaceActive;
         Dictionary<string, int> m_BlendShapeIndices;
 #endif
@@ -49,10 +65,9 @@ namespace Unity.Labs.FacialRemote
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
-#if UNITY_IOS
-            UnityARSessionNativeInterface.ARFaceAnchorAddedEvent += FaceAdded;
-            UnityARSessionNativeInterface.ARFaceAnchorUpdatedEvent += FaceUpdated;
-            UnityARSessionNativeInterface.ARFaceAnchorRemovedEvent += FaceRemoved;
+
+#if FACETRACKING
+            m_FaceManager.facesChanged += ARFaceManagerOnFacesChanged;
 #endif
         }
 
@@ -75,6 +90,10 @@ namespace Unity.Labs.FacialRemote
 
         void OnDestroy()
         {
+#if FACETRACKING
+            m_FaceManager.facesChanged -= ARFaceManagerOnFacesChanged;
+#endif
+
             m_Running = false;
         }
 
@@ -104,7 +123,7 @@ namespace Unity.Labs.FacialRemote
             new Thread(() =>
             {
                 var count = 0;
-#if UNITY_IOS
+#if FACETRACKING
                 var lastIndex = m_Buffer.Length - 1;
 #endif
                 while (m_Running)
@@ -129,7 +148,7 @@ namespace Unity.Labs.FacialRemote
                                 Buffer.BlockCopy(cameraPoseArray, 0, m_Buffer, m_StreamSettings.CameraPoseOffset, BlendShapeUtils.PoseSize);
                                 Buffer.BlockCopy(frameNum, 0, m_Buffer, m_StreamSettings.FrameNumberOffset, m_StreamSettings.FrameNumberSize);
                                 Buffer.BlockCopy(frameTime, 0, m_Buffer, m_StreamSettings.FrameTimeOffset, m_StreamSettings.FrameTimeSize);
-#if UNITY_IOS
+#if FACETRACKING
                                 m_Buffer[lastIndex] = (byte)(m_ARFaceActive ? 1 : 0);
 #endif
 
@@ -152,15 +171,70 @@ namespace Unity.Labs.FacialRemote
             }).Start();
         }
 
-#if UNITY_IOS
-        void FaceAdded(ARFaceAnchor anchorData)
+#if FACETRACKING
+        void ARFaceManagerOnFacesChanged(ARFacesChangedEventArgs changedEvent)
+        {
+            foreach (var arFace in changedEvent.removed)
+            {
+                FaceRemoved(arFace);
+                // var trackableId = arFace.trackableId;
+                // m_TrackedFaces.TryGetValue(trackableId, out var arFoundationFace);
+                // arFace.ToARFoundationFace(m_ARFaceManager.subsystem, ref arFoundationFace);
+                // m_TrackedFaces.Remove(trackableId);
+                // RemoveFaceData(arFoundationFace);
+            }
+
+            foreach (var arFace in changedEvent.updated)
+            {
+                FaceUpdated(arFace);
+                //UpdateFaceData(GetOrAddFace(arFace));
+            }
+
+            foreach (var arFace in changedEvent.added)
+            {
+                FaceAdded(arFace);
+                //AddFaceData(GetOrAddFace(arFace));
+            }
+        }
+
+        void FaceAdded(ARFace anchorData)
         {
             var anchorTransform = anchorData.transform;
-            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorTransform);
-            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorTransform);
+            m_FacePose.position = anchorTransform.localPosition;
+            m_FacePose.rotation = anchorTransform.localRotation;
             m_ARFaceActive = true;
 
-            var blendShapes = anchorData.blendShapes;
+            UpdateBlendShapes(anchorData);
+        }
+
+        void FaceUpdated(ARFace anchorData)
+        {
+            var anchorTransform = anchorData.transform;
+            m_FacePose.position = anchorTransform.localPosition;
+            m_FacePose.rotation = anchorTransform.localRotation;
+
+            UpdateBlendShapes(anchorData);
+        }
+
+        void FaceRemoved(ARFace anchorData)
+        {
+            m_ARFaceActive = false;
+        }
+
+        void UpdateBlendShapes(ARFace anchorData)
+        {
+            var xrFaceSubsystem = m_FaceManager.subsystem;
+            var arKitFaceSubsystem = (ARKitFaceSubsystem)xrFaceSubsystem;
+            var blendShapes = new Dictionary<string, float>();
+
+            var faceId = anchorData.trackableId;
+            using (var blendShapeCoefficients = arKitFaceSubsystem.GetBlendShapeCoefficients(faceId, Allocator.Temp))
+            {
+                foreach (var featureCoefficient in blendShapeCoefficients)
+                {
+                    blendShapes[featureCoefficient.blendShapeLocation.ToString()] = featureCoefficient.coefficient;
+                }
+            }
 
             if (m_BlendShapeIndices == null)
             {
@@ -178,25 +252,6 @@ namespace Unity.Labs.FacialRemote
                 }
             }
 
-            UpdateBlendShapes(blendShapes);
-        }
-
-        void FaceUpdated(ARFaceAnchor anchorData)
-        {
-            var anchorTransform = anchorData.transform;
-            m_FacePose.position = UnityARMatrixOps.GetPosition(anchorTransform);
-            m_FacePose.rotation = UnityARMatrixOps.GetRotation(anchorTransform);
-
-            UpdateBlendShapes(anchorData.blendShapes);
-        }
-
-        void FaceRemoved(ARFaceAnchor anchorData)
-        {
-            m_ARFaceActive = false;
-        }
-
-        void UpdateBlendShapes(Dictionary<string, float> blendShapes)
-        {
             foreach (var kvp in blendShapes)
             {
                 int index;

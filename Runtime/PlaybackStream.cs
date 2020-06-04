@@ -9,9 +9,11 @@ namespace Unity.Labs.FacialRemote
     /// </summary>
     public class PlaybackStream : MonoBehaviour, IStreamSource, IStreamRecorder
     {
+#pragma warning disable 649
         [SerializeField]
         [Tooltip("Contains the individual streams recorded from a capture session.")]
         PlaybackData m_PlaybackData;
+#pragma warning restore 649
 
         float m_PlaybackStartTime = float.PositiveInfinity;
 
