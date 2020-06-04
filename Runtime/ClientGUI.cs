@@ -1,5 +1,5 @@
 #if UNITY_IOS && !UNITY_EDITOR && INCLUDE_ARKIT_FACE_PLUGIN
-#define FACETRACKING
+#define SUPPORTED
 #endif
 
 using System;
@@ -10,18 +10,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-#if FACETRACKING
-using UnityEngine.XR.ARKit;
-#endif
-
 namespace Unity.Labs.FacialRemote
 {
     class ClientGUI : MonoBehaviour
     {
 #pragma warning disable 649
-        [SerializeField]
-        Transform m_FaceAnchor;
-
         [Tooltip("Percentage of screen width outside which the Face Lost GUI will appear")]
         [Range(0, 1)]
         [SerializeField]
@@ -72,24 +65,16 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_Camera = Camera.main;
-#if FACETRACKING
-            // TODO: fallback?
-            //var config = new ARKitFaceTrackingConfiguration();
-            if (m_Supported)
-            {
-                m_MainGUI.enabled = false;
-                m_FaceLostGUI.enabled = false;
-                m_NotSupportedGUI.enabled = false;
-            }
-            else
-            {
-#endif
-                m_MainGUI.enabled = false;
-                m_FaceLostGUI.enabled = false;
-                m_NotSupportedGUI.enabled = true;
-                enabled = false;
-#if FACETRACKING
-            }
+#if SUPPORTED
+            m_MainGUI.enabled = false;
+            m_FaceLostGUI.enabled = false;
+            m_NotSupportedGUI.enabled = false;
+
+#else
+            m_MainGUI.enabled = false;
+            m_FaceLostGUI.enabled = false;
+            m_NotSupportedGUI.enabled = true;
+            enabled = false;
 #endif
         }
 
@@ -165,7 +150,10 @@ namespace Unity.Labs.FacialRemote
 
         bool FaceInView()
         {
-            var anchorScreenPos = m_Camera.WorldToScreenPoint(m_FaceAnchor.position);
+            if (m_Client.faceAnchor == null)
+                return false;
+
+            var anchorScreenPos = m_Camera.WorldToScreenPoint(m_Client.faceAnchor.position);
 
             return !(Mathf.Abs(anchorScreenPos.x - m_CenterX) / m_CenterX > m_WidthPercent)
                 && !(Mathf.Abs(anchorScreenPos.y - m_CenterY) / m_CenterY > m_HeightPercent);

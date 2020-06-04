@@ -354,7 +354,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_StreamSettings
       value: 
-      objectReference: {fileID: 11400000, guid: a40a3380648a240bab934a19984df455,
+      objectReference: {fileID: 11400000, guid: 664f63512dc824ff69313c1e0b49cc3e,
         type: 2}
     - target: {fileID: 114306834681226924, guid: f94950507ce7740dfaa5e4deb18906c8,
         type: 3}

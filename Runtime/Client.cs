@@ -8,6 +8,7 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARKit;
+
 #if FACETRACKING
 using System.Linq;
 using System.Collections.Generic;
@@ -55,8 +56,10 @@ namespace Unity.Labs.FacialRemote
 
 #if FACETRACKING
         bool m_ARFaceActive;
-        Dictionary<string, int> m_BlendShapeIndices;
+        Dictionary<int, int> m_BlendShapeIndices;
 #endif
+
+        public Transform faceAnchor { get; private set; }
 
         void Awake()
         {
@@ -177,23 +180,16 @@ namespace Unity.Labs.FacialRemote
             foreach (var arFace in changedEvent.removed)
             {
                 FaceRemoved(arFace);
-                // var trackableId = arFace.trackableId;
-                // m_TrackedFaces.TryGetValue(trackableId, out var arFoundationFace);
-                // arFace.ToARFoundationFace(m_ARFaceManager.subsystem, ref arFoundationFace);
-                // m_TrackedFaces.Remove(trackableId);
-                // RemoveFaceData(arFoundationFace);
             }
 
             foreach (var arFace in changedEvent.updated)
             {
                 FaceUpdated(arFace);
-                //UpdateFaceData(GetOrAddFace(arFace));
             }
 
             foreach (var arFace in changedEvent.added)
             {
                 FaceAdded(arFace);
-                //AddFaceData(GetOrAddFace(arFace));
             }
         }
 
@@ -203,6 +199,7 @@ namespace Unity.Labs.FacialRemote
             m_FacePose.position = anchorTransform.localPosition;
             m_FacePose.rotation = anchorTransform.localRotation;
             m_ARFaceActive = true;
+            faceAnchor = anchorTransform;
 
             UpdateBlendShapes(anchorData);
         }
@@ -218,6 +215,10 @@ namespace Unity.Labs.FacialRemote
 
         void FaceRemoved(ARFace anchorData)
         {
+            // TODO: fix edge cases for multiple faces
+            if (faceAnchor == anchorData.transform)
+                faceAnchor = null;
+
             m_ARFaceActive = false;
         }
 
@@ -225,38 +226,32 @@ namespace Unity.Labs.FacialRemote
         {
             var xrFaceSubsystem = m_FaceManager.subsystem;
             var arKitFaceSubsystem = (ARKitFaceSubsystem)xrFaceSubsystem;
-            var blendShapes = new Dictionary<string, float>();
 
             var faceId = anchorData.trackableId;
             using (var blendShapeCoefficients = arKitFaceSubsystem.GetBlendShapeCoefficients(faceId, Allocator.Temp))
             {
+                if (m_BlendShapeIndices == null)
+                {
+                    m_BlendShapeIndices = new Dictionary<int, int>();
+
+                    var names = m_StreamSettings.locations.ToList();
+                    names.Sort();
+
+                    foreach (var featureCoefficient in blendShapeCoefficients)
+                    {
+                        var location = featureCoefficient.blendShapeLocation;
+                        var index = names.IndexOf(location.ToString());
+                        if (index >= 0)
+                            m_BlendShapeIndices[(int)location] = index;
+                    }
+                }
+
                 foreach (var featureCoefficient in blendShapeCoefficients)
                 {
-                    blendShapes[featureCoefficient.blendShapeLocation.ToString()] = featureCoefficient.coefficient;
+                    var location = (int)featureCoefficient.blendShapeLocation;
+                    if (m_BlendShapeIndices.TryGetValue(location, out var index))
+                        m_BlendShapes[index] = featureCoefficient.coefficient;
                 }
-            }
-
-            if (m_BlendShapeIndices == null)
-            {
-                m_BlendShapeIndices = new Dictionary<string, int>();
-
-                var names = m_StreamSettings.locations.ToList();
-                names.Sort();
-
-                foreach (var kvp in blendShapes)
-                {
-                    var key = kvp.Key;
-                    var index = names.IndexOf(key);
-                    if (index >= 0)
-                        m_BlendShapeIndices[key] = index;
-                }
-            }
-
-            foreach (var kvp in blendShapes)
-            {
-                int index;
-                if (m_BlendShapeIndices.TryGetValue(kvp.Key, out index))
-                    m_BlendShapes[index] = kvp.Value;
             }
         }
 #endif

@@ -1,12 +1,7 @@
-﻿#if UNITY_IOS && !UNITY_EDITOR && INCLUDE_ARKIT_FACE_PLUGIN
-#define FACETRACKING
-#endif
-
-using System;
+﻿using System;
 using UnityEngine;
-using UnityEngine.XR.ARKit;
 
-#if FACETRACKING
+#if INCLUDE_ARKIT_FACE_PLUGIN
 using UnityEngine.XR.ARKit;
 #endif
 
@@ -17,7 +12,7 @@ namespace Unity.Labs.FacialRemote
         public const int PoseFloatCount = 7;
         public const int PoseSize = sizeof(float) * PoseFloatCount;
 
-#if FACETRACKING
+#if INCLUDE_ARKIT_FACE_PLUGIN
         public static readonly string  BrowDownLeft        =   ARKitBlendShapeLocation.BrowDownLeft.ToString();
         public static readonly string  BrowDownRight       =   ARKitBlendShapeLocation.BrowDownRight.ToString();
         public static readonly string  BrowInnerUp         =   ARKitBlendShapeLocation.BrowInnerUp.ToString();
@@ -71,58 +66,58 @@ namespace Unity.Labs.FacialRemote
         public static readonly string  NoseSneerRight      =   ARKitBlendShapeLocation.NoseSneerRight.ToString();
         public static readonly string  TongueOut           =   ARKitBlendShapeLocation.TongueOut.ToString();
 #else
-        public const string  BrowDownLeft        =   "browDown_L";
-        public const string  BrowDownRight       =   "browDown_R";
-        public const string  BrowInnerUp         =   "browInnerUp";
-        public const string  BrowOuterUpLeft     =   "browOuterUp_L";
-        public const string  BrowOuterUpRight    =   "browOuterUp_R";
-        public const string  CheekPuff           =   "cheekPuff";
-        public const string  CheekSquintLeft     =   "cheekSquint_L";
-        public const string  CheekSquintRight    =   "cheekSquint_R";
-        public const string  EyeBlinkLeft        =   "eyeBlink_L";
-        public const string  EyeBlinkRight       =   "eyeBlink_R";
-        public const string  EyeLookDownLeft     =   "eyeLookDown_L";
-        public const string  EyeLookDownRight    =   "eyeLookDown_R";
-        public const string  EyeLookInLeft       =   "eyeLookIn_L";
-        public const string  EyeLookInRight      =   "eyeLookIn_R";
-        public const string  EyeLookOutLeft      =   "eyeLookOut_L";
-        public const string  EyeLookOutRight     =   "eyeLookOut_R";
-        public const string  EyeLookUpLeft       =   "eyeLookUp_L";
-        public const string  EyeLookUpRight      =   "eyeLookUp_R";
-        public const string  EyeSquintLeft       =   "eyeSquint_L";
-        public const string  EyeSquintRight      =   "eyeSquint_R";
-        public const string  EyeWideLeft         =   "eyeWide_L";
-        public const string  EyeWideRight        =   "eyeWide_R";
-        public const string  JawForward          =   "jawForward";
-        public const string  JawLeft             =   "jawLeft";
-        public const string  JawOpen             =   "jawOpen";
-        public const string  JawRight            =   "jawRight";
-        public const string  MouthClose          =   "mouthClose";
-        public const string  MouthDimpleLeft     =   "mouthDimple_L";
-        public const string  MouthDimpleRight    =   "mouthDimple_R";
-        public const string  MouthFrownLeft      =   "mouthFrown_L";
-        public const string  MouthFrownRight     =   "mouthFrown_R";
-        public const string  MouthFunnel         =   "mouthFunnel";
-        public const string  MouthLeft           =   "mouthLeft";
-        public const string  MouthLowerDownLeft  =   "mouthLowerDown_L";
-        public const string  MouthLowerDownRight =   "mouthLowerDown_R";
-        public const string  MouthPressLeft      =   "mouthPress_L";
-        public const string  MouthPressRight     =   "mouthPress_R";
-        public const string  MouthPucker         =   "mouthPucker";
-        public const string  MouthRight          =   "mouthRight";
-        public const string  MouthRollLower      =   "mouthRollLower";
-        public const string  MouthRollUpper      =   "mouthRollUpper";
-        public const string  MouthShrugLower     =   "mouthShrugLower";
-        public const string  MouthShrugUpper     =   "mouthShrugUpper";
-        public const string  MouthSmileLeft      =   "mouthSmile_L";
-        public const string  MouthSmileRight     =   "mouthSmile_R";
-        public const string  MouthStretchLeft    =   "mouthStretch_L";
-        public const string  MouthStretchRight   =   "mouthStretch_R";
-        public const string  MouthUpperUpLeft    =   "mouthUpperUp_L";
-        public const string  MouthUpperUpRight   =   "mouthUpperUp_R";
-        public const string  NoseSneerLeft       =   "noseSneer_L";
-        public const string  NoseSneerRight      =   "noseSneer_R";
-        public const string  TongueOut           =   "tongueOut";
+        public const string  BrowDownLeft        =   "BrowDownLeft";
+        public const string  BrowDownRight       =   "BrowDownRight";
+        public const string  BrowInnerUp         =   "BrowInnerUp";
+        public const string  BrowOuterUpLeft     =   "BrowOuterUpLeft";
+        public const string  BrowOuterUpRight    =   "BrowOuterUpRight";
+        public const string  CheekPuff           =   "CheekPuff";
+        public const string  CheekSquintLeft     =   "CheekSquintLeft";
+        public const string  CheekSquintRight    =   "CheekSquintRight";
+        public const string  EyeBlinkLeft        =   "EyeBlinkLeft";
+        public const string  EyeBlinkRight       =   "EyeBlinkRight";
+        public const string  EyeLookDownLeft     =   "EyeLookDownLeft";
+        public const string  EyeLookDownRight    =   "EyeLookDownRight";
+        public const string  EyeLookInLeft       =   "EyeLookInLeft";
+        public const string  EyeLookInRight      =   "EyeLookInRight";
+        public const string  EyeLookOutLeft      =   "EyeLookOutLeft";
+        public const string  EyeLookOutRight     =   "EyeLookOutRight";
+        public const string  EyeLookUpLeft       =   "EyeLookUpLeft";
+        public const string  EyeLookUpRight      =   "EyeLookUpRight";
+        public const string  EyeSquintLeft       =   "EyeSquintLeft";
+        public const string  EyeSquintRight      =   "EyeSquintRight";
+        public const string  EyeWideLeft         =   "EyeWideLeft";
+        public const string  EyeWideRight        =   "EyeWideRight";
+        public const string  JawForward          =   "JawForward";
+        public const string  JawLeft             =   "JawLeft";
+        public const string  JawOpen             =   "JawOpen";
+        public const string  JawRight            =   "JawRight";
+        public const string  MouthClose          =   "MouthClose";
+        public const string  MouthDimpleLeft     =   "MouthDimpleLeft";
+        public const string  MouthDimpleRight    =   "MouthDimpleRight";
+        public const string  MouthFrownLeft      =   "MouthFrownLeft";
+        public const string  MouthFrownRight     =   "MouthFrownRight";
+        public const string  MouthFunnel         =   "MouthFunnel";
+        public const string  MouthLeft           =   "MouthLeft";
+        public const string  MouthLowerDownLeft  =   "MouthLowerDownLeft";
+        public const string  MouthLowerDownRight =   "MouthLowerDownRight";
+        public const string  MouthPressLeft      =   "MouthPressLeft";
+        public const string  MouthPressRight     =   "MouthPressRight";
+        public const string  MouthPucker         =   "MouthPucker";
+        public const string  MouthRight          =   "MouthRight";
+        public const string  MouthRollLower      =   "MouthRollLower";
+        public const string  MouthRollUpper      =   "MouthRollUpper";
+        public const string  MouthShrugLower     =   "MouthShrugLower";
+        public const string  MouthShrugUpper     =   "MouthShrugUpper";
+        public const string  MouthSmileLeft      =   "MouthSmileLeft";
+        public const string  MouthSmileRight     =   "MouthSmileRight";
+        public const string  MouthStretchLeft    =   "MouthStretchLeft";
+        public const string  MouthStretchRight   =   "MouthStretchRight";
+        public const string  MouthUpperUpLeft    =   "MouthUpperUpLeft";
+        public const string  MouthUpperUpRight   =   "MouthUpperUpRight";
+        public const string  NoseSneerLeft       =   "NoseSneerLeft";
+        public const string  NoseSneerRight      =   "NoseSneerRight";
+        public const string  TongueOut           =   "TongueOut";
 #endif
 
         /// <summary>

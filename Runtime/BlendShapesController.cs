@@ -151,8 +151,13 @@ namespace Unity.Labs.FacialRemote
                     var index = -1;
                     foreach (var mapping in streamSettings.mappings)
                     {
-                        if (shapeName.Contains(mapping.from))
-                            index = Array.IndexOf(streamSettings.locations, mapping.to);
+                        var to = mapping.to;
+                        var from = mapping.from;
+                        if (shapeName.Contains(from))
+                            index = Array.IndexOf(streamSettings.locations, from);
+
+                        if (shapeName.Contains(to))
+                            index = Array.IndexOf(streamSettings.locations, from);
                     }
 
                     if (index < 0)
