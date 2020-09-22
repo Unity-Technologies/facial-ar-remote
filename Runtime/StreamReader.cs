@@ -88,7 +88,7 @@ namespace Unity.Labs.FacialRemote
                 if (value == null)
                     return;
 
-                var blendShapeCount = value.streamSettings.BlendShapeCount;
+                var blendShapeCount = value.streamSettings.locations.Length;
                 if (blendShapesBuffer == null || blendShapesBuffer.Length != blendShapeCount)
                     blendShapesBuffer = new float[blendShapeCount];
             }

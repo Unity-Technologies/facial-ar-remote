@@ -64,7 +64,7 @@ namespace Unity.Labs.FacialRemote
         void Awake()
         {
             m_Buffer = new byte[m_StreamSettings.bufferSize];
-            m_BlendShapes = new float[m_StreamSettings.BlendShapeCount];
+            m_BlendShapes = new float[m_StreamSettings.locations.Length];
             m_CameraTransform = Camera.main.transform;
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -224,14 +224,17 @@ namespace Unity.Labs.FacialRemote
 
         void UpdateBlendShapes(ARFace anchorData)
         {
+            Debug.Log("Begin update");
             var xrFaceSubsystem = m_FaceManager.subsystem;
             var arKitFaceSubsystem = (ARKitFaceSubsystem)xrFaceSubsystem;
 
             var faceId = anchorData.trackableId;
             using (var blendShapeCoefficients = arKitFaceSubsystem.GetBlendShapeCoefficients(faceId, Allocator.Temp))
             {
+                Debug.Log("inside using");
                 if (m_BlendShapeIndices == null)
                 {
+                    Debug.Log("First time setup");
                     m_BlendShapeIndices = new Dictionary<int, int>();
 
                     var names = m_StreamSettings.locations.ToList();
@@ -240,12 +243,14 @@ namespace Unity.Labs.FacialRemote
                     foreach (var featureCoefficient in blendShapeCoefficients)
                     {
                         var location = featureCoefficient.blendShapeLocation;
+                        Debug.Log(location);
                         var index = names.IndexOf(location.ToString());
                         if (index >= 0)
                             m_BlendShapeIndices[(int)location] = index;
                     }
                 }
 
+                Debug.Log($"regular update {m_BlendShapes.Length} - {blendShapeCoefficients.Length}");
                 foreach (var featureCoefficient in blendShapeCoefficients)
                 {
                     var location = (int)featureCoefficient.blendShapeLocation;

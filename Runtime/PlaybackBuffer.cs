@@ -27,11 +27,6 @@ namespace Unity.Labs.FacialRemote
 
         [SerializeField]
         [HideInInspector]
-        [Tooltip("Number of blend shapes in the stream.")]
-        int m_BlendShapeCount;
-
-        [SerializeField]
-        [HideInInspector]
         [Tooltip("Size of blend shapes in the byte array.")]
         int m_BlendShapeSize;
 
@@ -79,7 +74,6 @@ namespace Unity.Labs.FacialRemote
         Mapping[] m_Mappings = {};
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
-        public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get { return m_BlendShapeSize; } }
         public int FrameNumberSize { get { return m_FrameNumberSize; } }
         public int FrameTimeSize { get { return m_FrameTimeSize; } }
@@ -89,18 +83,7 @@ namespace Unity.Labs.FacialRemote
         public int FrameTimeOffset { get { return m_FrameTimeOffset; } }
         public int bufferSize { get { return m_BufferSize; } }
         public Mapping[] mappings { get { return m_Mappings; } }
-
-        public string[] locations
-        {
-            get
-            {
-                if (m_Locations.Length != m_BlendShapeCount)
-                {
-                    UseDefaultLocations();
-                }
-                return m_Locations;
-            }
-        }
+        public string[] locations { get { return m_Locations; } }
 
         public string name
         {
@@ -120,7 +103,6 @@ namespace Unity.Labs.FacialRemote
         {
             m_BufferSize = streamSettings.bufferSize;
             m_ErrorCheck = streamSettings.ErrorCheck;
-            m_BlendShapeCount = streamSettings.BlendShapeCount;
             m_BlendShapeSize = streamSettings.BlendShapeSize;
             m_HeadPoseOffset = streamSettings.HeadPoseOffset;
             m_CameraPoseOffset = streamSettings.CameraPoseOffset;

@@ -74,7 +74,7 @@ namespace Unity.Labs.FacialRemote
                 return;
             }
 
-            var blendShapesCount = streamSettings.BlendShapeCount;
+            var blendShapesCount = streamSettings.locations.Length;
             if (m_Overrides.Length != blendShapesCount)
                 Array.Resize(ref m_Overrides, blendShapesCount);
 
@@ -135,7 +135,8 @@ namespace Unity.Labs.FacialRemote
         public void UpdateBlendShapeIndices(IStreamSettings settings)
         {
             m_LastStreamSettings = settings;
-            var blendShapeCount = settings.BlendShapeCount;
+            var locations = settings.locations;
+            var blendShapeCount = locations.Length;
             m_BlendShapes = new float[blendShapeCount];
             blendShapesScaled = new float[blendShapeCount];
             m_Indices.Clear();
@@ -185,7 +186,8 @@ namespace Unity.Labs.FacialRemote
         public void InterpolateBlendShapes(bool force = false)
         {
             var streamSettings = streamReader.streamSource.streamSettings;
-            for (var i = 0; i < streamSettings.BlendShapeCount; i++)
+            var blendShapeCount = streamSettings.locations.Length;
+            for (var i = 0; i < blendShapeCount; i++)
             {
                 var blendShape = m_BlendShapes[i];
                 var blendShapeTarget = streamReader.blendShapesBuffer[i];
@@ -231,7 +233,8 @@ namespace Unity.Labs.FacialRemote
             //     return;
 
             // We do our best to keep the overrides up-to-date with current settings, but it's possible to get out of sync
-            var blendshapeCount = streamSettings.BlendShapeCount;
+            var locations = streamSettings.locations;
+            var blendshapeCount = locations.Length;
             if (m_Overrides.Length != blendshapeCount)
             {
 #if UNITY_EDITOR
@@ -239,7 +242,7 @@ namespace Unity.Labs.FacialRemote
 
                 for (var i = 0; i < blendshapeCount; i++)
                 {
-                    var location = streamSettings.locations[i];
+                    var location = locations[i];
                     var blendShapeOverride = m_Overrides.FirstOrDefault(f => f.name == location)
                         ?? new BlendShapeOverride(location);
 

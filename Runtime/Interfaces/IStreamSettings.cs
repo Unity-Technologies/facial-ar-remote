@@ -11,11 +11,6 @@
         byte ErrorCheck { get; }
 
         /// <summary>
-        /// Number of blend shapes in the stream.
-        /// </summary>
-        int BlendShapeCount { get; }
-
-        /// <summary>
         /// Size of blend shapes in the byte array.
         /// </summary>
         int BlendShapeSize { get; }

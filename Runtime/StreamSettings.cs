@@ -18,10 +18,6 @@ namespace Unity.Labs.FacialRemote
         byte m_ErrorCheck = 42;
 
         [SerializeField]
-        [Tooltip("Number of blend shapes in the stream.")]
-        int m_BlendShapeCount = 51;
-
-        [SerializeField]
         [Tooltip("Size of blend shapes in the byte array.")]
         int m_BlendShapeSize;
 
@@ -62,7 +58,6 @@ namespace Unity.Labs.FacialRemote
         Mapping[] m_Mappings = { };
 
         public byte ErrorCheck { get { return m_ErrorCheck; } }
-        public int BlendShapeCount { get { return m_BlendShapeCount; } }
         public int BlendShapeSize { get { return m_BlendShapeSize; } }
         public int FrameNumberSize { get { return m_FrameNumberSize; } }
         public int FrameTimeSize { get { return m_FrameTimeSize; } }
@@ -79,7 +74,7 @@ namespace Unity.Labs.FacialRemote
         // 261-264 - Frame Number
         // 265-268 - Frame Time
         // 269 - Active state
-        
+
         // ARKit 2.0 buffer layout
         // 0 - Error check
         // 1-208 - Blend Shapes
@@ -90,51 +85,42 @@ namespace Unity.Labs.FacialRemote
         // 274 - Active state
         public int bufferSize { get { return m_BufferSize; } }
 
-        public Mapping[] mappings { get { return m_Mappings; }}
+        public Mapping[] mappings { get { return m_Mappings; } }
 
-        public string[] locations
-        {
-            get
-            {
-                if (m_Locations.Length != m_BlendShapeCount)
-                {
-                    var locs = new List<string>();
-                    foreach (var location in BlendShapeUtils.Locations)
-                    {
-                        locs.Add(location);
-                    }
-
-                    m_Locations = locs.ToArray();
-                }
-
-                return m_Locations;
-            }
-        }
+        public string[] locations { get { return m_Locations; } }
 
         void OnValidate()
         {
+            UpdateOffsets();
+        }
+
+        void UpdateOffsets()
+        {
             const int poseSize = BlendShapeUtils.PoseSize;
-            m_BlendShapeSize = sizeof(float) * m_BlendShapeCount;
+            var blendShapeCount = m_Locations.Length;
+            m_BlendShapeSize = sizeof(float) * blendShapeCount;
             m_FrameNumberSize = sizeof(int);
             m_FrameTimeSize = sizeof(float);
             m_HeadPoseOffset = BlendShapeSize + 1;
             m_CameraPoseOffset = HeadPoseOffset + poseSize;
             m_FrameNumberOffset = CameraPoseOffset + poseSize;
             m_FrameTimeOffset = FrameNumberOffset + FrameNumberSize;
+
             // Error check + Blend Shapes + HeadPose + CameraPose + FrameNumber + FrameTime + Active
             m_BufferSize = 1 + BlendShapeSize + poseSize * 2 + FrameNumberSize + FrameTimeSize + 1;
+        }
 
-            if (m_Locations.Length == 0 || m_Locations.Length != m_BlendShapeCount)
+        void Reset()
+        {
+            var locationStrings = new List<string>();
+            foreach (var location in BlendShapeUtils.Locations)
             {
-                var locs = new List<string>();
-                foreach (var location in BlendShapeUtils.Locations)
-                {
-                    locs.Add(location);
-                }
-
-                locs.Sort();
-                m_Locations = locs.ToArray();
+                locationStrings.Add(location);
             }
+
+            locationStrings.Sort();
+            m_Locations = locationStrings.ToArray();
+            UpdateOffsets();
         }
     }
 }
