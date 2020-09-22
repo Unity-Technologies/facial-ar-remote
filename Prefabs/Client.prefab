@@ -486,7 +486,7 @@ GameObject:
   - component: {fileID: 114206732096894310}
   - component: {fileID: 114268972160000486}
   m_Layer: 5
-  m_Name: TextMeshPro - InputField
+  m_Name: Port Text Field
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -714,7 +714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bee8c0b839d4394a9d27a7b36be2eea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_StreamSettings: {fileID: 0}
+  m_StreamSettings: {fileID: 11400000, guid: 664f63512dc824ff69313c1e0b49cc3e, type: 2}
   m_FaceManager: {fileID: 0}
 --- !u!1 &1291535506064532
 GameObject:
@@ -1288,7 +1288,7 @@ GameObject:
   - component: {fileID: 114637652551015706}
   - component: {fileID: 114972750310622832}
   m_Layer: 5
-  m_Name: TextMeshPro - InputField
+  m_Name: IP Text Field
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1791,7 +1791,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &222454234356795782
 CanvasRenderer:
@@ -1923,7 +1923,7 @@ GameObject:
   - component: {fileID: 222789741080756026}
   - component: {fileID: 114003792004604690}
   m_Layer: 5
-  m_Name: Ip Text
+  m_Name: IP Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
