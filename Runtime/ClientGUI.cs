@@ -60,8 +60,6 @@ namespace Unity.Labs.FacialRemote
 
         Socket m_Socket;
 
-        bool m_Supported = true;
-
         void Awake()
         {
             m_Camera = Camera.main;
