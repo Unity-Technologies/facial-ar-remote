@@ -1,0 +1,29 @@
+{
+    "name": "Unity.FacialARRemote",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.XR.ARKit.FaceTracking",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.arkit-face-tracking",
+            "expression": "1.0.7",
+            "define": "INCLUDE_ARKIT_FACE_PLUGIN"
+        },
+        {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "2.1.8",
+            "define": "INCLUDE_AR_FOUNDATION"
+        }
+    ],
+    "noEngineReferences": false
+}

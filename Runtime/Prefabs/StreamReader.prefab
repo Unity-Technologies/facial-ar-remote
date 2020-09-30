@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1301902957927422
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4795781088406236}
+  - component: {fileID: 114853668929166538}
+  - component: {fileID: 114180405116318928}
+  - component: {fileID: 114641533554280668}
+  m_Layer: 0
+  m_Name: StreamReader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4795781088406236
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1301902957927422}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114853668929166538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1301902957927422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8172ccacadb6046a58bb68b5e91ff386, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StreamSettings: {fileID: 0}
+  m_Port: 9000
+  m_CatchUpThreshold: 16
+  m_CatchUpSize: 3
+  m_StreamRecorderOverride: {fileID: 0}
+--- !u!114 &114180405116318928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1301902957927422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44fb5c15f36a0ad43959c7c074f64b09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PlaybackData: {fileID: 0}
+--- !u!114 &114641533554280668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1301902957927422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d4971bbbce29c747ad31c2747bcbc57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Character: {fileID: 0}
+  m_VerboseLogging: 0
+  m_TrackingLossPadding: 64
+  m_BlendShapesControllerOverride: {fileID: 0}
+  m_CharacterRigControllerOverride: {fileID: 0}
+  m_HeadBoneOverride: {fileID: 0}
+  m_CameraOverride: {fileID: 0}
+  m_StreamSourceOverrides: []

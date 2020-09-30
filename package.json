@@ -1,0 +1,19 @@
+{
+  "name": "com.unity.facial-ar-remote",
+  "displayName": "Facial AR Remote",
+  "version": "0.1.0-preview",
+  "unity": "2019.3",
+  "unityRelease": "0f6",
+  "description": "Facial AR Remote for remote iteration on ARKit blendshapes",
+  "dependencies": {
+    "com.unity.textmeshpro": "2.0.1",
+    "com.unity.xr.arfoundation": "2.1.8"
+  },
+  "samples": [
+  {
+   "displayName": "Sloth Example",
+   "description": "A simple face rig of a sloth with the ARKit blendshapes.",
+   "path": "Samples~/Sloth Example"
+  }
+ ]
+}
