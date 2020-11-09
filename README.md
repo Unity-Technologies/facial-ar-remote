@@ -2,7 +2,7 @@
 
 ## About
 
-Facial AR Remote is a tool that allows you to capture blendshape animations directly from a compatible iOS device to the Unity Editor.
+Facial AR Remote is a tool that allows you to capture blendshape animations directly from a compatible iOS device to the Unity Editor. Download the [Facial AR Remote Integration Project](https://github.com/Unity-Technologies/Facial-AR-Remote-Project) if you want a Unity project with all dependencies built in.
 
 ### Experimental Status
 
