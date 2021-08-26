@@ -1,5 +1,8 @@
 # Facial AR Remote (Preview)
 
+## Notice
+**This project has been discontinued and replaced by the [Live Capture](https://docs.unity3d.com/Packages/com.unity.live-capture@latest) package and [Unity Face Capture](https://apps.apple.com/nz/app/unity-face-capture/id1544159771) app. This repository is no longer supported or maintained.** 
+
 ## About
 
 Facial AR Remote is a tool that allows you to capture blendshape animations directly from a compatible iOS device to the Unity Editor. Download the [Facial AR Remote Integration Project](https://github.com/Unity-Technologies/Facial-AR-Remote-Project) if you want a Unity project with all dependencies built in.
